@@ -93,7 +93,8 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 ## ✨ Features
 
 ### AI Capabilities
-- 🤖 Powered by Claude 3.5 Sonnet
+- 🤖 Powered by Anthropic Haiku, Opus, Sonnet, 4.5, 4.1, 4.5, and Ollama, LMStudio, or gguf, any local model they have.  As I am testing it with a local model, and a anthropic or openai model.
+
 - 📝 Rich markdown formatting with syntax highlighting
 - 🎯 Customizable system prompts for tailored AI behavior
 - 🔄 Real-time message updates and streaming responses (coming soon)
@@ -116,7 +117,8 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 - **Routing**: TanStack Router
 - **State Management**: TanStack Store
 - **Styling**: Tailwind CSS
-- **AI Integration**: Anthropic's Claude API
+- **AI Integration**: Anthropic's Claude API. Local Models via Ollama, LMStudio, gguf.
+OpenAI API (can be added similarly)
 
 
 ## Routing

@@ -2,6 +2,52 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 
 export default defineSchema({
+  // OCR Results (compressed documents)
+  ocrResults: defineTable({
+    documentUrl: v.string(),
+    originalTokens: v.number(),
+    compressedTokens: v.number(),
+    tokenSavings: v.number(), // percentage
+    compressionRatio: v.number(), // e.g., 10 for 10x
+    compressedMarkdown: v.string(),
+    processingTimeMs: v.number(),
+    confidence: v.number(),
+    metadata: v.object({
+      pages: v.optional(v.number()),
+      title: v.optional(v.string()),
+      author: v.optional(v.string()),
+      createdAt: v.optional(v.string())
+    }),
+    createdAt: v.number()
+  }).index('by_url', ['documentUrl'])
+    .index('by_created', ['createdAt']),
+
+  // OCR Processing Errors
+  ocrErrors: defineTable({
+    documentUrl: v.string(),
+    errorMessage: v.string(),
+    errorStack: v.optional(v.string()),
+    createdAt: v.number()
+  }).index('by_url', ['documentUrl'])
+    .index('by_created', ['createdAt']),
+
+  // MCP Server Connections
+  mcpConnections: defineTable({
+    serverName: v.string(),
+    status: v.string(), // 'connected' | 'disconnected'
+    lastConnectedAt: v.number(),
+    createdAt: v.number()
+  }).index('by_server', ['serverName']),
+
+  // MCP Text Extractions (LLM.txt results)
+  mcpExtractions: defineTable({
+    url: v.string(),
+    extractedText: v.string(),
+    format: v.string(), // 'text' | 'markdown'
+    textLength: v.number(),
+    extractedAt: v.number()
+  }).index('by_url', ['url']),
+
   // Legacy tables (keep for compatibility)
   products: defineTable({
     title: v.string(),

@@ -193,6 +193,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
 
 ### Critical Bugs
 - [x] Cloudflare build failing (.output/server directory)
+- [x] Convex MCP Node.js API errors (functions split into Node.js runtime)
 - [ ] ModelConfigManager not connected to AI SDK
 - [ ] No Convex schema for user data
 - [ ] Missing wrangler.toml configuration

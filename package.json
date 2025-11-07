@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --import ./instrument.server.mjs .\\node_modules\\vite\\bin\\vite.js dev --port 3000",
-    "build": "vite build && shx mkdir -p .output/server && shx cp instrument.server.mjs .output/server",
+    "build": "vite build",
     "build:cloudflare": "vite build",
     "serve": "vite preview",
     "test": "vitest run",
@@ -17,6 +17,9 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.1",
+    "@ai-sdk/azure": "^2.0.66",
+    "@ai-sdk/google": "^2.0.29",
+    "@ai-sdk/openai": "^2.0.64",
     "@ai-sdk/react": "^2.0.8",
     "@convex-dev/react-query": "0.0.0-alpha.11",
     "@modelcontextprotocol/sdk": "^1.8.0",
@@ -48,6 +51,7 @@
     "dotenv": "^17.2.3",
     "highlight.js": "^11.11.1",
     "lucide-react": "^0.544.0",
+    "pdf-parse": "^2.4.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
