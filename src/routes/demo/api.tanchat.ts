@@ -3,6 +3,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { convertToModelMessages, stepCountIs, streamText } from 'ai'
 
 import getTools from '@/utils/demo.tools'
+import { validateCsrfRequest, createCsrfErrorResponse } from '@/lib/csrf-protection'
 
 const SYSTEM_PROMPT = `You are a helpful assistant for a store that sells guitars.
 
@@ -16,6 +17,13 @@ export const Route = createFileRoute('/demo/api/tanchat')({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // CSRF Protection: POST method requires CSRF token validation
+        const validation = validateCsrfRequest(request)
+        if (!validation.valid) {
+          console.warn('[CSRF] Validation failed for /demo/api/tanchat:', validation.error)
+          return createCsrfErrorResponse(validation.error!)
+        }
+
         try {
           const { messages } = await request.json()
 
