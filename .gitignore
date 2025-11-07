@@ -104,3 +104,5 @@ dist/server/assets/tanchat-BN4AyLN1.js
 dist/server/assets/tanstack-query-Sn7WOoUk.js
 dist/server/assets/workos-y9ComlkE.js
 .env (2).local
+.github/scripts/github_actions.ps1
+.github/workflows/setup-github-projects_Version3.yml

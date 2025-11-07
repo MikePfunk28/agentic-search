@@ -9,6 +9,7 @@ import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins'
 
 import { TodoSchema } from '@/orpc/schema'
 import router from '@/orpc/router'
+import { validateCsrfRequest, createCsrfErrorResponse, requiresCsrfProtection, ensureCsrfToken } from '@/lib/csrf-protection'
 
 const handler = new OpenAPIHandler(router, {
   interceptors: [
@@ -55,12 +56,28 @@ const handler = new OpenAPIHandler(router, {
 })
 
 async function handle({ request }: { request: Request }) {
+  // CSRF Protection: Validate tokens for state-changing methods
+  if (requiresCsrfProtection(request.method)) {
+    const validation = validateCsrfRequest(request)
+    if (!validation.valid) {
+      console.warn('[CSRF] Validation failed for /api/*:', validation.error)
+      return createCsrfErrorResponse(validation.error!)
+    }
+  }
+
   const { response } = await handler.handle(request, {
     prefix: '/api',
     context: {},
   })
 
-  return response ?? new Response('Not Found', { status: 404 })
+  const finalResponse = response ?? new Response('Not Found', { status: 404 })
+
+  // Ensure CSRF token exists on response for safe methods
+  if (!requiresCsrfProtection(request.method)) {
+    return ensureCsrfToken(finalResponse)
+  }
+
+  return finalResponse
 }
 
 export const Route = createFileRoute('/api/$')({
