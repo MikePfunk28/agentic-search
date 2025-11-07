@@ -30,15 +30,6 @@ jobs:
           }
           Write-Host "gh CLI version: $(gh --version)"
 
-      - name: Install gh-projects extension
-        shell: pwsh
-        run: |
-          Write-Host "Installing gh-projects extension..."
-          gh extension install github/gh-projects 2>$null
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "Extension may already be installed or install failed (non-fatal)."
-          }
-
       - name: Authenticate gh CLI
         shell: pwsh
         env:

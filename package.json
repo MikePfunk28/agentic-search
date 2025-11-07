@@ -4,13 +4,16 @@
   "type": "module",
   "scripts": {
     "dev": "node --import ./instrument.server.mjs .\\node_modules\\vite\\bin\\vite.js dev --port 3000",
-    "build": "vite build && shx  cp instrument.server.mjs .output/server",
+    "build": "vite build && shx mkdir -p .output/server && shx cp instrument.server.mjs .output/server",
+    "build:cloudflare": "vite build",
     "serve": "vite preview",
     "test": "vitest run",
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "start": "node --import ./.output/server/instrument.server.mjs .output/server/index.mjs"
+    "start": "node --import ./.output/server/instrument.server.mjs .output/server/index.mjs",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.1",
@@ -60,6 +63,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
+    "@cloudflare/vite-plugin": "^1.14.0",
     "@tanstack/devtools-event-client": "^0.3.2",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
@@ -72,6 +76,7 @@
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
     "vitest": "^3.0.5",
-    "web-vitals": "^5.1.0"
+    "web-vitals": "^5.1.0",
+    "wrangler": "^4.46.0"
   }
 }
