@@ -1,4 +1,4 @@
-Welcome to your new TanStack app! 
+Welcome to your new TanStack app!
 
 # Getting Started
 
@@ -82,7 +82,7 @@ console.log(env.VITE_APP_TITLE);
 
 # TanStack Chat Application
 
-Am example chat application built with TanStack Start, TanStack Store, and Claude AI.
+An example chat application built with TanStack Start, TanStack Store, and Claude AI.
 
 ## .env Updates
 
@@ -93,7 +93,7 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 ## ✨ Features
 
 ### AI Capabilities
-- 🤖 Powered by Claude 3.5 Sonnet 
+- 🤖 Powered by Claude 3.5 Sonnet
 - 📝 Rich markdown formatting with syntax highlighting
 - 🎯 Customizable system prompts for tailored AI behavior
 - 🔄 Real-time message updates and streaming responses (coming soon)

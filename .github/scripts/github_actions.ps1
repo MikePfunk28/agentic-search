@@ -27,7 +27,7 @@ param(
   [switch]$DryRun = $false
 )
 
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
 function Log($msg) { Write-Host "[import-plan] $msg" -ForegroundColor Cyan }
 function Warn($msg) { Write-Host "[import-plan][WARN] $msg" -ForegroundColor Yellow }
@@ -83,7 +83,7 @@ $lines = Get-Content $PlanFile
 # Get existing issues to avoid duplicates
 Log "Fetching existing issues to avoid duplicates..."
 try {
-  $existingIssuesJson = gh issue list --repo $Repo --limit 1000 --state all --json title 2>$null
+  $existingIssuesJson = gh issue list --repo $Repo --limit 10000 --state all --json title
   $existingIssues = @()
   if ($existingIssuesJson) {
     $existingIssues = ($existingIssuesJson | ConvertFrom-Json).title
@@ -104,10 +104,12 @@ foreach ($line in $lines) {
     $sectionTitle = $matches[1].Trim()
 
     # Determine label based on section title
-    if ($sectionTitle -match 'bug|fix|issue') {
-      $currentSection = "bug"
-    } elseif ($sectionTitle -match 'feature|implement|add') {
+    # Check enhancement patterns first to avoid broad "bug" matches overriding specific intents
+    # (e.g., "Feature Bugs" should be enhancement, not bug)
+    if ($sectionTitle -match 'feature|implement|add|enhancement') {
       $currentSection = "enhancement"
+    } elseif ($sectionTitle -match 'bug|fix|issue') {
+      $currentSection = "bug"
     } else {
       $currentSection = "task"
     }
@@ -116,8 +118,8 @@ foreach ($line in $lines) {
     continue
   }
 
-  # Find unchecked checkboxes: - [ ] Task name
-  if ($line -match '^\s*-\s+\[\s\]\s+(.+)$') {
+  # Find unchecked checkboxes: - [ ] or * [ ] Task name
+  if ($line -match '^\s*[-*]\s+\[\s\]\s+(.+)$') {
     $taskTitle = $matches[1].Trim()
 
     # Skip if issue already exists
@@ -134,8 +136,8 @@ foreach ($line in $lines) {
     Log "  ✓ Found task: $taskTitle [$currentSection]"
   }
 
-  # Skip checked checkboxes: - [x] Task name
-  if ($line -match '^\s*-\s+\[x\]\s+(.+)$') {
+  # Skip checked checkboxes: - [x] or * [X] Task name
+  if ($line -match '^\s*[-*]\s+\[[xX]\]\s+(.+)$') {
     $taskTitle = $matches[1].Trim()
     Log "  ⏭️  Skipping (completed): $taskTitle"
   }
