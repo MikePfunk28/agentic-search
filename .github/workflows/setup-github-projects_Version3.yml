@@ -1,16 +1,14 @@
-name: Auto Create & Backfill GitHub Project (PowerShell)
+name: Import Plan to Issues
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * 0'  # Every Sunday at midnight UTC
-  issues:
-    types: [opened, reopened]
-  pull_request:
-    types: [opened, reopened]
+  workflow_dispatch: # Manual trigger
+  push:
+    paths:
+      - "docs/plan.md" # Auto-run when plan.md changes
+      - "docs/**/*.md" # Or any markdown in docs folder
 
 jobs:
-  setup-project:
+  import-plan:
     runs-on: windows-latest
     steps:
       - name: Checkout repo
@@ -21,12 +19,7 @@ jobs:
         run: |
           if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
             Write-Host "gh CLI not found. Attempting to install via winget..."
-            try {
-              winget install --id GitHub.cli -e --silent
-            } catch {
-              Write-Host "ERROR: winget install failed. gh CLI is required."
-              exit 1
-            }
+            winget install --id GitHub.cli -e --silent
           }
           Write-Host "gh CLI version: $(gh --version)"
 
@@ -38,33 +31,16 @@ jobs:
         run: |
           $token = $env:GH_TOKEN_SECRET
           if ([string]::IsNullOrEmpty($token)) {
-            Write-Host "GH_TOKEN not set; using GITHUB_TOKEN fallback (repo-level permissions only)."
+            Write-Host "Using GITHUB_TOKEN for authentication."
             $token = $env:GITHUB_TOKEN_SECRET
-          } else {
-            Write-Host "Using GH_TOKEN secret for authentication."
           }
-
-          if ([string]::IsNullOrEmpty($token)) {
-            Write-Host "ERROR: No token available. Set secrets.GH_TOKEN or ensure GITHUB_TOKEN is available."
-            exit 1
-          }
-
           $token | gh auth login --with-token
           Write-Host "Successfully authenticated gh CLI."
 
-      - name: Set PROJECT_NAME to repository name
-        shell: pwsh
-        run: |
-          $full = "${{ github.repository }}"
-          $repoName = $full.Split('/')[-1]
-          Write-Host "Project name will be: $repoName"
-          Add-Content -Path $env:GITHUB_ENV -Value "PROJECT_NAME=$repoName"
-
-      - name: Run PowerShell setup script
+      - name: Run import script
         shell: pwsh
         env:
-          PROJECT_DESC: "Automated project with table, board, and timeline views."
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.repository }}
         run: |
-          .\.github\scripts\setup-project.ps1 -ProjectName $env:PROJECT_NAME -ProjectDesc $env:PROJECT_DESC -Owner $env:OWNER -Repo $env:REPO
+          .\.github\scripts\import-plan-to-issues.ps1 -PlanFile "docs/plan.md" -Owner $env:OWNER -Repo $env:REPO

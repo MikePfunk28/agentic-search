@@ -1,36 +1,37 @@
 <#
 .SYNOPSIS
-  Create/find a GitHub Projects (v2) project, ensure views, and backfill open issues & PRs.
+  Parse docs/plan.md and create GitHub issues from unchecked tasks
 .DESCRIPTION
-  Uses gh CLI for Projects v2 API. Does NOT commit or push to repo.
-.PARAMETER ProjectName
-  Name of the project to create or update
-.PARAMETER ProjectDesc
-  Description for the project (on creation)
+  Reads markdown files with checkbox lists and creates GitHub issues for unchecked items.
+  Skips already-checked items and avoids creating duplicate issues.
+.PARAMETER PlanFile
+  Path to the plan markdown file (default: docs/plan.md)
 .PARAMETER Owner
-  Repository owner (user or org)
+  Repository owner
 .PARAMETER Repo
-  Full repository name (owner/repo)
+  Repository name (owner/repo)
+.PARAMETER DryRun
+  If set, shows what would be created without actually creating issues
 #>
 param(
   [Parameter(Mandatory=$false)]
-  [string]$ProjectName = "Auto Project",
-
-  [Parameter(Mandatory=$false)]
-  [string]$ProjectDesc = "Automated project created by Actions.",
+  [string]$PlanFile = "docs/plan.md",
 
   [Parameter(Mandatory=$false)]
   [string]$Owner = $env:OWNER,
 
   [Parameter(Mandatory=$false)]
-  [string]$Repo = $env:REPO
+  [string]$Repo = $env:REPO,
+
+  [Parameter(Mandatory=$false)]
+  [switch]$DryRun = $false
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
-function Log($msg) { Write-Host "[setup-project] $msg" -ForegroundColor Cyan }
-function Warn($msg) { Write-Host "[setup-project][WARN] $msg" -ForegroundColor Yellow }
-function Err($msg) { Write-Host "[setup-project][ERROR] $msg" -ForegroundColor Red }
+function Log($msg) { Write-Host "[import-plan] $msg" -ForegroundColor Cyan }
+function Warn($msg) { Write-Host "[import-plan][WARN] $msg" -ForegroundColor Yellow }
+function Err($msg) { Write-Host "[import-plan][ERROR] $msg" -ForegroundColor Red }
 
 # Resolve owner/repo
 if ([string]::IsNullOrEmpty($Owner)) {
@@ -53,7 +54,6 @@ if ([string]::IsNullOrEmpty($Repo)) {
   }
 }
 
-# Extract just repo name (not owner/repo)
 $RepoName = ($Repo -split "/")[-1]
 
 # Validate gh CLI
@@ -62,195 +62,135 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
   exit 1
 }
 
+# Check if plan file exists
+if (-not (Test-Path $PlanFile)) {
+  Err "Plan file not found: $PlanFile"
+  exit 1
+}
+
 Log "Owner: $Owner"
 Log "Repo: $Repo"
-Log "Project Name: $ProjectName"
+Log "Plan file: $PlanFile"
+if ($DryRun) {
+  Warn "DRY RUN MODE - No issues will be created"
+}
+Log ""
 
-# Helper: Get project ID by name
-function Get-ProjectIdByName {
-  param([string]$owner, [string]$name)
+# Read plan file
+$content = Get-Content $PlanFile -Raw
+$lines = Get-Content $PlanFile
 
-  try {
-    $json = gh projects list --owner $owner --limit 200 --format json 2>$null
-    if ([string]::IsNullOrEmpty($json)) { return $null }
-
-    $projects = $json | ConvertFrom-Json
-    foreach ($p in $projects) {
-      if ($p.title -eq $name) {
-        return $p.id
-      }
-    }
-  } catch {
-    Warn "Failed to list projects: $_"
+# Get existing issues to avoid duplicates
+Log "Fetching existing issues to avoid duplicates..."
+try {
+  $existingIssuesJson = gh issue list --repo $Repo --limit 1000 --state all --json title 2>$null
+  $existingIssues = @()
+  if ($existingIssuesJson) {
+    $existingIssues = ($existingIssuesJson | ConvertFrom-Json).title
   }
-  return $null
+  Log "Found $($existingIssues.Count) existing issues"
+} catch {
+  Warn "Could not fetch existing issues: $_"
+  $existingIssues = @()
 }
 
-# 1) Find or create project
-Log "Looking for project '$ProjectName'..."
-$projectId = Get-ProjectIdByName -owner $Owner -name $ProjectName
+# Parse tasks from markdown
+$currentSection = "task"
+$tasksToCreate = @()
 
-if (-not $projectId) {
-  Log "Project not found. Creating new project..."
-  try {
-    gh projects create $ProjectName --owner $Owner 2>$null | Out-Null
-    Start-Sleep -Seconds 3
-    $projectId = Get-ProjectIdByName -owner $Owner -name $ProjectName
+foreach ($line in $lines) {
+  # Detect section headers (## Something)
+  if ($line -match '^##\s+(.+)$') {
+    $sectionTitle = $matches[1].Trim()
 
-    if (-not $projectId) {
-      Err "Project creation failed or project not found after creation."
-      exit 1
-    }
-    Log "Created project (ID: $projectId)"
-  } catch {
-    Err "Failed to create project. Ensure token has project permissions. Error: $_"
-    exit 1
-  }
-} else {
-  Log "Found existing project (ID: $projectId)"
-}
-
-# 2) Ensure views exist
-function Ensure-View {
-  param([string]$projectId, [string]$type, [string]$name)
-
-  Log "Checking for $type view '$name'..."
-  try {
-    $viewJson = gh projects view $projectId --format json 2>$null
-    if ($viewJson) {
-      $project = $viewJson | ConvertFrom-Json
-      $exists = $false
-
-      if ($project.views) {
-        foreach ($v in $project.views) {
-          if ($v.name -eq $name) {
-            $exists = $true
-            break
-          }
-        }
-      }
-
-      if ($exists) {
-        Log "  ✓ View '$name' already exists"
-        return
-      }
-    }
-
-    Log "  Adding $type view '$name'..."
-    # Note: gh projects view --add-view may not be supported in all gh versions
-    # This is a best-effort attempt
-    $result = gh api graphql -f query='
-      mutation($projectId: ID!, $name: String!) {
-        addProjectV2View(input: {projectId: $projectId, name: $name}) {
-          view {
-            id
-            name
-          }
-        }
-      }
-    ' -f projectId=$projectId -f name=$name 2>$null
-
-    if ($LASTEXITCODE -eq 0) {
-      Log "  ✓ Added view '$name'"
+    # Determine label based on section title
+    if ($sectionTitle -match 'bug|fix|issue') {
+      $currentSection = "bug"
+    } elseif ($sectionTitle -match 'feature|implement|add') {
+      $currentSection = "enhancement"
     } else {
-      Warn "  Could not add view via API (may require manual setup)"
+      $currentSection = "task"
+    }
+
+    Log "Section: $sectionTitle (label: $currentSection)"
+    continue
+  }
+
+  # Find unchecked checkboxes: - [ ] Task name
+  if ($line -match '^\s*-\s+\[\s\]\s+(.+)$') {
+    $taskTitle = $matches[1].Trim()
+
+    # Skip if issue already exists
+    if ($existingIssues -contains $taskTitle) {
+      Log "  ⏭️  Skipping (already exists): $taskTitle"
+      continue
+    }
+
+    $tasksToCreate += @{
+      Title = $taskTitle
+      Label = $currentSection
+    }
+
+    Log "  ✓ Found task: $taskTitle [$currentSection]"
+  }
+
+  # Skip checked checkboxes: - [x] Task name
+  if ($line -match '^\s*-\s+\[x\]\s+(.+)$') {
+    $taskTitle = $matches[1].Trim()
+    Log "  ⏭️  Skipping (completed): $taskTitle"
+  }
+}
+
+Log ""
+Log "=========================================="
+Log "Found $($tasksToCreate.Count) new tasks to create as issues"
+Log "=========================================="
+Log ""
+
+if ($tasksToCreate.Count -eq 0) {
+  Log "No new tasks to create. All tasks either completed or already exist as issues."
+  exit 0
+}
+
+# Create issues
+$created = 0
+$failed = 0
+
+foreach ($task in $tasksToCreate) {
+  $title = $task.Title
+  $label = $task.Label
+
+  if ($DryRun) {
+    Log "[DRY RUN] Would create issue: '$title' with label: $label"
+    continue
+  }
+
+  Log "Creating issue: $title"
+  try {
+    $issueUrl = gh issue create --repo $Repo --title $title --label $label --body "Created from $PlanFile" 2>$null
+    if ($LASTEXITCODE -eq 0) {
+      Log "  ✓ Created: $issueUrl"
+      $created++
+    } else {
+      Warn "  ✗ Failed to create issue: $title"
+      $failed++
     }
   } catch {
-    Warn "  Error ensuring view '$name': $_"
+    Warn "  ✗ Error creating issue '$title': $_"
+    $failed++
   }
-}
-
-Ensure-View -projectId $projectId -type "TABLE" -name "Tasks Table"
-Ensure-View -projectId $projectId -type "BOARD" -name "Kanban Board"
-Ensure-View -projectId $projectId -type "ROADMAP" -name "Timeline"
-
-# 3) Backfill open issues (excluding PRs)
-Log "Backfilling open issues..."
-$failed = @()
-
-try {
-  $issuesJson = gh api --paginate "repos/$Owner/$RepoName/issues?state=open&per_page=100" 2>$null
-
-  if ($issuesJson) {
-    $issues = $issuesJson | ConvertFrom-Json
-    $issueCount = 0
-
-    foreach ($issue in $issues) {
-      # Skip PRs (they have pull_request property)
-      if ($issue.pull_request) { continue }
-
-      $issueCount++
-      $num = $issue.number
-      $title = $issue.title
-
-      Log "  Adding issue #$num : $title"
-      try {
-        gh project item-add $projectId --owner $Owner --url "https://github.com/$Repo/issues/$num" 2>$null | Out-Null
-      } catch {
-        Warn "  Failed to add issue #$num (may already exist)"
-        $failed += "issue #$num"
-      }
-    }
-
-    Log "Processed $issueCount issues"
-  } else {
-    Log "No open issues found"
-  }
-} catch {
-  Warn "Failed to fetch issues: $_"
-}
-
-# 4) Backfill open PRs
-Log "Backfilling open pull requests..."
-
-try {
-  $prsJson = gh api --paginate "repos/$Owner/$RepoName/pulls?state=open&per_page=100" 2>$null
-
-  if ($prsJson) {
-    $prs = $prsJson | ConvertFrom-Json
-    $prCount = 0
-
-    foreach ($pr in $prs) {
-      $prCount++
-      $num = $pr.number
-      $title = $pr.title
-
-      Log "  Adding PR #$num : $title"
-      try {
-        gh project item-add $projectId --owner $Owner --url "https://github.com/$Repo/pull/$num" 2>$null | Out-Null
-      } catch {
-        Warn "  Failed to add PR #$num (may already exist)"
-        $failed += "PR #$num"
-      }
-    }
-
-    Log "Processed $prCount pull requests"
-  } else {
-    Log "No open PRs found"
-  }
-} catch {
-  Warn "Failed to fetch PRs: $_"
-}
-
-# 5) Final report
-Log ""
-Log "=========================================="
-Log "Setup complete!"
-Log "Project ID: $projectId"
-Log "Project Name: $ProjectName"
-Log "=========================================="
-
-if ($failed.Count -gt 0) {
-  Warn "Failed to add $($failed.Count) items:"
-  foreach ($f in $failed) {
-    Write-Host "  - $f"
-  }
-} else {
-  Log "All items added successfully!"
 }
 
 Log ""
-Log "Notes:"
-Log "- This script does NOT modify your repository code"
-Log "- No commits or pushes were made"
-Log "- For org-level projects, use a PAT with project permissions in secrets.GH_TOKEN"
+Log "=========================================="
+Log "Import complete!"
+Log "Created: $created issues"
+if ($failed -gt 0) {
+  Warn "Failed: $failed issues"
+}
+Log "=========================================="
+Log ""
+Log "Next steps:"
+Log "1. Check your issues: https://github.com/$Repo/issues"
+Log "2. The setup-github-projects workflow will add them to your project automatically"
+Log "3. Mark tasks as [x] in $PlanFile when completed"
