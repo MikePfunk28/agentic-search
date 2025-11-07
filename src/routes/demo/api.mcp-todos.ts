@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { addTodo, getTodos, subscribeToTodos } from '@/mcp-todos'
+import { validateCsrfRequest, createCsrfErrorResponse, ensureCsrfToken } from '@/lib/csrf-protection'
 
 export const Route = createFileRoute('/demo/api/mcp-todos')({
   server: {
     handlers: {
-      GET: () => {
+      GET: ({ request }) => {
         const stream = new ReadableStream({
           start(controller) {
             function ping() {
@@ -23,11 +24,22 @@ export const Route = createFileRoute('/demo/api/mcp-todos')({
             return () => unsubscribe()
           },
         })
-        return new Response(stream, {
+
+        const response = new Response(stream, {
           headers: { 'Content-Type': 'text/event-stream' },
         })
+
+        // Ensure CSRF token exists on GET response
+        return ensureCsrfToken(response)
       },
       POST: async ({ request }) => {
+        // CSRF Protection: POST method requires CSRF token validation
+        const validation = validateCsrfRequest(request)
+        if (!validation.valid) {
+          console.warn('[CSRF] Validation failed for /demo/api/mcp-todos:', validation.error)
+          return createCsrfErrorResponse(validation.error!)
+        }
+
         const { title } = await request.json()
         addTodo(title)
         return Response.json(getTodos())
