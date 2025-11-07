@@ -1,0 +1,838 @@
+{
+  "componentHierarchy": {
+    "ModelSelectionPanel": {
+      "description": "Top-level container component for model configuration",
+      "location": "src/components/model-selection/ModelSelectionPanel.tsx",
+      "children": [
+        {
+          "name": "ProviderSelector",
+          "description": "Dropdown/tabs for selecting AI provider (Ollama, Anthropic, LMStudio, OpenAI, Google, Azure)",
+          "location": "src/components/model-selection/ProviderSelector.tsx",
+          "props": ["selectedProvider", "onProviderChange", "availableProviders"],
+          "features": [
+            "Provider icons/logos",
+            "Active indicator",
+            "Hover descriptions"
+          ]
+        },
+        {
+          "name": "ModelConfigForm",
+          "description": "Dynamic form that adapts based on selected provider",
+          "location": "src/components/model-selection/ModelConfigForm.tsx",
+          "children": [
+            {
+              "name": "APIKeyInput",
+              "description": "Secure input with visibility toggle and validation",
+              "location": "src/components/model-selection/APIKeyInput.tsx",
+              "features": [
+                "Masked display by default (sk-ant-***-xyz)",
+                "Visibility toggle with auto-hide timer",
+                "Real-time format validation",
+                "Copy to clipboard (with confirmation)",
+                "Save to encrypted storage"
+              ],
+              "securityFeatures": [
+                "Web Crypto API encryption",
+                "No plaintext in DOM",
+                "Auto-clear on session end"
+              ]
+            },
+            {
+              "name": "BaseURLInput",
+              "description": "URL input for custom endpoints (required for local models)",
+              "location": "src/components/model-selection/BaseURLInput.tsx",
+              "features": [
+                "Pre-filled defaults per provider",
+                "URL format validation",
+                "Protocol auto-correction (http/https)",
+                "Port number support"
+              ],
+              "providerDefaults": {
+                "ollama": "http://localhost:11434",
+                "lm_studio": "http://localhost:1234/v1",
+                "anthropic": "https://api.anthropic.com",
+                "openai": "https://api.openai.com/v1"
+              }
+            },
+            {
+              "name": "ModelSelector",
+              "description": "Dropdown for available models per provider",
+              "location": "src/components/model-selection/ModelSelector.tsx",
+              "features": [
+                "Dynamic model list loading (for Ollama/LM Studio)",
+                "Custom model input option",
+                "Model descriptions/tooltips",
+                "Recently used models"
+              ],
+              "providerModels": {
+                "anthropic": ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229"],
+                "openai": ["gpt-4-turbo-preview", "gpt-3.5-turbo"],
+                "ollama": "Dynamically loaded via API",
+                "lm_studio": "Dynamically loaded via API"
+              }
+            },
+            {
+              "name": "AdvancedSettings",
+              "description": "Collapsible section for temperature, maxTokens, timeout, streaming",
+              "location": "src/components/model-selection/AdvancedSettings.tsx",
+              "features": [
+                "Collapsible accordion",
+                "Provider-specific defaults",
+                "Slider inputs with numerical override",
+                "Reset to defaults button"
+              ],
+              "settings": [
+                {
+                  "name": "temperature",
+                  "type": "slider",
+                  "range": [0, 2],
+                  "default": 0.7,
+                  "step": 0.1
+                },
+                {
+                  "name": "maxTokens",
+                  "type": "number",
+                  "default": 4096,
+                  "min": 1,
+                  "max": 100000
+                },
+                {
+                  "name": "timeout",
+                  "type": "number",
+                  "default": 60000,
+                  "unit": "ms"
+                },
+                {
+                  "name": "enableStreaming",
+                  "type": "boolean",
+                  "default": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ConnectionTester",
+          "description": "Test API connection before saving configuration",
+          "location": "src/components/model-selection/ConnectionTester.tsx",
+          "features": [
+            "Async connection testing",
+            "Real-time status updates",
+            "Latency measurement display",
+            "Detailed error messages",
+            "Retry mechanism"
+          ],
+          "states": [
+            "idle",
+            "testing",
+            "success",
+            "error"
+          ],
+          "display": {
+            "idle": "Test Connection button",
+            "testing": "Loading spinner + 'Testing...'",
+            "success": "Green checkmark + latency badge (e.g., '✓ 245ms')",
+            "error": "Red X + error message"
+          }
+        },
+        {
+          "name": "ConfigurationList",
+          "description": "List of saved configurations with quick switching",
+          "location": "src/components/model-selection/ConfigurationList.tsx",
+          "features": [
+            "Card/list view toggle",
+            "Active configuration indicator",
+            "Quick switch on click",
+            "Edit/Delete actions",
+            "Search/filter",
+            "Drag to reorder (optional)"
+          ],
+          "cardDisplay": {
+            "title": "Config name (e.g., 'Local Ollama', 'Production Claude')",
+            "subtitle": "Provider + Model",
+            "metadata": "Last tested, latency",
+            "actions": "Switch, Edit, Delete, Test"
+          }
+        }
+      ]
+    }
+  },
+  "stateManagement": {
+    "approach": "TanStack Store with localStorage persistence and optional Convex sync",
+    "rationale": [
+      "TanStack Store already used in project (demo-store.ts)",
+      "Reactive updates without Redux boilerplate",
+      "Type-safe with TypeScript",
+      "Derived state support",
+      "Lightweight and performant"
+    ],
+    "stores": [
+      {
+        "name": "modelConfigStore",
+        "location": "src/stores/model-config-store.ts",
+        "purpose": "Central state management for all model configurations",
+        "structure": {
+          "configs": {
+            "type": "Map<string, ModelConfig>",
+            "description": "All saved configurations keyed by ID"
+          },
+          "activeConfigId": {
+            "type": "string | null",
+            "description": "Currently active configuration ID"
+          },
+          "testResults": {
+            "type": "Map<string, ConnectionTestResult>",
+            "description": "Cached connection test results"
+          },
+          "uiState": {
+            "selectedProvider": {
+              "type": "ModelProvider",
+              "description": "Currently selected provider in form"
+            },
+            "formData": {
+              "type": "Partial<ModelConfig>",
+              "description": "In-progress form data"
+            },
+            "isTestingConnection": {
+              "type": "boolean",
+              "description": "Connection test in progress"
+            },
+            "showAdvanced": {
+              "type": "boolean",
+              "description": "Advanced settings panel expanded"
+            },
+            "editingConfigId": {
+              "type": "string | null",
+              "description": "ID of config being edited"
+            }
+          }
+        },
+        "actions": [
+          {
+            "name": "addConfig",
+            "params": ["id: string", "config: ModelConfig"],
+            "description": "Add new configuration and persist to storage"
+          },
+          {
+            "name": "updateConfig",
+            "params": ["id: string", "updates: Partial<ModelConfig>"],
+            "description": "Update existing configuration"
+          },
+          {
+            "name": "deleteConfig",
+            "params": ["id: string"],
+            "description": "Remove configuration and update storage"
+          },
+          {
+            "name": "setActiveConfig",
+            "params": ["id: string"],
+            "description": "Switch active configuration"
+          },
+          {
+            "name": "testConnection",
+            "params": ["id: string"],
+            "async": true,
+            "description": "Test configuration connection, update testResults"
+          },
+          {
+            "name": "loadFromStorage",
+            "async": true,
+            "description": "Load configurations from localStorage on init"
+          },
+          {
+            "name": "saveToStorage",
+            "async": true,
+            "description": "Persist current state to localStorage"
+          },
+          {
+            "name": "setSelectedProvider",
+            "params": ["provider: ModelProvider"],
+            "description": "Update selected provider, reset form to defaults"
+          },
+          {
+            "name": "updateFormData",
+            "params": ["updates: Partial<ModelConfig>"],
+            "description": "Update in-progress form data"
+          },
+          {
+            "name": "resetForm",
+            "description": "Clear form data and reset to defaults"
+          }
+        ],
+        "integration": {
+          "modelConfigManager": "Wraps existing ModelConfigManager class from model-config.ts",
+          "approach": "Store maintains configs Map, delegates to ModelConfigManager for validation and testing"
+        }
+      }
+    ],
+    "persistence": {
+      "strategy": "Hybrid localStorage + optional Convex cloud sync",
+      "localStorage": {
+        "key": "model-configs-v1",
+        "scope": "All model configurations, active selection, test results",
+        "encryption": {
+          "method": "Web Crypto API (AES-GCM)",
+          "keyDerivation": "PBKDF2 from user session token",
+          "implementation": "src/lib/crypto-utils.ts",
+          "fields": ["apiKey only - all other fields stored plaintext"]
+        },
+        "structure": {
+          "version": "1.0.0",
+          "configs": "Array<{id: string, config: ModelConfig (with encrypted apiKey)}>",
+          "activeConfigId": "string | null",
+          "lastUpdated": "timestamp"
+        }
+      },
+      "convex": {
+        "optional": true,
+        "purpose": "Cloud sync for multi-device access",
+        "schema": "models table with user_id, config_id, encrypted_config",
+        "sync": "On save, push to Convex; on load, merge local + cloud",
+        "conflicts": "Last-write-wins with timestamp"
+      },
+      "sessionStorage": {
+        "fallback": true,
+        "purpose": "If localStorage encryption fails or unavailable",
+        "warning": "Show user warning that configs won't persist across sessions"
+      }
+    },
+    "derivedState": [
+      {
+        "name": "activeConfig",
+        "type": "Derived<ModelConfig | null>",
+        "deps": ["configs", "activeConfigId"],
+        "fn": "() => activeConfigId ? configs.get(activeConfigId) : null",
+        "usage": "Display current active model in UI"
+      },
+      {
+        "name": "providerConfigs",
+        "type": "Derived<ModelConfig[]>",
+        "deps": ["configs", "uiState.selectedProvider"],
+        "fn": "() => Array.from(configs.values()).filter(c => c.provider === selectedProvider)",
+        "usage": "Filter configurations by provider in ConfigurationList"
+      },
+      {
+        "name": "formIsValid",
+        "type": "Derived<boolean>",
+        "deps": ["uiState.formData"],
+        "fn": "() => ModelConfigSchema.safeParse(formData).success",
+        "usage": "Enable/disable Save button"
+      },
+      {
+        "name": "canTestConnection",
+        "type": "Derived<boolean>",
+        "deps": ["uiState.formData", "uiState.isTestingConnection"],
+        "fn": "() => formData.apiKey && formData.baseUrl && !isTestingConnection",
+        "usage": "Enable/disable Test Connection button"
+      }
+    ]
+  },
+  "securityConsiderations": {
+    "apiKeyStorage": {
+      "approach": "Client-side encryption with Web Crypto API before localStorage",
+      "rationale": [
+        "Prevent XSS attacks from accessing raw keys",
+        "Protect against local file access",
+        "Industry standard for browser-based key storage",
+        "No server-side storage needed (BYOK principle)"
+      ],
+      "implementation": [
+        "1. Generate encryption key using Web Crypto API",
+        "2. Derive key from user session token (if available) or browser fingerprint",
+        "3. Encrypt apiKey field using AES-GCM",
+        "4. Store encrypted blob in localStorage",
+        "5. Decrypt only when needed for API calls",
+        "6. Never expose raw key in browser DevTools"
+      ],
+      "keyDerivation": {
+        "method": "PBKDF2",
+        "salt": "Random salt per user session, stored in sessionStorage",
+        "iterations": 100000,
+        "hash": "SHA-256"
+      },
+      "fallback": {
+        "ifEncryptionUnavailable": "Session-only storage with clear warning",
+        "message": "Your browser doesn't support secure storage. API keys will only persist for this session."
+      }
+    },
+    "validation": {
+      "clientSide": [
+        "Zod schema validation (ModelConfigSchema already exists)",
+        "Provider-specific format validation (regex patterns)",
+        "URL validation for baseUrl (valid HTTP/HTTPS)",
+        "Model name validation (non-empty string)",
+        "Numeric range validation (temperature, maxTokens)"
+      ],
+      "connectionTesting": [
+        "Minimal test request (max_tokens: 10, simple prompt)",
+        "Timeout protection (default 60s, configurable)",
+        "Error sanitization (strip sensitive data from error messages)",
+        "Rate limiting (prevent rapid test spam)"
+      ],
+      "errorHandling": {
+        "sensitiveDataLeakage": "Never include API key in error messages",
+        "userFeedback": "Specific errors: 'Invalid API key format', 'Connection timeout', 'Server unreachable'",
+        "logging": "Log to console in dev mode only, never in production"
+      }
+    },
+    "displaySafety": {
+      "maskedDisplay": {
+        "format": "sk-ant-************-abcd",
+        "implementation": "Show first 8 chars + asterisks + last 4 chars",
+        "minLength": "Mask entirely if key < 12 chars"
+      },
+      "copyToClipboard": {
+        "behavior": "Optional unmask with 'Copy' button",
+        "confirmation": "Show toast: 'API key copied to clipboard'",
+        "clearing": "Auto-clear clipboard after 30 seconds (optional)"
+      },
+      "visibilityToggle": {
+        "implementation": "Eye icon button to temporarily show full key",
+        "autoHide": "Hide after 10 seconds of inactivity",
+        "accessibility": "Announce state change to screen readers"
+      }
+    },
+    "transport": {
+      "https": "Enforce HTTPS for cloud providers (prevent MITM)",
+      "cors": "Handle CORS for local models (Ollama/LM Studio)",
+      "headers": "Proper authentication headers per provider (Bearer vs x-api-key)"
+    }
+  },
+  "userExperienceFlow": {
+    "initialSetup": {
+      "steps": [
+        {
+          "step": 1,
+          "action": "User opens Model Selection Panel",
+          "trigger": "Click 'Configure Models' button or settings icon",
+          "display": "Modal/sidebar with ProviderSelector"
+        },
+        {
+          "step": 2,
+          "action": "Select provider from dropdown/tabs",
+          "options": ["Ollama", "Anthropic", "LM Studio", "OpenAI", "Google", "Azure"],
+          "display": "Highlight selected provider, show icon"
+        },
+        {
+          "step": 3,
+          "action": "Form auto-populates with provider defaults",
+          "behavior": "baseUrl, model, temperature, maxTokens pre-filled",
+          "source": "ProviderDefaults from model-config.ts"
+        },
+        {
+          "step": 4,
+          "action": "User enters API key (if cloud provider)",
+          "required": ["Anthropic", "OpenAI", "Google", "Azure"],
+          "optional": ["Ollama", "LM Studio"],
+          "validation": "Real-time format check"
+        },
+        {
+          "step": 5,
+          "action": "User configures custom URL (if local provider)",
+          "required": ["Ollama", "LM Studio"],
+          "default": "Pre-filled with localhost URLs",
+          "validation": "URL format check"
+        },
+        {
+          "step": 6,
+          "action": "Optional: Adjust advanced settings",
+          "settings": ["temperature", "maxTokens", "timeout", "streaming"],
+          "display": "Collapsed by default, expand on click"
+        },
+        {
+          "step": 7,
+          "action": "Click 'Test Connection' button",
+          "requirement": "baseUrl and apiKey (if needed) must be valid",
+          "process": "Call ModelConfigManager.testConnection()",
+          "display": "Loading spinner, then success/error state"
+        },
+        {
+          "step": 8,
+          "action": "On success: 'Save Configuration' button enabled",
+          "display": "Green checkmark with latency (e.g., '✓ Connected (245ms)')",
+          "validation": "Form must be valid to save"
+        },
+        {
+          "step": 9,
+          "action": "User clicks 'Save Configuration'",
+          "prompt": "Optional: Enter configuration name (default: '{Provider} - {Model}')",
+          "result": "Configuration saved to store and localStorage",
+          "feedback": "Toast: 'Configuration saved successfully'"
+        },
+        {
+          "step": 10,
+          "action": "Configuration set as active",
+          "behavior": "Immediately available for use",
+          "display": "Active indicator in ConfigurationList"
+        }
+      ]
+    },
+    "switching": {
+      "steps": [
+        {
+          "step": 1,
+          "action": "User views Configuration List",
+          "display": "Grid/list of saved configurations with metadata"
+        },
+        {
+          "step": 2,
+          "action": "User clicks on saved configuration card",
+          "alternative": "Use keyboard navigation + Enter"
+        },
+        {
+          "step": 3,
+          "action": "Instant switch (no page reload)",
+          "implementation": "modelConfigStore.setActiveConfig(id)",
+          "performance": "<100ms latency"
+        },
+        {
+          "step": 4,
+          "action": "Active indicator updates",
+          "visual": "Checkmark icon, highlighted card border"
+        },
+        {
+          "step": 5,
+          "action": "UI reflects new provider/model",
+          "behavior": "Any in-progress searches use new config",
+          "feedback": "Toast: 'Switched to {config name}'"
+        }
+      ]
+    },
+    "editing": {
+      "steps": [
+        {
+          "step": 1,
+          "action": "User clicks 'Edit' button on saved config",
+          "trigger": "Hover action or context menu"
+        },
+        {
+          "step": 2,
+          "action": "Form pre-populates with existing values",
+          "behavior": "All fields filled, masked API key shown",
+          "state": "editingConfigId set in store"
+        },
+        {
+          "step": 3,
+          "action": "User makes changes",
+          "validation": "Real-time validation on each field"
+        },
+        {
+          "step": 4,
+          "action": "Re-test connection (if critical fields changed)",
+          "triggers": ["apiKey change", "baseUrl change", "model change"],
+          "optional": "Skip if only metadata changed (name, temperature)"
+        },
+        {
+          "step": 5,
+          "action": "User clicks 'Save Changes'",
+          "confirmation": "Optional: 'Save changes to {config name}?'",
+          "result": "updateConfig() called, localStorage updated",
+          "feedback": "Toast: 'Configuration updated'"
+        }
+      ]
+    },
+    "errorHandling": {
+      "scenarios": [
+        {
+          "error": "Connection failed (timeout)",
+          "display": "Red X icon + 'Connection timeout. Check your internet connection or baseUrl.'",
+          "actions": ["Retry button", "Edit URL button"],
+          "prevention": "Timeout set to 60s by default"
+        },
+        {
+          "error": "Connection failed (authentication)",
+          "display": "Red X icon + 'Authentication failed. Please check your API key.'",
+          "actions": ["Edit API Key button", "Documentation link"],
+          "prevention": "Validate API key format before testing"
+        },
+        {
+          "error": "Connection failed (invalid URL)",
+          "display": "Red X icon + 'Invalid baseUrl. Ensure Ollama/LM Studio is running.'",
+          "actions": ["Edit URL button", "Start Ollama button (if detected)"],
+          "prevention": "URL format validation"
+        },
+        {
+          "error": "Invalid API key format",
+          "display": "Inline error below input: 'Anthropic API keys start with sk-ant-'",
+          "actions": ["Clear input", "Help link"],
+          "prevention": "Real-time regex validation"
+        },
+        {
+          "error": "Storage quota exceeded",
+          "display": "Warning: 'Unable to save. Browser storage is full.'",
+          "actions": ["Delete old configs", "Export to file"],
+          "fallback": "Session storage with warning"
+        },
+        {
+          "error": "Encryption unavailable",
+          "display": "Warning: 'Secure storage unavailable. API keys will persist for this session only.'",
+          "actions": ["Continue anyway", "Cancel"],
+          "fallback": "Use sessionStorage instead of localStorage"
+        }
+      ]
+    },
+    "accessibility": {
+      "keyboardNavigation": [
+        "Tab through all form fields",
+        "Arrow keys for dropdown navigation",
+        "Enter to select/submit",
+        "Escape to close modals"
+      ],
+      "screenReader": [
+        "ARIA labels on all inputs",
+        "Role announcements (button, input, status)",
+        "Live region for connection test status",
+        "Error announcements"
+      ],
+      "visualAccessibility": [
+        "High contrast mode support",
+        "Focus indicators on all interactive elements",
+        "Color not sole indicator (icons + text)",
+        "Minimum 4.5:1 contrast ratio"
+      ]
+    }
+  },
+  "technicalImplementation": {
+    "fileStructure": [
+      {
+        "path": "src/stores/model-config-store.ts",
+        "purpose": "TanStack Store definition with state, actions, and persistence",
+        "exports": ["modelConfigStore", "useModelConfig hook"]
+      },
+      {
+        "path": "src/components/model-selection/ModelSelectionPanel.tsx",
+        "purpose": "Container component, manages store subscriptions",
+        "exports": ["ModelSelectionPanel (default)"]
+      },
+      {
+        "path": "src/components/model-selection/ProviderSelector.tsx",
+        "purpose": "Provider tabs/dropdown UI",
+        "exports": ["ProviderSelector (default)"]
+      },
+      {
+        "path": "src/components/model-selection/ModelConfigForm.tsx",
+        "purpose": "Dynamic form that adapts to selected provider",
+        "exports": ["ModelConfigForm (default)"]
+      },
+      {
+        "path": "src/components/model-selection/APIKeyInput.tsx",
+        "purpose": "Secure input with masking and encryption",
+        "exports": ["APIKeyInput (default)"]
+      },
+      {
+        "path": "src/components/model-selection/BaseURLInput.tsx",
+        "purpose": "URL input with validation",
+        "exports": ["BaseURLInput (default)"]
+      },
+      {
+        "path": "src/components/model-selection/ModelSelector.tsx",
+        "purpose": "Model dropdown with dynamic loading",
+        "exports": ["ModelSelector (default)"]
+      },
+      {
+        "path": "src/components/model-selection/AdvancedSettings.tsx",
+        "purpose": "Collapsible advanced settings panel",
+        "exports": ["AdvancedSettings (default)"]
+      },
+      {
+        "path": "src/components/model-selection/ConnectionTester.tsx",
+        "purpose": "Test connection UI with status display",
+        "exports": ["ConnectionTester (default)"]
+      },
+      {
+        "path": "src/components/model-selection/ConfigurationList.tsx",
+        "purpose": "List/grid of saved configurations",
+        "exports": ["ConfigurationList (default)"]
+      },
+      {
+        "path": "src/lib/crypto-utils.ts",
+        "purpose": "Web Crypto API helpers for API key encryption/decryption",
+        "exports": ["encryptAPIKey", "decryptAPIKey", "deriveKey"]
+      },
+      {
+        "path": "src/lib/model-config.ts",
+        "purpose": "Already exists - ModelConfigManager class",
+        "modifications": "Minimal - possibly add helper methods if needed"
+      },
+      {
+        "path": "src/types/model-config.ts",
+        "purpose": "TypeScript types for UI state and connection results",
+        "exports": ["UIState", "ConnectionTestResult", "ConfigurationCard"]
+      }
+    ],
+    "dependencies": {
+      "existing": [
+        "@tanstack/react-store - State management",
+        "@tanstack/store - Core store",
+        "zod - Schema validation",
+        "class-variance-authority - Component variants",
+        "lucide-react - Icons",
+        "react - UI framework",
+        "tailwindcss - Styling"
+      ],
+      "new": [
+        "None required - all functionality achievable with existing dependencies"
+      ],
+      "optional": [
+        "convex - For cloud sync (already in project)"
+      ]
+    },
+    "integration": {
+      "withModelConfigManager": {
+        "approach": "Store wraps ModelConfigManager instance",
+        "pattern": "Store owns configs Map, delegates validation/testing to ModelConfigManager",
+        "initialization": "const manager = new ModelConfigManager(); // in store",
+        "methods": "Use manager.testConnection(), manager.createLLMInstance(), etc."
+      },
+      "withConvex": {
+        "optional": true,
+        "schema": "models table: user_id, config_id, encrypted_config, updated_at",
+        "sync": "On addConfig/updateConfig, trigger Convex mutation",
+        "loading": "On app init, merge localStorage + Convex data",
+        "conflicts": "Last-write-wins based on updated_at timestamp"
+      },
+      "withTanStackRouter": {
+        "routing": "Optional: /settings/models route for dedicated settings page",
+        "queryParams": "?provider=anthropic to pre-select provider",
+        "navigation": "Navigate to specific config edit: /settings/models/:configId"
+      },
+      "withExistingUI": {
+        "placement": "Settings dropdown in Header component",
+        "modal": "ModelSelectionPanel in modal/sidebar",
+        "quickSwitch": "Dropdown in SearchBar for active config"
+      }
+    },
+    "codePatterns": {
+      "storeUsage": "const selectedProvider = useStore(modelConfigStore, (state) => state.uiState.selectedProvider)",
+      "actions": "modelConfigStore.setState((state) => ({ ...state, activeConfigId: newId }))",
+      "derivedState": "const activeConfig = useStore(activeConfigDerived)",
+      "persistence": "Auto-save on state change via store.subscribe(() => saveToStorage())"
+    },
+    "testing": {
+      "unit": [
+        "crypto-utils.ts - Encryption/decryption correctness",
+        "model-config-store.ts - State mutations and derived state",
+        "ModelConfigSchema validation"
+      ],
+      "integration": [
+        "Connection testing with mock API responses",
+        "localStorage persistence and retrieval",
+        "Form validation and error handling"
+      ],
+      "e2e": [
+        "Complete user flow: add config → test → save → switch",
+        "Error scenarios: invalid API key, connection timeout",
+        "Multi-device sync (if Convex integration)"
+      ]
+    }
+  },
+  "visualDesign": {
+    "layout": "Modal/sidebar with tabbed interface",
+    "providerTabs": {
+      "style": "Horizontal tabs with icons",
+      "icons": "Provider logos (Anthropic Claude, OpenAI, Ollama llama, etc.)",
+      "activeState": "Underline + accent color",
+      "responsiveness": "Collapse to dropdown on mobile"
+    },
+    "formLayout": {
+      "style": "Vertical stack with labeled sections",
+      "sections": [
+        "Provider Selection (tabs)",
+        "Connection Details (API key, URL)",
+        "Model Selection (dropdown)",
+        "Advanced Settings (collapsible)",
+        "Connection Test (inline status)"
+      ],
+      "spacing": "Consistent 16px gaps between sections",
+      "responsiveness": "Single column on all screen sizes"
+    },
+    "connectionTester": {
+      "inline": true,
+      "position": "Below form, above Save button",
+      "states": {
+        "idle": "Button: 'Test Connection'",
+        "testing": "Button disabled + spinner: 'Testing...'",
+        "success": "Green badge: '✓ Connected (245ms)'",
+        "error": "Red badge: '✗ Connection failed' + error details below"
+      },
+      "latencyBadge": "Pill-shaped, shows ms latency on success"
+    },
+    "configurationList": {
+      "view": "Grid cards (3 columns on desktop, 2 on tablet, 1 on mobile)",
+      "cardDesign": {
+        "header": "Config name + provider icon",
+        "body": "Model name, last tested time",
+        "footer": "Quick action buttons (Switch, Edit, Test, Delete)",
+        "activeIndicator": "Green border + checkmark icon"
+      },
+      "emptyState": "Illustration + 'No configurations yet. Add one above!'",
+      "search": "Search bar above grid to filter by name/provider"
+    },
+    "colorScheme": {
+      "primary": "Existing project accent color",
+      "success": "Green (#10b981)",
+      "error": "Red (#ef4444)",
+      "warning": "Yellow (#f59e0b)",
+      "neutral": "Gray scale from tailwind"
+    },
+    "responsiveness": {
+      "mobile": "Single column, full-width inputs, stacked buttons",
+      "tablet": "2-column config grid, wider modal",
+      "desktop": "3-column config grid, sidebar layout option"
+    },
+    "accessibility": {
+      "focusIndicators": "2px blue outline on all interactive elements",
+      "colorContrast": "4.5:1 minimum for all text",
+      "touchTargets": "Minimum 44x44px for all buttons",
+      "animations": "Respect prefers-reduced-motion"
+    }
+  },
+  "implementation": {
+    "phaseOne": {
+      "description": "Core functionality - single provider support",
+      "components": [
+        "ModelConfigForm (basic)",
+        "APIKeyInput",
+        "ConnectionTester"
+      ],
+      "features": [
+        "Add configuration",
+        "Test connection",
+        "Save to localStorage (encrypted)",
+        "Basic validation"
+      ],
+      "estimate": "2-3 days"
+    },
+    "phaseTwo": {
+      "description": "Multi-provider support and UI polish",
+      "components": [
+        "ProviderSelector",
+        "BaseURLInput",
+        "ModelSelector",
+        "ConfigurationList"
+      ],
+      "features": [
+        "All 6 providers supported",
+        "Switch between configs",
+        "Edit/Delete configs",
+        "UI polish and responsiveness"
+      ],
+      "estimate": "2-3 days"
+    },
+    "phaseThree": {
+      "description": "Advanced features and optimization",
+      "components": [
+        "AdvancedSettings",
+        "Convex sync integration",
+        "Quick-switch dropdown"
+      ],
+      "features": [
+        "Advanced settings panel",
+        "Cloud sync (optional)",
+        "Performance optimization",
+        "Comprehensive testing"
+      ],
+      "estimate": "1-2 days"
+    }
+  }
+}
