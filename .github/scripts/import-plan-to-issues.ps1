@@ -86,7 +86,11 @@ try {
   $existingIssuesJson = gh issue list --repo $Repo --limit 10000 --state all --json title
   $existingIssues = @()
   if ($existingIssuesJson) {
-    $existingIssues = ($existingIssuesJson | ConvertFrom-Json).title
+    $existingIssues = @(
+      $existingIssuesJson |
+        ConvertFrom-Json |
+        ForEach-Object { $_.title }
+    )
   }
   Log "Found $($existingIssues.Count) existing issues"
 } catch {

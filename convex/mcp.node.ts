@@ -1,10 +1,10 @@
+"use node"
+
 /**
  * MCP Integration - Node.js Runtime Functions
  * Contains MCP client operations that require Node.js APIs
  * Runs in Node.js runtime due to "use node" directive
  */
-
-"use node"
 
 import { action } from './_generated/server'
 import { v } from 'convex/values'

@@ -6,13 +6,13 @@
 import { action, internalMutation } from '../../_generated/server'
 import { v } from 'convex/values'
 import { internal } from '../../_generated/api'
+import { buffer } from 'stream/consumers'
 
 // Dynamic import for pdf-parse to work in Convex
 const getPdfParse = async () => {
   const pdfParse = await import('pdf-parse')
   return pdfParse
 }
-
 /**
  * Estimate token count (rough approximation)
  * OpenAI/Anthropic: ~4 chars per token
