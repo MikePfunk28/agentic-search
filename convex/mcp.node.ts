@@ -8,7 +8,6 @@
 
 import { action } from './_generated/server'
 import { v } from 'convex/values'
-import { getMCPManager } from './lib/mcp/client'
 
 /**
  * Connect to LLM.txt MCP Server
@@ -17,6 +16,7 @@ import { getMCPManager } from './lib/mcp/client'
 export const connectLLMText = action({
   args: {},
   handler: async (ctx) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
 
     await manager.connect({
@@ -39,6 +39,7 @@ export const extractText = action({
     maxLength: v.optional(v.number())
   },
   handler: async (ctx, args) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
 
     // Ensure connected
@@ -72,6 +73,7 @@ export const connectServer = action({
     env: v.optional(v.any())
   },
   handler: async (ctx, args) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
 
     await manager.connect({
@@ -91,6 +93,7 @@ export const connectServer = action({
 export const listTools = action({
   args: { serverName: v.string() },
   handler: async (ctx, args) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
     const tools = await manager.listTools(args.serverName)
     return tools
@@ -107,6 +110,7 @@ export const callTool = action({
     arguments: v.any()
   },
   handler: async (ctx, args) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
     const result = await manager.callTool(
       args.serverName,
@@ -123,6 +127,7 @@ export const callTool = action({
 export const listResources = action({
   args: { serverName: v.string() },
   handler: async (ctx, args) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
     const resources = await manager.listResources(args.serverName)
     return resources
@@ -138,6 +143,7 @@ export const readResource = action({
     resourceUri: v.string()
   },
   handler: async (ctx, args) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
     const content = await manager.readResource(args.serverName, args.resourceUri)
     return content
@@ -150,6 +156,7 @@ export const readResource = action({
 export const disconnectServer = action({
   args: { serverName: v.string() },
   handler: async (ctx, args) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
     await manager.disconnect(args.serverName)
 
@@ -162,6 +169,7 @@ export const disconnectServer = action({
  */
 export const getConnectedServers = action({
   handler: async (ctx) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
     return manager.getConnectedServers()
   }

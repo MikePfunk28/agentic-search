@@ -5,7 +5,6 @@
 
 export {
   processDocument,
-  processDocumentBatch,
   storeResult,
   storeError,
   type OCRResult

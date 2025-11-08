@@ -188,7 +188,7 @@ export class MockLocalLLM {
 
   async generateWithTools(prompt: string, tools: any[]): Promise<any> {
     // Simulate tool calling
-    if (prompt.includes('search')) {
+    if (prompt.toLowerCase().includes('search')) {
       return {
         toolCalls: [
           {

@@ -6,7 +6,12 @@
 import { action, internalMutation } from '../../_generated/server'
 import { v } from 'convex/values'
 import { internal } from '../../_generated/api'
-import pdfParse from 'pdf-parse'
+
+// Dynamic import for pdf-parse to work in Convex
+const getPdfParse = async () => {
+  const pdfParse = await import('pdf-parse')
+  return pdfParse
+}
 
 /**
  * Estimate token count (rough approximation)
@@ -48,15 +53,15 @@ async function createModelForCompression(config: {
 
     case 'openai':
       if (!config.apiKey) throw new Error('OpenAI API key required')
-      return openai(config.modelId, { apiKey: config.apiKey })
+      return openai(config.modelId)
 
     case 'anthropic':
       if (!config.apiKey) throw new Error('Anthropic API key required')
-      return anthropic(config.modelId, { apiKey: config.apiKey })
+      return anthropic(config.modelId)
 
     case 'google':
       if (!config.apiKey) throw new Error('Google API key required')
-      return google(config.modelId, { apiKey: config.apiKey })
+      return google(config.modelId)
 
     default:
       throw new Error(`Unknown provider: ${config.provider}`)
@@ -113,7 +118,8 @@ export const processDocument = action({
 
       // Step 2: Extract text with pdf-parse
       console.log('[OCR] Extracting text from PDF...')
-      const pdfData = await pdfParse(buffer)
+      const pdfParse = await getPdfParse()
+      const pdfData = await (pdfParse as any)(buffer)
       const originalText = pdfData.text
       const originalTokens = estimateTokens(originalText)
 
@@ -148,8 +154,7 @@ DOCUMENT TO COMPRESS:
 ${originalText}
 
 COMPRESSED MARKDOWN:`,
-        temperature: 0.3, // Low temperature for consistency
-        maxTokens: Math.min(targetTokens * 2, 4096) // Allow some buffer
+        temperature: 0.3 // Low temperature for consistency
       })
 
       const compressedTokens = estimateTokens(compressedMarkdown)
@@ -209,51 +214,8 @@ COMPRESSED MARKDOWN:`,
   }
 })
 
-/**
- * Process multiple documents in parallel
- */
-export const processDocumentBatch = action({
-  args: {
-    documentUrls: v.array(v.string()),
-    compressionModel: v.object({
-      provider: v.string(),
-      modelId: v.string(),
-      apiKey: v.optional(v.string()),
-      baseURL: v.optional(v.string())
-    }),
-    targetCompressionRatio: v.optional(v.number())
-  },
-  handler: async (ctx, args) => {
-    console.log('[OCR] Processing batch of', args.documentUrls.length, 'documents')
-
-    const results = await Promise.allSettled(
-      args.documentUrls.map(url =>
-        ctx.runAction(internal.ocr.processDocument, {
-          documentUrl: url,
-          compressionModel: args.compressionModel,
-          targetCompressionRatio: args.targetCompressionRatio
-        })
-      )
-    )
-
-    const successful = results.filter(r => r.status === 'fulfilled').length
-    const failed = results.filter(r => r.status === 'rejected').length
-
-    console.log('[OCR] Batch complete:', { successful, failed })
-
-    return {
-      total: args.documentUrls.length,
-      successful,
-      failed,
-      results: results.map((r, i) => ({
-        url: args.documentUrls[i],
-        status: r.status,
-        result: r.status === 'fulfilled' ? r.value : null,
-        error: r.status === 'rejected' ? r.reason?.message : null
-      }))
-    }
-  }
-})
+// Batch processing removed for now due to Convex action calling limitations
+// Use client-side batching instead
 
 /**
  * Internal mutation to store OCR result

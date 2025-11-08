@@ -9,8 +9,8 @@ Build an intelligent agentic search platform with multi-model support (local + c
 
 ### Phase 1: Deployment & Configuration (Priority: CRITICAL)
 - [x] Fix Cloudflare build error (.output/server directory missing)
-- [ ] Create wrangler.toml for Cloudflare Pages deployment
-- [ ] Configure build output for TanStack Start + Cloudflare
+- [x] Create wrangler.json for Cloudflare Pages deployment
+- [x] Configure build output for TanStack Start + Cloudflare
 - [ ] Setup environment variables in Cloudflare dashboard
 - [ ] Test successful deployment to mikepfunk.com
 - [ ] Configure custom domain DNS (mikepfunk.com → Cloudflare Pages)
@@ -22,12 +22,12 @@ Build an intelligent agentic search platform with multi-model support (local + c
   - [ ] Setup real-time subscriptions for chat
   - [ ] Configure Convex authentication (WorkOS integration)
 
-- [ ] **Sentry Integration** (mikepfunk.sentry.io)
+- [x] **Sentry Integration** (mikepfunk.sentry.io)
   - [x] Sentry already installed (@sentry/react, @sentry/tanstackstart-react)
-  - [ ] Configure DSN in Cloudflare environment variables
-  - [ ] Add performance monitoring for API routes
-  - [ ] Setup error boundaries for React components
-  - [ ] Add breadcrumbs for user actions
+  - [x] Configure DSN in environment variables (VITE_SENTRY_DSN set)
+  - [x] Add performance monitoring for API routes (TanStack Start integration)
+  - [x] Setup error boundaries for React components
+  - [x] Add breadcrumbs for user actions
 
 - [ ] **CodeRabbit CI/CD**
   - [ ] Add .coderabbit.yaml configuration
@@ -193,7 +193,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
 
 ### Critical Bugs
 - [x] Cloudflare build failing (.output/server directory)
-- [x] Convex MCP Node.js API errors (functions split into Node.js runtime)
+- [x] Convex MCP Node.js API errors (resolved with dynamic imports)
 - [ ] ModelConfigManager not connected to AI SDK
 - [ ] No Convex schema for user data
 - [ ] Missing wrangler.toml configuration
