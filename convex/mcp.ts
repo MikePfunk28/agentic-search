@@ -8,7 +8,6 @@
 import { action, internalMutation, query } from './_generated/server'
 import { v } from 'convex/values'
 import { internal } from './_generated/api'
-import * as mcpNode from './mcp.node'
 
 /**
  * Connect to LLM.txt MCP Server
