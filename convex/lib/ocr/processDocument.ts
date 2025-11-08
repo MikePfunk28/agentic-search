@@ -32,9 +32,9 @@ async function createModelForCompression(config: {
   baseURL?: string
 }) {
   // Dynamic imports for Convex actions
-  const { anthropic } = await import('@ai-sdk/anthropic')
-  const { openai, createOpenAI } = await import('@ai-sdk/openai')
-  const { google } = await import('@ai-sdk/google')
+  const { createAnthropic } = await import('@ai-sdk/anthropic')
+  const { createOpenAI } = await import('@ai-sdk/openai')
+  const { createGoogleGenerativeAI } = await import('@ai-sdk/google')
 
   switch (config.provider) {
     case 'ollama':
@@ -53,15 +53,37 @@ async function createModelForCompression(config: {
 
     case 'openai':
       if (!config.apiKey) throw new Error('OpenAI API key required')
+      const openai = createOpenAI({
+        apiKey: config.apiKey,
+        baseURL: config.baseURL
+      })
       return openai(config.modelId)
 
     case 'anthropic':
       if (!config.apiKey) throw new Error('Anthropic API key required')
+      const anthropic = createAnthropic({
+        apiKey: config.apiKey
+      })
       return anthropic(config.modelId)
 
     case 'google':
       if (!config.apiKey) throw new Error('Google API key required')
+      const google = createGoogleGenerativeAI({
+        apiKey: config.apiKey
+      })
       return google(config.modelId)
+
+    case 'azure':
+      if (!config.apiKey) throw new Error('Azure API key required')
+      if (!config.baseURL) throw new Error('Azure base URL required')
+      const azure = createOpenAI({
+        apiKey: config.apiKey,
+        baseURL: config.baseURL,
+        defaultHeaders: {
+          'api-key': config.apiKey
+        }
+      })
+      return azure(config.modelId)
 
     default:
       throw new Error(`Unknown provider: ${config.provider}`)
