@@ -67,7 +67,7 @@ jobs:
         shell: pwsh
         env:
           REPO_NAME: ${{ github.event.repository.name }}
-          PROJECT_TITLE: agentic-search
+          PROJECT_TITLE: ${{ github.event.repository.name }}
         run: |
           # Find the Projects (v2) project number by title
           $projects = gh project list --owner $env:OWNER --format json | ConvertFrom-Json
