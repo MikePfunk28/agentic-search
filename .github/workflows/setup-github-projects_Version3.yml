@@ -7,6 +7,11 @@ on:
       - "docs/plan.md" # Auto-run when plan.md changes
       - "docs/**/*.md" # Or any markdown in docs folder
 
+# Required permissions for GITHUB_TOKEN
+permissions:
+  issues: write      # Create and manage issues
+  contents: read     # Read repository contents
+
 jobs:
   import-plan:
     runs-on: windows-latest
@@ -26,16 +31,13 @@ jobs:
       - name: Authenticate gh CLI
         shell: pwsh
         env:
-          GH_TOKEN_SECRET: ${{ secrets.GH_TOKEN }}
-          GITHUB_TOKEN_SECRET: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
         run: |
-          $token = $env:GH_TOKEN_SECRET
-          if ([string]::IsNullOrEmpty($token)) {
-            Write-Host "Using GITHUB_TOKEN for authentication."
-            $token = $env:GITHUB_TOKEN_SECRET
+          if ([string]::IsNullOrEmpty($env:GH_TOKEN)) {
+            Write-Error "MY_GITHUB_TOKEN secret not found"
+            exit 1
           }
-          $token | gh auth login --with-token
-          Write-Host "Successfully authenticated gh CLI."
+          Write-Host "Authenticated with MY_GITHUB_TOKEN"
 
       - name: Run import script
         shell: pwsh

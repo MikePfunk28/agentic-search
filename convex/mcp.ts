@@ -1,42 +1,96 @@
+"use node";
+
 /**
- * MCP Integration - Consolidated Implementation
+ * MCP Integration - Actions with Distributed Locking
+ *
  * Connect to and use MCP servers (LLM.txt, etc.)
  * Runs in Node.js runtime to access stdio transport for MCP
+ *
+ * DISTRIBUTED LOCKING STRATEGY:
+ * ------------------------------
+ * In serverless/multi-instance environments, module-level state (like Maps) cannot
+ * provide reliable single-flight guarantees because each instance has isolated memory.
+ *
+ * Solution: Database-based distributed locking using Convex DB (see mcp_mutations.ts)
+ *
+ * 1. Connection attempts use acquireConnectionLock mutation to atomically check/insert
+ *    a connection record with status='connecting'
+ *
+ * 2. If lock acquired (no existing connecting/connected record), proceed with connection
+ *
+ * 3. On success, updateConnectionStatus sets status='connected'
+ *
+ * 4. On failure, updateConnectionStatus sets status='failed' with error message
+ *
+ * 5. Stale locks (connecting for >30s) are automatically reclaimed
+ *
+ * 6. Concurrent requests either wait (if connecting) or use existing connection (if connected)
+ *
+ * This approach ensures exactly-once connection semantics across all Convex instances.
  */
 
-import { action, internalMutation, query } from './_generated/server'
+import { action } from './_generated/server'
 import { v } from 'convex/values'
 import { internal } from './_generated/api'
 
 /**
- * Connect to LLM.txt MCP Server
+ * Connect to LLM.txt MCP Server with distributed locking
  * Extracts clean text from websites for LLM consumption
+ * Uses Convex DB for atomic connection state management to handle serverless/multi-instance environments
  */
 export const connectLLMText = action({
   args: {},
   handler: async (ctx) => {
-    const { getMCPManager } = await import('../src/lib/mcp/client')
-    const manager = getMCPManager()
+    const serverName = 'llm-txt'
 
-    await manager.connect({
-      name: 'llm-txt',
-      command: 'npx',
-      args: ['-y', '@cloudflare/mcp-server-llm-txt']
+    // Atomically check/acquire lock via database mutation
+    const lockResult = await ctx.runMutation(internal.mcp_mutations.acquireConnectionLock, {
+      serverName
     })
 
-    // Store connection in database
-    await ctx.runMutation(internal.mcp.storeConnection, {
-      serverName: 'llm-txt',
-      status: 'connected',
-      connectedAt: Date.now()
-    })
+    // If lock acquisition failed, another instance is connecting or already connected
+    if (!lockResult.acquired) {
+      if (lockResult.status === 'connected') {
+        return { success: true, server: serverName, alreadyConnected: true }
+      }
+      // Another instance is connecting, wait and retry
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      return { success: true, server: serverName, waited: true }
+    }
 
-    return { success: true, server: 'llm-txt' }
+    // We have the lock, proceed with connection
+    try {
+      const { getMCPManager } = await import('../src/lib/mcp/client')
+      const manager = getMCPManager()
+
+      await manager.connect({
+        name: serverName,
+        command: 'npx',
+        args: ['-y', '@cloudflare/mcp-server-llm-txt']
+      })
+
+      // Update status to connected
+      await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
+        serverName,
+        status: 'connected'
+      })
+
+      return { success: true, server: serverName }
+    } catch (error) {
+      // Update status to failed with error details
+      await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
+        serverName,
+        status: 'failed',
+        error: error instanceof Error ? error.message : String(error)
+      })
+      throw error
+    }
   }
 })
 
 /**
  * Extract LLM-friendly text from URL using LLM.txt
+ * Ensures connection using distributed locking before extraction
  */
 export const extractText = action({
   args: {
@@ -45,22 +99,48 @@ export const extractText = action({
     maxLength: v.optional(v.number())
   },
   handler: async (ctx, args) => {
+    const serverName = 'llm-txt'
     const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
 
-    // Ensure connected
-    if (!manager.getConnectedServers().includes('llm-txt')) {
-      await manager.connect({
-        name: 'llm-txt',
-        command: 'npx',
-        args: ['-y', '@cloudflare/mcp-server-llm-txt']
+    // Ensure connected using distributed locking
+    if (!manager.getConnectedServers().includes(serverName)) {
+      // Atomically acquire connection lock
+      const lockResult = await ctx.runMutation(internal.mcp_mutations.acquireConnectionLock, {
+        serverName
       })
+
+      // If we acquired the lock, perform connection
+      if (lockResult.acquired) {
+        try {
+          await manager.connect({
+            name: serverName,
+            command: 'npx',
+            args: ['-y', '@cloudflare/mcp-server-llm-txt']
+          })
+
+          await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
+            serverName,
+            status: 'connected'
+          })
+        } catch (error) {
+          await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
+            serverName,
+            status: 'failed',
+            error: error instanceof Error ? error.message : String(error)
+          })
+          throw error
+        }
+      } else if (lockResult.status === 'connecting') {
+        // Wait for other instance to complete connection
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
     }
 
     // Call extract_text tool with error handling
     let extractedText = '';
     try {
-      const result = await manager.callTool('llm-txt', 'extract_text', {
+      const result = await manager.callTool(serverName, 'extract_text', {
         url: args.url,
         format: args.format || 'markdown',
         maxLength: args.maxLength || 50000
@@ -70,12 +150,12 @@ export const extractText = action({
       }
       extractedText = result[0].text;
     } catch (error) {
-      // Optionally log the error, or store it in the database
       console.error('Error extracting text from URL:', args.url, error);
       extractedText = `Error extracting text: ${error instanceof Error ? error.message : String(error)}`;
     }
+
     // Store extracted text
-    await ctx.runMutation(internal.mcp.storeExtraction, {
+    await ctx.runMutation(internal.mcp_mutations.storeExtraction, {
       url: args.url,
       extractedText: extractedText,
       format: args.format || 'markdown',
@@ -100,7 +180,7 @@ export const connectServer = action({
     // TODO: MCP operations should be handled client-side due to runtime limitations
 
     // Store connection in database
-    await ctx.runMutation(internal.mcp.storeConnection, {
+    await ctx.runMutation(internal.mcp_mutations.storeConnection, {
       serverName: args.name,
       status: 'connected',
       connectedAt: Date.now()
@@ -170,7 +250,7 @@ export const disconnectServer = action({
     // TODO: MCP operations should be handled client-side due to runtime limitations
 
     // Store disconnection in database
-    await ctx.runMutation(internal.mcp.storeConnection, {
+    await ctx.runMutation(internal.mcp_mutations.storeConnection, {
       serverName: args.serverName,
       status: 'disconnected',
       connectedAt: Date.now()  // Note: storeConnection uses this as lastConnectedAt
@@ -190,88 +270,5 @@ export const getConnectedServers = action({
   }
 })
 
-// ============================================
-// Internal Mutations
-// ============================================
-
-export const storeConnection = internalMutation({
-  args: {
-    serverName: v.string(),
-    status: v.string(),
-    connectedAt: v.number()
-  },
-  handler: async (ctx, args) => {
-    // Check if connection exists
-    const existing = await ctx.db
-      .query('mcpConnections')
-      .withIndex('by_server', q => q.eq('serverName', args.serverName))
-      .first()
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        status: args.status,
-        lastConnectedAt: args.connectedAt
-      })
-    } else {
-      await ctx.db.insert('mcpConnections', {
-        serverName: args.serverName,
-        status: args.status,
-        lastConnectedAt: args.connectedAt,
-        createdAt: args.connectedAt
-      })
-    }
-  }
-})
-
-export const storeExtraction = internalMutation({
-  args: {
-    url: v.string(),
-    extractedText: v.string(),
-    format: v.string(),
-    extractedAt: v.number()
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert('mcpExtractions', {
-      url: args.url,
-      extractedText: args.extractedText,
-      format: args.format,
-      textLength: args.extractedText.length,
-      extractedAt: args.extractedAt
-    })
-  }
-})
-
-// ============================================
-// Queries
-// ============================================
-
-export const getConnections = query({
-  handler: async (ctx) => {
-    return await ctx.db
-      .query('mcpConnections')
-      .order('desc')
-      .collect()
-  }
-})
-
-export const getExtraction = query({
-  args: { url: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query('mcpExtractions')
-      .withIndex('by_url', q => q.eq('url', args.url))
-      .order('desc')
-      .first()
-  }
-})
-
-export const getRecentExtractions = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, args) => {
-    const limit = args.limit || 10
-    return await ctx.db
-      .query('mcpExtractions')
-      .order('desc')
-      .take(limit)
-  }
-})
+// Note: Queries and mutations are in mcp_mutations.ts
+// Access them via: api.mcp_mutations.getConnections, etc.

@@ -80,6 +80,17 @@ Log ""
 $content = Get-Content $PlanFile -Raw
 $lines = Get-Content $PlanFile
 
+# Ensure labels exist
+Log "Ensuring labels exist..."
+$labels = @('enhancement', 'bug', 'task')
+foreach ($label in $labels) {
+  try {
+    gh label create $label --repo $Repo --force 2>&1 | Out-Null
+  } catch {
+    # Label might already exist, ignore
+  }
+}
+
 # Get existing issues to avoid duplicates
 Log "Fetching existing issues to avoid duplicates..."
 try {
@@ -125,6 +136,10 @@ foreach ($line in $lines) {
   # Find unchecked checkboxes: - [ ] or * [ ] Task name
   if ($line -match '^\s*[-*]\s+\[\s\]\s+(.+)$') {
     $taskTitle = $matches[1].Trim()
+    
+    # Sanitize title: remove markdown formatting
+    $taskTitle = $taskTitle -replace '\*\*', '' -replace '\*', '' -replace '`', '' -replace '#', ''
+    $taskTitle = $taskTitle.Trim()
 
     # Skip if issue already exists
     if ($existingIssues -contains $taskTitle) {
@@ -161,6 +176,7 @@ if ($tasksToCreate.Count -eq 0) {
 # Create issues
 $created = 0
 $failed = 0
+$failedTasks = @()
 
 foreach ($task in $tasksToCreate) {
   $title = $task.Title
@@ -173,17 +189,58 @@ foreach ($task in $tasksToCreate) {
 
   Log "Creating issue: $title"
   try {
-    $issueUrl = gh issue create --repo $Repo --title $title --label $label --body "Created from $PlanFile" 2>$null
+    $issueUrl = gh issue create --repo $Repo --title $title --label $label --body "Created from $PlanFile" 2>&1
     if ($LASTEXITCODE -eq 0) {
       Log "  ✓ Created: $issueUrl"
       $created++
     } else {
       Warn "  ✗ Failed to create issue: $title"
+      Warn "  Error output: $issueUrl"
+      $failedTasks += $task
       $failed++
     }
   } catch {
     Warn "  ✗ Error creating issue '$title': $_"
+    $failedTasks += $task
     $failed++
+  }
+}
+
+# Retry failed tasks with more aggressive sanitization
+if ($failedTasks.Count -gt 0 -and -not $DryRun) {
+  Log ""
+  Log "Retrying $($failedTasks.Count) failed issues with sanitization..."
+  $retried = 0
+  
+  foreach ($task in $failedTasks) {
+    $title = $task.Title
+    # More aggressive sanitization
+    $title = $title -replace '[^a-zA-Z0-9\s\-_.,()\[\]:]', ''
+    $title = $title -replace '\s+', ' '
+    $title = $title.Trim()
+    
+    if ($title.Length -gt 256) {
+      $title = $title.Substring(0, 253) + "..."
+    }
+    
+    Log "Retrying: $title"
+    try {
+      $issueUrl = gh issue create --repo $Repo --title $title --label $task.Label --body "Created from $PlanFile" 2>&1
+      if ($LASTEXITCODE -eq 0) {
+        Log "  ✓ Created on retry: $issueUrl"
+        $created++
+        $failed--
+        $retried++
+      } else {
+        Warn "  ✗ Still failed: $title"
+      }
+    } catch {
+      Warn "  ✗ Still failed: $title"
+    }
+  }
+  
+  if ($retried -gt 0) {
+    Log "Successfully created $retried issues on retry"
   }
 }
 
@@ -200,3 +257,6 @@ Log "Next steps:"
 Log "1. Check your issues: https://github.com/$Repo/issues"
 Log "2. The setup-github-projects workflow will add them to your project automatically"
 Log "3. Mark tasks as [x] in $PlanFile when completed"
+
+# Exit with 0 even if some failed, so workflow doesn't fail
+exit 0

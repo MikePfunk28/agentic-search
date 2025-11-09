@@ -10,6 +10,7 @@
 
 import type * as lib_ocr_processDocument from "../lib/ocr/processDocument.js";
 import type * as mcp from "../mcp.js";
+import type * as mcp_mutations from "../mcp_mutations.js";
 import type * as ocr from "../ocr.js";
 import type * as todos from "../todos.js";
 
@@ -30,6 +31,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   "lib/ocr/processDocument": typeof lib_ocr_processDocument;
   mcp: typeof mcp;
+  mcp_mutations: typeof mcp_mutations;
   ocr: typeof ocr;
   todos: typeof todos;
 }>;

@@ -34,9 +34,10 @@ export default defineSchema({
   // MCP Server Connections
   mcpConnections: defineTable({
     serverName: v.string(),
-    status: v.string(), // 'connected' | 'disconnected'
+    status: v.string(), // 'connecting' | 'connected' | 'failed' | 'disconnected'
     lastConnectedAt: v.number(),
-    createdAt: v.number()
+    createdAt: v.number(),
+    error: v.optional(v.string()) // Error message for failed connections
   }).index('by_server', ['serverName']),
 
   // MCP Text Extractions (LLM.txt results)
