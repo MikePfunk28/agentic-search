@@ -1,5 +1,3 @@
-"use node"
-
 /**
  * MCP Integration - Consolidated Implementation
  * Connect to and use MCP servers (LLM.txt, etc.)
