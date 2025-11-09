@@ -34,7 +34,7 @@ jobs:
         shell: pwsh
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          Unblock-File .\.github\scripts\import-plan-to-issues.ps1
+          Unblock-File .\.github\scripts\import-plan-to-issues.ps1 -ErrorAction SilentlyContinue
 
       # 🔍 Hard sanity check: proves token, repo access, and Issues are enabled
       - name: Sanity check auth & repo
