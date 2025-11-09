@@ -15,7 +15,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
 - [ X ] Configure build output for TanStack Start + Cloudflare
 - [ X ] Setup environment variables in Cloudflare dashboard
 - [ ] Test successful deployment to mikepfunk.com
-- [ X ] Configure custom domain DNS (mikepfunk.com → Cloudflare Pages)
+- [x] Configure custom domain DNS (mikepfunk.com → Cloudflare Pages)
 
 ### Phase 2: Backend Services
 
