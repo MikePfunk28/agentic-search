@@ -59,15 +59,23 @@ export const extractText = action({
       })
     }
 
-    // Call extract_text tool
-    const result = await manager.callTool('llm-txt', 'extract_text', {
-      url: args.url,
-      format: args.format || 'markdown',
-      maxLength: args.maxLength || 50000
-    })
-
-    const extractedText = result[0]?.text || ''
-
+    // Call extract_text tool with error handling
+    let extractedText = '';
+    try {
+      const result = await manager.callTool('llm-txt', 'extract_text', {
+        url: args.url,
+        format: args.format || 'markdown',
+        maxLength: args.maxLength || 50000
+      });
+      if (!Array.isArray(result) || !result[0] || typeof result[0].text !== 'string') {
+        throw new Error('Unexpected result structure from llm-txt extract_text tool');
+      }
+      extractedText = result[0].text;
+    } catch (error) {
+      // Optionally log the error, or store it in the database
+      console.error('Error extracting text from URL:', args.url, error);
+      extractedText = `Error extracting text: ${error instanceof Error ? error.message : String(error)}`;
+    }
     // Store extracted text
     await ctx.runMutation(internal.mcp.storeExtraction, {
       url: args.url,
