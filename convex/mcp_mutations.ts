@@ -178,10 +178,12 @@ export const getConnectionStatus = internalQuery({
 
 export const getConnections = query({
   handler: async (ctx) => {
+    // Order by lastConnectedAt descending (most recently active connections first)
+    // Uses the 'by_last_connected' index for performance
     return await ctx.db
       .query('mcpConnections')
-      .withIndex('by_server')  // or create an index on lastConnectedAt
-      .order('desc')  // orders by _creationTime by default
+      .withIndex('by_last_connected')
+      .order('desc')
       .collect()
   }
 })

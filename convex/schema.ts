@@ -38,7 +38,9 @@ export default defineSchema({
     lastConnectedAt: v.number(),
     createdAt: v.number(),
     error: v.optional(v.string()) // Error message for failed connections
-  }).index('by_server', ['serverName']),
+  })
+    .index('by_server', ['serverName'])
+    .index('by_last_connected', ['lastConnectedAt']),
 
   // MCP Text Extractions (LLM.txt results)
   mcpExtractions: defineTable({
