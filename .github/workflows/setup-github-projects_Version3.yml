@@ -1,46 +1,92 @@
 name: Import Plan to Issues
 
+# ✅ Required so the auto GITHUB_TOKEN can create issues and add to Projects (v2)
+permissions:
+  contents: read
+  issues: write
+  repository-projects: write
+  pull-requests: read
+
 on:
-  workflow_dispatch: # Manual trigger
+  workflow_dispatch:
   push:
     paths:
-      - "docs/plan.md" # Auto-run when plan.md changes
-      - "docs/**/*.md" # Or any markdown in docs folder
+      - "docs/plan.md"
+      - "docs/**/*.md"
 
 jobs:
   import-plan:
     runs-on: windows-latest
+    env:
+      # ✅ Use the built-in token directly (no secrets needed)
+      GH_TOKEN: ${{ github.token }}
+      OWNER: ${{ github.repository_owner }}               # e.g. "MikePfunk28"
+      REPO_NAME: ${{ github.event.repository.name }}      # e.g. "agentic-search"
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Ensure gh CLI is available
+      - name: Setup GitHub CLI
+        uses: actions/setup-gh-cli@v2
+
+      - name: Allow script execution
         shell: pwsh
         run: |
-          if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-            Write-Host "gh CLI not found. Attempting to install via winget..."
-            winget install --id GitHub.cli -e --silent
-          }
-          Write-Host "gh CLI version: $(gh --version)"
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          Unblock-File .\.github\scripts\import-plan-to-issues.ps1
 
-      - name: Authenticate gh CLI
+      # 🔍 Hard sanity check: proves token, repo access, and Issues are enabled
+      - name: Sanity check auth & repo
         shell: pwsh
-        env:
-          GH_TOKEN_SECRET: ${{ secrets.GH_TOKEN }}
-          GITHUB_TOKEN_SECRET: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $token = $env:GH_TOKEN_SECRET
-          if ([string]::IsNullOrEmpty($token)) {
-            Write-Host "Using GITHUB_TOKEN for authentication."
-            $token = $env:GITHUB_TOKEN_SECRET
-          }
-          $token | gh auth login --with-token
-          Write-Host "Successfully authenticated gh CLI."
+          gh --version
+          gh auth status
+          Write-Host "Owner=$env:OWNER  Repo=$env:REPO_NAME"
+          if (-not (Test-Path "docs/plan.md")) { throw "docs/plan.md not found" }
+          gh api graphql -f query='
+            query($o:String!,$r:String!){
+              repository(owner:$o, name:$r){
+                name
+                viewerPermission
+                hasIssuesEnabled
+              }
+            }' -f o=$env:OWNER -f r=$env:REPO_NAME
 
+      # 📝 Create/update issues from docs/plan.md
       - name: Run import script
+        shell: pwsh
+        run: |
+          .\.github\scripts\import-plan-to-issues.ps1 `
+            -PlanFile "docs/plan.md" `
+            -Owner $env:OWNER `
+            -Repo  $env:REPO_NAME     # ← repo NAME only, not owner/repo
+
+      # ➕ Add newly created issues to your Projects (v2) board named "agentic-search"
+      - name: Add created issues to GitHub Project
         shell: pwsh
         env:
           OWNER: ${{ github.repository_owner }}
-          REPO: ${{ github.repository }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          PROJECT_TITLE: agentic-search
         run: |
-          .\.github\scripts\import-plan-to-issues.ps1 -PlanFile "docs/plan.md" -Owner $env:OWNER -Repo $env:REPO
+          # Find the Projects (v2) project number by title
+          $projects = gh project list --owner $env:OWNER --format json | ConvertFrom-Json
+          $proj = $projects | Where-Object { $_.title -eq $env:PROJECT_TITLE }
+          if (-not $proj) { throw "Project '$env:PROJECT_TITLE' not found under owner $env:OWNER." }
+          $projectNumber = $proj.number
+          Write-Host "Using project number: $projectNumber"
+
+          # Pull issues created in the last 24h by this workflow (labels optional)
+          $since = (Get-Date).AddDays(-1).ToString('yyyy-MM-dd')
+          $issuesJson = gh issue list --repo $env:OWNER/$env:REPO_NAME `
+            --search "created:>=$since author:app/github-actions" `
+            --limit 500 --json number,url | Out-String
+          $issues = $issuesJson | ConvertFrom-Json
+
+          if (-not $issues) { Write-Host "No recent issues to add."; exit 0 }
+
+          foreach ($i in $issues) {
+            Write-Host "Adding issue $($i.number) to project $projectNumber..."
+            gh project item-add --owner $env:OWNER --number $projectNumber --url $i.url
+          }
