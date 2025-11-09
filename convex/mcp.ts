@@ -1,8 +1,9 @@
+"use node"
+
 /**
- * MCP Integration - Public API
+ * MCP Integration - Consolidated Implementation
  * Connect to and use MCP servers (LLM.txt, etc.)
- * This file contains database operations and coordination logic.
- * Node.js API-dependent operations are in mcp.node.ts
+ * Runs in Node.js runtime to access stdio transport for MCP
  */
 
 import { action, internalMutation, query } from './_generated/server'
@@ -15,9 +16,15 @@ import { internal } from './_generated/api'
  */
 export const connectLLMText = action({
   args: {},
-  handler: async (ctx): Promise<any> => {
-    // TODO: MCP Node functions run in separate runtime and cannot be called from Convex actions
-    // This should be handled client-side or through a different mechanism
+  handler: async (ctx) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
+    const manager = getMCPManager()
+
+    await manager.connect({
+      name: 'llm-txt',
+      command: 'npx',
+      args: ['-y', '@cloudflare/mcp-server-llm-txt']
+    })
 
     // Store connection in database
     await ctx.runMutation(internal.mcp.storeConnection, {
@@ -39,9 +46,27 @@ export const extractText = action({
     format: v.optional(v.union(v.literal('text'), v.literal('markdown'))),
     maxLength: v.optional(v.number())
   },
-  handler: async (ctx, args): Promise<string> => {
-    // TODO: MCP operations should be handled client-side due to runtime limitations
-    const extractedText = `Extracted text from ${args.url}` // Placeholder
+  handler: async (ctx, args) => {
+    const { getMCPManager } = await import('../src/lib/mcp/client')
+    const manager = getMCPManager()
+
+    // Ensure connected
+    if (!manager.getConnectedServers().includes('llm-txt')) {
+      await manager.connect({
+        name: 'llm-txt',
+        command: 'npx',
+        args: ['-y', '@cloudflare/mcp-server-llm-txt']
+      })
+    }
+
+    // Call extract_text tool
+    const result = await manager.callTool('llm-txt', 'extract_text', {
+      url: args.url,
+      format: args.format || 'markdown',
+      maxLength: args.maxLength || 50000
+    })
+
+    const extractedText = result[0]?.text || ''
 
     // Store extracted text
     await ctx.runMutation(internal.mcp.storeExtraction, {

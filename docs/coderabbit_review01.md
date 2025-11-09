@@ -288,3 +288,20 @@ In convex/mcp.node.ts around line 7, the "use node" directive is placed after
 the JSDoc comment block; move the directive to the very top of the file (line 1)
 so it appears before any comments or code, then place the existing comment block
 immediately after it to ensure the directive is the first line in the file.
+
+Configure sentry
+
+Configure Sentry
+Enable Sentry logs by adding enableLogs: true to your Sentry.init() configuration.
+
+import * as Sentry from "@sentry/tanstackstart-react";
+
+Sentry.init({
+  dsn: "https://702af28ad38faebd2a7784669ec466af@o4510314186014720.ingest.us.sentry.io/4510314188636160",
+  integrations: [
+    // send console.log, console.warn, and console.error calls as logs to Sentry
+    Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+  ],
+  // Enable logs to be sent to Sentry
+  enableLogs: true,
+});
