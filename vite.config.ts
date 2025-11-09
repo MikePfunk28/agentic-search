@@ -16,7 +16,7 @@ const config = defineConfig({
   ],
   ssr: {
     target: 'webworker',
-    noExternal: true,
+    noExternal: [],
   },
 })
 
