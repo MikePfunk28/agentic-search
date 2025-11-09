@@ -276,9 +276,9 @@ Build an intelligent agentic search platform with multi-model support (local + c
 
 ## 🔗 Resources
 
-- TanStack Start Docs: <<https://tanstack.com/start/latest>>
-- Cloudflare Pages: <<https://developers.cloudflare.com/pages/>>
-- Convex Docs: <<https://docs.convex.dev/quickstart/tanstack-start>>
-- Ollama API: <<https://github.com/ollama/ollama/blob/main/docs/api.md>>
-- Claude Flow: <<https://github.com/ruvnet/claude-flow>>
-- Sentry Integration: <<https://mikepfunk.sentry.io>>
+- TanStack Start Docs: <https://tanstack.com/start/latest>
+- Cloudflare Pages: <https://developers.cloudflare.com/pages/>
+- Convex Docs: <https://docs.convex.dev/quickstart/tanstack-start>
+- Ollama API: <https://github.com/ollama/ollama/blob/main/docs/api.md>
+- Claude Flow: <https://github.com/ruvnet/claude-flow>
+- Sentry Integration: <https://mikepfunk.sentry.io>
