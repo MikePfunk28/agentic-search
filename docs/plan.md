@@ -247,32 +247,30 @@ Build an intelligent agentic search platform with multi-model support (local + c
 
 ## 🎯 Success Criteria
 
-- ✅ Successfully deployed to mikepfunk.com on Cloudflare
-- ✅ Local Ollama models working without API keys
-- ✅ Cloud models (Anthropic, OpenAI) working with encrypted keys
-- ✅ Chat interface with streaming responses
-- ✅ Agentic search returning relevant results
-- ✅ Short-term memory (Convex) and long-term memory (S3/DynamoDB) operational
-- ✅ MCP server integration functional
-- ✅ All tests passing (95%+ coverage)
-- ✅ Sentry tracking errors and performance
-- ✅ CodeRabbit reviewing PRs automatically
+- [ ] ✅ Successfully deployed to mikepfunk.com on Cloudflare
+- [ ] ✅ Local Ollama models working without API keys
+- [ ]✅ Cloud models (Anthropic, OpenAI) working with encrypted keys
+- [ ] ✅ Chat interface with streaming responses
+- [ ]✅ Agentic search returning relevant results
+- [ ] ✅ Short-term memory (Convex) and long-term memory (S3/DynamoDB) operational
+- [ ] ✅ MCP server integration functional
+- [ ] ✅ All tests passing (95%+ coverage)
+- [ ] ✅ Sentry tracking errors and performance
+- [ ] ✅ CodeRabbit reviewing PRs automatically
 
 ---
 
 ## 📝 Next Immediate Actions
 
-1. **Fix Cloudflare build** (create .output/server directory in build script)
-2. **Create wrangler.toml** for Cloudflare configuration
-3. **Initialize Convex** with `npx convex dev`
-4. **Create Convex schemas** for models, chat, search results
-5. **Build chat interface** component with streaming support
-6. **Test with Ollama** local model first (no API key needed)
-7. **Deploy to Cloudflare** and test at mikepfunk.com
+- [ ] 1. **Fix Cloudflare build** (create .output/server directory in build script)
+- [ ] 2. **Create wrangler.toml** for Cloudflare configuration
+- [ ] 3. **Initialize Convex** with `npx convex dev`
+- [ ] 4. **Create Convex schemas** for models, chat, search results
+- [ ] 5. **Build chat interface** component with streaming support
+- [ ] 6. **Test with Ollama** local model first (no API key needed)
+- [ ] 7. **Deploy to Cloudflare** and test at mikepfunk.com
 
 ---
-
-## 🔗 Resources
 
 ## 🔗 Resources
 

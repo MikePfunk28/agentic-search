@@ -8,35 +8,66 @@ import { action, internalMutation, query } from './_generated/server'
 import { v } from 'convex/values'
 import { internal } from './_generated/api'
 
+// Single-flight connection guard: tracks pending connections to prevent race conditions
+const pendingConnections = new Map<string, Promise<void>>()
+
 /**
- * Connect to LLM.txt MCP Server
+ * Connect to LLM.txt MCP Server with race condition protection
  * Extracts clean text from websites for LLM consumption
+ * Uses single-flight pattern: concurrent calls wait for the same connection attempt
  */
 export const connectLLMText = action({
   args: {},
   handler: async (ctx) => {
+    const serverName = 'llm-txt'
+
+    // Check if connection is already in progress
+    const pendingConnection = pendingConnections.get(serverName)
+    if (pendingConnection) {
+      // Wait for the existing connection attempt to complete
+      await pendingConnection
+      return { success: true, server: serverName, waited: true }
+    }
+
     const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
 
-    await manager.connect({
-      name: 'llm-txt',
-      command: 'npx',
-      args: ['-y', '@cloudflare/mcp-server-llm-txt']
-    })
+    // Check if already connected (after checking pending, to avoid race)
+    if (manager.getConnectedServers().includes(serverName)) {
+      return { success: true, server: serverName, alreadyConnected: true }
+    }
 
-    // Store connection in database
-    await ctx.runMutation(internal.mcp.storeConnection, {
-      serverName: 'llm-txt',
-      status: 'connected',
-      connectedAt: Date.now()
-    })
+    // Create connection promise and store it
+    const connectionPromise = (async () => {
+      try {
+        await manager.connect({
+          name: serverName,
+          command: 'npx',
+          args: ['-y', '@cloudflare/mcp-server-llm-txt']
+        })
 
-    return { success: true, server: 'llm-txt' }
+        // Store connection in database
+        await ctx.runMutation(internal.mcp.storeConnection, {
+          serverName,
+          status: 'connected',
+          connectedAt: Date.now()
+        })
+      } finally {
+        // Always clean up the pending connection tracker
+        pendingConnections.delete(serverName)
+      }
+    })()
+
+    pendingConnections.set(serverName, connectionPromise)
+    await connectionPromise
+
+    return { success: true, server: serverName }
   }
 })
 
 /**
  * Extract LLM-friendly text from URL using LLM.txt
+ * Delegates connection handling to connectLLMText to avoid race conditions
  */
 export const extractText = action({
   args: {
@@ -48,13 +79,9 @@ export const extractText = action({
     const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
 
-    // Ensure connected
+    // Ensure connected - delegate to connectLLMText for proper connection guards
     if (!manager.getConnectedServers().includes('llm-txt')) {
-      await manager.connect({
-        name: 'llm-txt',
-        command: 'npx',
-        args: ['-y', '@cloudflare/mcp-server-llm-txt']
-      })
+      await ctx.runAction(internal.mcp.connectLLMText, {})
     }
 
     // Call extract_text tool with error handling
