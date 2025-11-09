@@ -35,13 +35,15 @@ export function initSentry(config?: SentryConfig) {
 				maskAllText: false,
 				blockAllMedia: false,
 			}),
-			Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+			...(environment === "development"
+				? [Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] })]
+				: []
+			),
 		],
 		tracesSampleRate: environment === "production" ? 0.1 : 1.0,
 		replaysSessionSampleRate: 0.1,
 		replaysOnErrorSampleRate: 1.0,
-		enableLogs: true,
-	});
+		enableLogs: environment === "development",	});
 
 	console.log(`[Sentry] Initialized for ${environment}`);
 }

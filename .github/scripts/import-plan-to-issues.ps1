@@ -37,25 +37,25 @@ function Err($msg) { Write-Host "[import-plan][ERROR] $msg" -ForegroundColor Red
 function Remove-MarkdownFormatting($title) {
   # Remove markdown links [text](url) - keep only the text
   $sanitized = $title -replace '\[([^\]]+)\]\([^\)]+\)', '$1'
-  
+
   # Remove bold/italic markers
   $sanitized = $sanitized -replace '\*\*', '' -replace '\*', '' -replace '__', '' -replace '_', ''
-  
+
   # Remove strikethrough
   $sanitized = $sanitized -replace '~~', ''
-  
+
   # Remove inline code and code markers
   $sanitized = $sanitized -replace '`', ''
-  
+
   # Remove heading markers
   $sanitized = $sanitized -replace '#', ''
-  
+
   # Remove blockquote markers
   $sanitized = $sanitized -replace '^>\s*', ''
-  
+
   # Remove horizontal rules (if somehow in a title)
   $sanitized = $sanitized -replace '---+', '' -replace '\*\*\*+', ''
-  
+
   return $sanitized.Trim()
 }
 
@@ -172,7 +172,7 @@ foreach ($line in $lines) {
     foreach ($existingTitle in $existingIssues) {
       $sanitizedExisting = Remove-MarkdownFormatting $existingTitle
       # Compare: sanitized new vs sanitized existing, or original new vs existing
-      if (($taskTitle -eq $sanitizedExisting) -or ($originalTitle -eq $existingTitle)) {
+      if ($taskTitle -eq $sanitizedExisting) {
         $isDuplicate = $true
         Log "  ⏭️  Skipping (already exists): $taskTitle"
         break

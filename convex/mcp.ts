@@ -32,6 +32,94 @@
 import { action } from './_generated/server'
 import { v } from 'convex/values'
 import { internal } from './_generated/api'
+import type { ActionCtx } from './_generated/server'
+
+/**
+ * Helper: Ensure MCP server connection with distributed locking and exponential backoff
+ * Implements retry logic with fail-fast for failed connections
+ */
+async function ensureConnection(
+  ctx: ActionCtx,
+  serverName: string,
+  connectFn: () => Promise<void>
+): Promise<void> {
+  const MAX_CONNECTION_RETRIES = 5
+  const BASE_RETRY_DELAY_MS = 500
+
+  for (let attempt = 0; attempt < MAX_CONNECTION_RETRIES; attempt++) {
+    const lockResult = await ctx.runMutation(internal.mcp_mutations.acquireConnectionLock, {
+      serverName
+    })
+
+    // Already connected - return immediately
+    if (!lockResult.acquired && lockResult.status === 'connected') {
+      return
+    }
+
+    // Fail-fast: Previous connection attempt failed, don't retry
+    if (!lockResult.acquired && lockResult.status === 'failed') {
+      // Get detailed error information from database
+      const connection = await ctx.runQuery(internal.mcp_mutations.getConnectionStatus, {
+        serverName
+      })
+      throw new Error(
+        `Connection previously failed for '${serverName}': ${connection?.error || 'Unknown error'}. Clear the failed state before retrying.`
+      )
+    }
+
+    // Lock acquired - attempt connection
+    if (lockResult.acquired) {
+      try {
+        await connectFn()
+        await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
+          serverName,
+          status: 'connected'
+        })
+        return
+      } catch (error) {
+        await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
+          serverName,
+          status: 'failed',
+          error: error instanceof Error ? error.message : String(error)
+        })
+        throw error
+      }
+    }
+
+    // Another instance is connecting - wait with exponential backoff (with jitter) and poll
+    if (lockResult.status === 'connecting') {
+      // Add jitter: randomize between 50% and 100% of calculated delay
+      const baseDelay = BASE_RETRY_DELAY_MS * Math.pow(2, attempt)
+      const jitter = Math.random() * 0.5 + 0.5 // Random value between 0.5 and 1
+      const delayMs = Math.floor(baseDelay * jitter)
+
+      await new Promise(resolve => setTimeout(resolve, delayMs))
+
+      const connection = await ctx.runQuery(internal.mcp_mutations.getConnectionStatus, {
+        serverName
+      })
+
+      if (connection?.status === 'connected') {
+        return
+      }
+
+      if (connection?.status === 'failed') {
+        throw new Error(
+          `Connection failed by another instance for '${serverName}': ${connection.error || 'Unknown error'}`
+        )
+      }
+
+      // Still connecting, continue retry loop
+      continue
+    }
+  }
+
+  // Max retries exceeded
+  const totalTimeMs = BASE_RETRY_DELAY_MS * (Math.pow(2, MAX_CONNECTION_RETRIES) - 1)
+  throw new Error(
+    `Connection timeout: server '${serverName}' did not connect after ${MAX_CONNECTION_RETRIES} attempts (~${totalTimeMs}ms with exponential backoff)`
+  )
+}
 
 /**
  * Connect to LLM.txt MCP Server with distributed locking and exponential backoff
@@ -43,82 +131,18 @@ export const connectLLMText = action({
   args: {},
   handler: async (ctx) => {
     const serverName = 'llm-txt'
-    const maxRetries = 5
-    const baseDelayMs = 500 // Start with 500ms
+    const { getMCPManager } = await import('../src/lib/mcp/client')
+    const manager = getMCPManager()
 
-    // Retry loop with exponential backoff
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      // Atomically check/acquire lock via database mutation
-      const lockResult = await ctx.runMutation(internal.mcp_mutations.acquireConnectionLock, {
-        serverName
+    await ensureConnection(ctx, serverName, async () => {
+      await manager.connect({
+        name: serverName,
+        command: 'npx',
+        args: ['-y', '@cloudflare/mcp-server-llm-txt']
       })
+    })
 
-      // If already connected, return immediately
-      if (!lockResult.acquired && lockResult.status === 'connected') {
-        return { success: true, server: serverName, alreadyConnected: true }
-      }
-
-      // If lock acquired, proceed with connection
-      if (lockResult.acquired) {
-        try {
-          const { getMCPManager } = await import('../src/lib/mcp/client')
-          const manager = getMCPManager()
-
-          await manager.connect({
-            name: serverName,
-            command: 'npx',
-            args: ['-y', '@cloudflare/mcp-server-llm-txt']
-          })
-
-          // Update status to connected
-          await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
-            serverName,
-            status: 'connected'
-          })
-
-          return { success: true, server: serverName, connected: true }
-        } catch (error) {
-          // Update status to failed with error details
-          await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
-            serverName,
-            status: 'failed',
-            error: error instanceof Error ? error.message : String(error)
-          })
-          throw error
-        }
-      }
-
-      // Another instance is connecting, wait with exponential backoff and poll status
-      if (lockResult.status === 'connecting') {
-        // Calculate exponential backoff: 500ms, 1000ms, 2000ms, 4000ms, 8000ms
-        const delayMs = baseDelayMs * Math.pow(2, attempt)
-        await new Promise(resolve => setTimeout(resolve, delayMs))
-
-        // Poll the connection status to see if connection succeeded
-        const connection = await ctx.runQuery(internal.mcp_mutations.getConnectionStatus, {
-          serverName
-        })
-
-        if (connection?.status === 'connected') {
-          return { success: true, server: serverName, waitedForConnection: true, attempts: attempt + 1 }
-        }
-
-        if (connection?.status === 'failed') {
-          throw new Error(
-            `Connection failed by another instance: ${connection.error || 'Unknown error'}`
-          )
-        }
-
-        // Still connecting, continue retry loop
-        continue
-      }
-    }
-
-    // Max retries exceeded
-    const totalTimeMs = baseDelayMs * (Math.pow(2, maxRetries) - 1)
-    throw new Error(
-      `Connection timeout: server '${serverName}' did not connect after ${maxRetries} attempts (~${totalTimeMs}ms with exponential backoff)`
-    )
+    return { success: true, server: serverName }
   }
 })
 
@@ -135,79 +159,17 @@ export const extractText = action({
   },
   handler: async (ctx, args) => {
     const serverName = 'llm-txt'
-    const maxRetries = 5
-    const baseDelayMs = 500
     const { getMCPManager } = await import('../src/lib/mcp/client')
     const manager = getMCPManager()
 
-    // Ensure connected using distributed locking with retry and exponential backoff
     if (!manager.getConnectedServers().includes(serverName)) {
-      let connected = false
-      
-      for (let attempt = 0; attempt < maxRetries && !connected; attempt++) {
-        // Atomically acquire connection lock
-        const lockResult = await ctx.runMutation(internal.mcp_mutations.acquireConnectionLock, {
-          serverName
+      await ensureConnection(ctx, serverName, async () => {
+        await manager.connect({
+          name: serverName,
+          command: 'npx',
+          args: ['-y', '@cloudflare/mcp-server-llm-txt']
         })
-
-        // If already connected, break out
-        if (!lockResult.acquired && lockResult.status === 'connected') {
-          connected = true
-          break
-        }
-
-        // If we acquired the lock, perform connection
-        if (lockResult.acquired) {
-          try {
-            await manager.connect({
-              name: serverName,
-              command: 'npx',
-              args: ['-y', '@cloudflare/mcp-server-llm-txt']
-            })
-
-            await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
-              serverName,
-              status: 'connected'
-            })
-            connected = true
-            break
-          } catch (error) {
-            await ctx.runMutation(internal.mcp_mutations.updateConnectionStatus, {
-              serverName,
-              status: 'failed',
-              error: error instanceof Error ? error.message : String(error)
-            })
-            throw error
-          }
-        } else if (lockResult.status === 'connecting') {
-          // Wait with exponential backoff and check status
-          const delayMs = baseDelayMs * Math.pow(2, attempt)
-          await new Promise(resolve => setTimeout(resolve, delayMs))
-          
-          // Poll connection status
-          const connection = await ctx.runQuery(internal.mcp_mutations.getConnectionStatus, {
-            serverName
-          })
-          
-          if (connection?.status === 'connected') {
-            connected = true
-            break
-          }
-          
-          if (connection?.status === 'failed') {
-            throw new Error(
-              `Connection failed by another instance: ${connection.error || 'Unknown error'}`
-            )
-          }
-        }
-      }
-      
-      if (!connected) {
-        const totalTimeMs = baseDelayMs * (Math.pow(2, maxRetries) - 1)
-        throw new Error(
-          `Failed to connect to ${serverName} after ${maxRetries} attempts (~${totalTimeMs}ms with exponential backoff)`
-        )
-      }
+      })
     }
 
     // Call extract_text tool with error handling
