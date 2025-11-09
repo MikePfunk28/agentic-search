@@ -79,7 +79,7 @@ async function createModelForCompression(config: {
       const azure = createOpenAI({
         apiKey: config.apiKey,
         baseURL: config.baseURL,
-        defaultHeaders: {
+        headers: {
           'api-key': config.apiKey
         }
       })
