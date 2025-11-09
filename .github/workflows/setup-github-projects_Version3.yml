@@ -7,6 +7,11 @@ on:
       - "docs/plan.md" # Auto-run when plan.md changes
       - "docs/**/*.md" # Or any markdown in docs folder
 
+# Required permissions for GITHUB_TOKEN
+permissions:
+  issues: write      # Create and manage issues
+  contents: read     # Read repository contents
+
 jobs:
   import-plan:
     runs-on: windows-latest
