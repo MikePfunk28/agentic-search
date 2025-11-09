@@ -31,16 +31,15 @@ jobs:
       - name: Authenticate gh CLI
         shell: pwsh
         env:
-          GH_TOKEN_SECRET: ${{ secrets.GH_TOKEN }}
-          GITHUB_TOKEN_SECRET: ${{ secrets.GITHUB_TOKEN }}
+          MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
         run: |
-          $token = $env:GH_TOKEN_SECRET
+          $token = $env:MY_GITHUB_TOKEN
           if ([string]::IsNullOrEmpty($token)) {
-            Write-Host "Using GITHUB_TOKEN for authentication."
-            $token = $env:GITHUB_TOKEN_SECRET
+            Write-Error "MY_GITHUB_TOKEN secret not found. Please add it to repository secrets."
+            exit 1
           }
           $token | gh auth login --with-token
-          Write-Host "Successfully authenticated gh CLI."
+          Write-Host "Successfully authenticated gh CLI with MY_GITHUB_TOKEN."
 
       - name: Run import script
         shell: pwsh
