@@ -1,6 +1,7 @@
 # Agentic Search Platform - Project Plan
 
 ## 🎯 Project Overview
+
 Build an intelligent agentic search platform with multi-model support (local + cloud), real-time chat interface, and distributed memory management, deployed to Cloudflare at mikepfunk.com.
 
 ---
@@ -8,14 +9,16 @@ Build an intelligent agentic search platform with multi-model support (local + c
 ## 🏗️ Infrastructure Setup
 
 ### Phase 1: Deployment & Configuration (Priority: CRITICAL)
-- [x] Fix Cloudflare build error (.output/server directory missing)
-- [x] Create wrangler.json for Cloudflare Pages deployment
-- [x] Configure build output for TanStack Start + Cloudflare
-- [ ] Setup environment variables in Cloudflare dashboard
+
+- [ X ] Fix Cloudflare build error (.output/server directory missing)
+- [ X ] Create wrangler.json for Cloudflare Pages deployment
+- [ X ] Configure build output for TanStack Start + Cloudflare
+- [ X ] Setup environment variables in Cloudflare dashboard
 - [ ] Test successful deployment to mikepfunk.com
-- [ ] Configure custom domain DNS (mikepfunk.com → Cloudflare Pages)
+- [x] Configure custom domain DNS (mikepfunk.com → Cloudflare Pages)
 
 ### Phase 2: Backend Services
+
 - [ ] **Convex Backend**
   - [ ] Run `npx convex dev` and initialize project
   - [ ] Create schema for model configs, chat history, search results
@@ -40,6 +43,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
 ## 🤖 Core Features
 
 ### Phase 3: Model Selection & Integration
+
 - [x] Model configuration UI (Settings page)
 - [x] Support for 6 providers (OpenAI, Anthropic, Google, Ollama, LM Studio, Azure)
 - [x] Web Crypto API encryption for API keys
@@ -60,6 +64,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
   - [ ] Support custom MCP servers
 
 ### Phase 4: Agentic Search with Chat Interface
+
 - [ ] **Chat UI Component**
   - [ ] Build ChatInterface.tsx with message history
   - [ ] Add SearchBar integration
@@ -82,6 +87,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
   - [ ] Provide source attribution
 
 ### Phase 5: Memory Management (Short-term + Long-term)
+
 - [ ] **Short-term Memory (Convex)**
   - [ ] Store chat history per session (Convex real-time)
   - [ ] Cache recent search results (5-minute TTL)
@@ -106,6 +112,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
 ## 🔧 Technical Integrations
 
 ### Phase 6: Claude Flow MCP Integration
+
 - [x] Claude Flow initialized with mesh swarm
 - [x] ReasoningBank memory enabled
 - [ ] **MCP Tools for Search**
@@ -121,6 +128,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
   - [ ] Knowledge graph MCP server
 
 ### Phase 7: AI SDK Provider Adapter
+
 - [ ] Create unified provider interface
 - [ ] Map ModelConfigManager → AI SDK providers
 - [ ] Support streaming for all providers
@@ -132,6 +140,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
 ## 🧪 Testing & Quality Assurance
 
 ### Phase 8: Comprehensive Testing
+
 - [x] 74 tests passing for model selection
 - [x] 29 tests passing for CSRF protection
 - [ ] **E2E Tests**
@@ -158,6 +167,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
 ## 🚀 Deployment Pipeline
 
 ### Phase 9: CI/CD with Cloudflare
+
 - [ ] **GitHub Actions Workflow**
   - [ ] Build and test on PR
   - [ ] Deploy preview for each PR (Cloudflare Pages)
@@ -175,6 +185,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
 ## 📊 Monitoring & Analytics
 
 ### Phase 10: Observability
+
 - [ ] **Sentry Error Tracking**
   - [ ] Client-side error capture
   - [ ] Server-side error capture
@@ -192,6 +203,7 @@ Build an intelligent agentic search platform with multi-model support (local + c
 ## 🐛 Known Issues to Fix
 
 ### Critical Bugs
+
 - [x] Cloudflare build failing (.output/server directory)
 - [x] Convex MCP Node.js API errors (resolved with dynamic imports)
 - [ ] ModelConfigManager not connected to AI SDK
@@ -199,12 +211,14 @@ Build an intelligent agentic search platform with multi-model support (local + c
 - [ ] Missing wrangler.toml configuration
 
 ### Medium Priority
+
 - [ ] API keys in plain localStorage (need encryption)
 - [ ] No CSRF protection on some routes
 - [ ] Large bundle size (1.2MB main.js)
 - [ ] Missing TypeScript strict mode compliance
 
 ### Low Priority
+
 - [ ] Improve error messages for failed searches
 - [ ] Add loading skeletons for chat messages
 - [ ] Optimize image assets
