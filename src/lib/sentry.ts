@@ -2,8 +2,7 @@
  * Sentry Error Tracking Setup
  * Monitors frontend errors and performance for the agentic search platform
  */
-
-import * as Sentry from "@sentry/react";
+import * as Sentry from "@sentry/tanstackstart-react";
 
 export interface SentryConfig {
 	dsn?: string;
@@ -36,10 +35,12 @@ export function initSentry(config?: SentryConfig) {
 				maskAllText: false,
 				blockAllMedia: false,
 			}),
+			Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
 		],
 		tracesSampleRate: environment === "production" ? 0.1 : 1.0,
 		replaysSessionSampleRate: 0.1,
 		replaysOnErrorSampleRate: 1.0,
+		enableLogs: true,
 	});
 
 	console.log(`[Sentry] Initialized for ${environment}`);

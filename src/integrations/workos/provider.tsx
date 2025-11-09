@@ -2,15 +2,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { AuthKitProvider } from "@workos-inc/authkit-react";
 
 const VITE_WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID;
-if (!VITE_WORKOS_CLIENT_ID) {
-	throw new Error("Add your WorkOS Client ID to the .env.local file");
-}
-
 const VITE_WORKOS_API_HOSTNAME = import.meta.env.VITE_WORKOS_API_HOSTNAME;
-if (!VITE_WORKOS_API_HOSTNAME) {
-	throw new Error("Add your WorkOS API Hostname to the .env.local file");
-}
 
+// WorkOS is OPTIONAL - if not configured, just pass through children
 export default function AppWorkOSProvider({
 	children,
 }: {
@@ -18,6 +12,13 @@ export default function AppWorkOSProvider({
 }) {
 	const navigate = useNavigate();
 
+	// If WorkOS is not configured, render children without auth
+	if (!VITE_WORKOS_CLIENT_ID || !VITE_WORKOS_API_HOSTNAME) {
+		console.info("[WorkOS] Not configured - running without WorkOS auth");
+		return <>{children}</>;
+	}
+
+	// If WorkOS is configured, wrap with AuthKitProvider
 	return (
 		<AuthKitProvider
 			clientId={VITE_WORKOS_CLIENT_ID}
