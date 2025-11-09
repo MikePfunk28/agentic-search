@@ -9,6 +9,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
+import { useCsrfToken } from "@/hooks/useCsrfToken";
 
 import GuitarRecommendation from "@/components/example-GuitarRecommendation";
 
@@ -120,9 +121,21 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
 }
 
 function ChatPage() {
+	const { token: csrfToken } = useCsrfToken();
 	const { messages, sendMessage } = useChat({
 		transport: new DefaultChatTransport({
 			api: "/demo/api/tanchat",
+			fetch: async (url, options) => {
+				// Add CSRF token to headers if available
+				const headers = new Headers(options?.headers);
+				if (csrfToken) {
+					headers.set("X-CSRF-Token", csrfToken);
+				}
+				return fetch(url, {
+					...options,
+					headers,
+				});
+			},
 		}),
 	});
 	const [input, setInput] = useState("");
