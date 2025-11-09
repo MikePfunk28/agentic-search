@@ -18,9 +18,9 @@ export const mockSearchResponses = {
         },
         {
           id: 'autumn-2',
-          title: 'Machine Learning Best Practices',
+          title: 'Advanced Neural Networks Research',
           url: 'https://arxiv.org/ml-practices',
-          snippet: 'Research paper on best practices in machine learning engineering.',
+          snippet: 'Research paper on neural networks and deep learning architectures.',
           publishedDate: '2024-02-01',
           domain: 'arxiv.org',
           relevanceScore: 0.88,

@@ -30,7 +30,7 @@ hive-mind-prompt-*.txt
 
 node_modules/*
 .env.local
-*.md
+
 claude-flow.cmd
 DeepSeek OCR Compressio.txt
 .vscode/settings.json
@@ -38,3 +38,29 @@ dist/*
 
 .env (2).local
 tanstack-router-8a5edab282632443.txt
+
+# Build output and deployment artifacts
+.output/
+.wrangler/
+dist/
+docs/AGENTIC_SEARCH_PLAN.md
+docs/ARCHITECTURE_DECISION_GUIDE.md
+docs/architecture.md
+docs/CLAUDE.md
+docs/CRYPTO_IMPLEMENTATION.md
+docs/CSRF-IMPLEMENTATION-SUMMARY.md
+docs/CSRF-PROTECTION.md
+docs/DEPLOYMENT_STATUS.md
+docs/FIX_TANSTACK_START.md
+docs/model-configuration-usage.md
+docs/model-selection-summary.md
+docs/model-selection-ux-flow.md
+docs/RESEARCH_AGENTIC_SEARCH_PLATFORM.md
+docs/SECURITY_ANALYSIS_SUMMARY.md
+docs/sentry.md
+docs/tech-stack.md
+docs/testing-summary.md
+docs/trae.md
+docs/OCR_IMPLEMENTATION.md
+docs/MCP_INTEGRATION.md
+docs/IMPLEMENTATION_PLAN.md
