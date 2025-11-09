@@ -3,7 +3,6 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
-import { cloudflare } from '@cloudflare/vite-plugin' // <--- 1. Import this
 
 const config = defineConfig({
   plugins: [
@@ -12,10 +11,14 @@ const config = defineConfig({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
-    cloudflare({ viteEnvironment: { name: 'ssr' } }), // <--- 2. Add this before tanstackStart
+    // cloudflare plugin removed - Cloudflare Pages handles the build natively
     tanstackStart(),
     viteReact(),
   ],
+  ssr: {
+    target: 'webworker',
+    noExternal: true,
+  },
 })
 
 export default config
