@@ -58,16 +58,12 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
 									)}
 									<div className="flex-1 min-w-0 text-white prose dark:prose-invert max-w-none prose-sm">
 										<ReactMarkdown
-										<ReactMarkdown
 											remarkPlugins={[remarkGfm]}
 											rehypePlugins={[
 												rehypeRaw,
 												rehypeSanitize,
 												rehypeHighlight,
 											]}
-										>
-											{part.text}
-										</ReactMarkdown>
 										>
 											{part.text}
 										</ReactMarkdown>

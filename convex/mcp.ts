@@ -142,7 +142,7 @@ export const disconnectServer = action({
     await ctx.runMutation(internal.mcp.storeConnection, {
       serverName: args.serverName,
       status: 'disconnected',
-      connectedAt: Date.now()
+      connectedAt: Date.now()  // Note: storeConnection uses this as lastConnectedAt
     })
 
     return { success: true }
