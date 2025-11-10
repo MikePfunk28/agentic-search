@@ -288,7 +288,7 @@ Make queries specific and effective for the intent type.`;
 
 	/**
 	 * Assess individual result quality using ADD scoring
-	 * 
+	 *
 	 * TODO [TRACK-001]: Replace deterministic scoring with ML model integration
 	 * - Integrate real ADD (Adversarial Differential Discrimination) model
 	 * - Add feature flag: ENABLE_ML_SCORING
@@ -308,7 +308,7 @@ Make queries specific and effective for the intent type.`;
 			return this.getFallbackAssessment();
 		}
 
-		const baseScore = typeof result.rawScore === 'number' 
+		const baseScore = typeof result.rawScore === 'number'
 			? Math.max(0, Math.min(1, result.rawScore))
 			: 0.5;
 
@@ -358,7 +358,7 @@ Make queries specific and effective for the intent type.`;
 			const date = new Date(publishedDate);
 			const now = Date.now();
 			const ageInDays = (now - date.getTime()) / (1000 * 60 * 60 * 24);
-			
+
 			// Score decreases with age: fresh content scores higher
 			if (ageInDays < 7) return 1.0;
 			if (ageInDays < 30) return 0.9;
@@ -376,19 +376,19 @@ Make queries specific and effective for the intent type.`;
 	 */
 	private detectQualityFlags(result: any): string[] {
 		const flags: string[] = [];
-		
+
 		if (!result.snippet || result.snippet.length < 50) {
 			flags.push('low-content');
 		}
-		
+
 		if (!result.publishedDate) {
 			flags.push('no-date');
 		}
-		
+
 		if (!result.source) {
 			flags.push('unknown-source');
 		}
-		
+
 		return flags;
 	}
 
@@ -426,7 +426,7 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 		try {
 			const response = await this.callModel(synthesisPrompt, model);
 			const synthesized = JSON.parse(response);
-			
+
 			// Verify the response is an array before using it
 			if (Array.isArray(synthesized)) {
 				return synthesized.slice(0, 5);
@@ -455,7 +455,7 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 
 		// Guard against division by zero
 		const resultCount = results.length;
-		const avgScore = resultCount > 0 
+		const avgScore = resultCount > 0
 			? results.reduce((sum, r) => sum + (r.addScore || 0), 0) / resultCount
 			: 0;
 

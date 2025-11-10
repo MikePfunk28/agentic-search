@@ -209,7 +209,7 @@ export async function isProviderAvailable(provider: ModelProvider, modelId?: str
       [ModelProvider.GOOGLE]: 'VITE_GOOGLE_API_KEY',
       [ModelProvider.AZURE_OPENAI]: 'VITE_AZURE_API_KEY',
     };
-    
+
     const envVar = envVarMap[provider];
     if (envVar && import.meta.env[envVar]) {
       return true;
