@@ -103,7 +103,7 @@ export const setActiveConfig = mutation({
       .collect();
 
     for (const c of allConfigs) {
-      if (c.isActive && c._id !== args.configId) {
+      if (c._id !== args.configId) {
         await ctx.db.patch(c._id, { isActive: false });
       }
     }
@@ -115,7 +115,6 @@ export const setActiveConfig = mutation({
     });
   }
 });
-
 /**
  * Delete a model configuration
  */

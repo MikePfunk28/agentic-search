@@ -116,10 +116,10 @@ async function ensureConnection(
 
   // Max retries exceeded
   const totalTimeMs = BASE_RETRY_DELAY_MS * (Math.pow(2, MAX_CONNECTION_RETRIES) - 1)
+  const minTimeMs = Math.floor(totalTimeMs * 0.5)
   throw new Error(
-    `Connection timeout: server '${serverName}' did not connect after ${MAX_CONNECTION_RETRIES} attempts (~${totalTimeMs}ms with exponential backoff)`
-  )
-}
+    `Connection timeout: server '${serverName}' did not connect after ${MAX_CONNECTION_RETRIES} attempts (~${minTimeMs}-${totalTimeMs}ms with exponential backoff and jitter)`
+  )}
 
 /**
  * Connect to LLM.txt MCP Server with distributed locking and exponential backoff

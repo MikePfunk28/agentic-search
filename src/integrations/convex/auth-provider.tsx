@@ -10,12 +10,11 @@ import { ConvexReactClient } from "convex/react";
 
 const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL;
 if (!CONVEX_URL) {
-	console.error("missing envar CONVEX_URL");
+	throw new Error("Missing required environment variable: VITE_CONVEX_URL");
 }
 
 // Create a single shared Convex client instance
 const convexClient = new ConvexReactClient(CONVEX_URL);
-
 export default function ConvexAuthProvider({
 	children,
 }: {

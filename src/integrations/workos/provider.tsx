@@ -3,7 +3,7 @@ import { AuthKitProvider } from "@workos-inc/authkit-react";
 import { addBreadcrumb } from "../../lib/sentry";
 
 const VITE_WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID;
-const VITE_VITE_WORKOS_API_HOSTNAME = import.meta.env.VITE_VITE_WORKOS_API_HOSTNAME;
+const VITE_WORKOS_API_HOSTNAME = import.meta.env.VITE_WORKOS_API_HOSTNAME;
 
 /**
  * WorkOS Authentication Provider

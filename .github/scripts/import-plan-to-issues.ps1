@@ -171,9 +171,8 @@ foreach ($line in $lines) {
     $isDuplicate = $false
     foreach ($existingTitle in $existingIssues) {
       $sanitizedExisting = Remove-MarkdownFormatting $existingTitle
-      # Compare: sanitized new vs sanitized existing, or original new vs existing
-      if ($taskTitle -eq $sanitizedExisting) {
-        $isDuplicate = $true
+      # Compare sanitized versions for duplicate detection
+      if ($taskTitle -eq $sanitizedExisting) {        $isDuplicate = $true
         Log "  ⏭️  Skipping (already exists): $taskTitle"
         break
       }
