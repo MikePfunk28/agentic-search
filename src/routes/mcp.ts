@@ -1,8 +1,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createFileRoute } from "@tanstack/react-router";
-import z from "zod";
-import { addTodo } from "@/mcp-todos";
-import { handleMcpRequest } from "@/utils/mcp-handler";
+import { handleMcpRequest } from "../utils/mcp-handler";
+
+
+// In-memory todos storage (server-side only)
+const todos: Array<{ id: number; title: string }> = [
+	{ id: 1, title: "Buy groceries" },
+];
+
+function addTodo(title: string) {
+	const newTodo = { id: todos.length + 1, title };
+	todos.push(newTodo);
+	return newTodo;
+}
 
 const server = new McpServer({
 	name: "start-server",
@@ -15,12 +25,19 @@ server.registerTool(
 		title: "Tool to add a todo to a list of todos",
 		description: "Add a todo to a list of todos",
 		inputSchema: {
-			title: z.string().describe("The title of the todo"),
+			type: "object",
+			properties: {
+				title: {
+					type: "string",
+					description: "The title of the todo",
+				},
+			},
+			required: ["title"],
 		},
-	},
-	({ title }) => ({
+	} as any,
+	(({ title }: any) => ({
 		content: [{ type: "text", text: String(addTodo(title)) }],
-	}),
+	})) as any,
 );
 
 // server.registerResource(

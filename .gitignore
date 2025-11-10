@@ -85,3 +85,5 @@ docs/tanstack_react.md
 WARP.md
 .tanstack/tmp/*
 claude2.md
+src/components/AgenticChat.tsx
+docs/IMPLEMENTATION_STATUS.md

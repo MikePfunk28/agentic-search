@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 import { useCsrfToken } from "@/hooks/useCsrfToken";
 import { ModelSelector } from "./ModelSelector";
 import { ResultsList } from "./ResultsList";
+import { SecurityBanner } from "./SecurityBanner";
 import type { SearchResult } from "../lib/types";
 import { ModelProvider } from "../lib/model-config";
 
@@ -217,6 +218,10 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 
 			{/* Chat Messages Area */}
 			<div className="flex-1 overflow-y-auto p-4 space-y-4">
+				{/* Security Banner - Shows when no messages yet */}
+				{messages.length === 0 && (
+					<SecurityBanner />
+				)}
 				{messages.map((message) => (
 					<div
 						key={message.id}
