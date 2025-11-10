@@ -288,28 +288,121 @@ Make queries specific and effective for the intent type.`;
 
 	/**
 	 * Assess individual result quality using ADD scoring
+	 * 
+	 * TODO [TRACK-001]: Replace deterministic scoring with ML model integration
+	 * - Integrate real ADD (Adversarial Differential Discrimination) model
+	 * - Add feature flag: ENABLE_ML_SCORING
+	 * - Add input validation for result.rawScore and strategy
+	 * - Surface errors via proper logging infrastructure
+	 * - Add unit tests with mocked ML service
 	 */
 	private async assessQuality(result: any, strategy: SearchStrategy): Promise<QualityAssessment> {
-		// ADD (Adversarial Differential Discrimination) scoring
-		// This would use a trained model to detect:
-		// - Adversarial content manipulation
-		// - Source credibility
-		// - Content freshness
-		// - Relevance to query
-		// - Information diversity
+		// Validate inputs
+		if (!result || typeof result !== 'object') {
+			console.error('[assessQuality] Invalid result object:', result);
+			return this.getFallbackAssessment();
+		}
 
-		const baseScore = result.rawScore || 0.5;
+		if (!strategy || typeof strategy !== 'object') {
+			console.error('[assessQuality] Invalid strategy object:', strategy);
+			return this.getFallbackAssessment();
+		}
 
-		// Mock ADD assessment - in production this would use ML model
-		const addScore = Math.min(1.0, baseScore + (Math.random() * 0.3));
+		const baseScore = typeof result.rawScore === 'number' 
+			? Math.max(0, Math.min(1, result.rawScore))
+			: 0.5;
+
+		// Deterministic scoring based on result properties (testable, not random)
+		// This provides consistent scores for the same inputs
+		const contentLength = result.snippet?.length || 0;
+		const hasMetadata = Boolean(result.metadata && Object.keys(result.metadata).length > 0);
+		const hasPublishDate = Boolean(result.publishedDate);
+		const sourceQuality = this.getSourceQualityScore(result.source);
+
+		// Calculate deterministic ADD score components
+		const credibility = Math.min(1.0, sourceQuality * 0.4 + (hasMetadata ? 0.3 : 0) + 0.3);
+		const freshness = hasPublishDate ? this.calculateFreshnessScore(result.publishedDate) : 0.5;
+		const relevance = Math.min(1.0, baseScore * 0.7 + (contentLength > 100 ? 0.3 : 0.1));
+		const diversity = Math.min(1.0, 0.6 + (hasMetadata ? 0.2 : 0) + (contentLength > 200 ? 0.2 : 0));
+
+		const addScore = Math.min(1.0, (credibility + freshness + relevance + diversity) / 4);
 
 		return {
 			addScore,
-			credibility: Math.random() * 0.4 + 0.6, // 0.6-1.0
-			freshness: Math.random() * 0.5 + 0.5,   // 0.5-1.0
-			relevance: Math.random() * 0.3 + 0.7,   // 0.7-1.0
-			diversity: Math.random() * 0.4 + 0.6,   // 0.6-1.0
-			flags: [], // Would detect adversarial content
+			credibility,
+			freshness,
+			relevance,
+			diversity,
+			flags: this.detectQualityFlags(result),
+		};
+	}
+
+	/**
+	 * Get deterministic source quality score
+	 */
+	private getSourceQualityScore(source: string): number {
+		// Deterministic scoring based on known source types
+		const qualityMap: Record<string, number> = {
+			'firecrawl': 0.8,
+			'autumn': 0.7,
+			'direct': 0.9,
+		};
+		return qualityMap[source?.toLowerCase()] || 0.6;
+	}
+
+	/**
+	 * Calculate freshness score based on publish date
+	 */
+	private calculateFreshnessScore(publishedDate: string | number): number {
+		try {
+			const date = new Date(publishedDate);
+			const now = Date.now();
+			const ageInDays = (now - date.getTime()) / (1000 * 60 * 60 * 24);
+			
+			// Score decreases with age: fresh content scores higher
+			if (ageInDays < 7) return 1.0;
+			if (ageInDays < 30) return 0.9;
+			if (ageInDays < 90) return 0.8;
+			if (ageInDays < 365) return 0.7;
+			return 0.6;
+		} catch (error) {
+			console.error('[calculateFreshnessScore] Invalid date:', publishedDate);
+			return 0.5;
+		}
+	}
+
+	/**
+	 * Detect quality flags in result
+	 */
+	private detectQualityFlags(result: any): string[] {
+		const flags: string[] = [];
+		
+		if (!result.snippet || result.snippet.length < 50) {
+			flags.push('low-content');
+		}
+		
+		if (!result.publishedDate) {
+			flags.push('no-date');
+		}
+		
+		if (!result.source) {
+			flags.push('unknown-source');
+		}
+		
+		return flags;
+	}
+
+	/**
+	 * Fallback assessment for error cases
+	 */
+	private getFallbackAssessment(): QualityAssessment {
+		return {
+			addScore: 0.5,
+			credibility: 0.5,
+			freshness: 0.5,
+			relevance: 0.5,
+			diversity: 0.5,
+			flags: ['error-fallback'],
 		};
 	}
 
@@ -333,8 +426,16 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 		try {
 			const response = await this.callModel(synthesisPrompt, model);
 			const synthesized = JSON.parse(response);
-			return synthesized.slice(0, 5);
-		} catch {
+			
+			// Verify the response is an array before using it
+			if (Array.isArray(synthesized)) {
+				return synthesized.slice(0, 5);
+			} else {
+				console.warn('[synthesizeResults] AI response was not an array:', typeof synthesized);
+				return results.slice(0, 5);
+			}
+		} catch (error) {
+			console.error('[synthesizeResults] Failed to parse or synthesize results:', error);
 			// Fallback: return top results
 			return results.slice(0, 5);
 		}
@@ -352,12 +453,21 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 		// Store successful search patterns for future optimization
 		// This would update a learning model that improves search strategies over time
 
+		// Guard against division by zero
+		const resultCount = results.length;
+		const avgScore = resultCount > 0 
+			? results.reduce((sum, r) => sum + (r.addScore || 0), 0) / resultCount
+			: 0;
+
+		// Ensure avgScore is finite
+		const validAvgScore = Number.isFinite(avgScore) ? avgScore : 0;
+
 		const learningData = {
 			query,
 			intent,
 			strategy,
-			resultCount: results.length,
-			avgScore: results.reduce((sum, r) => sum + r.addScore, 0) / results.length,
+			resultCount,
+			avgScore: validAvgScore,
 			timestamp: Date.now(),
 		};
 

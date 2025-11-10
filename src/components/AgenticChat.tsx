@@ -18,7 +18,7 @@ import { ResultsList } from "./ResultsList";
 import type { SearchResult } from "../lib/types";
 import { ModelProvider } from "../lib/model-config";
 
-interface ReasoningStep {
+interface ChatReasoningStep {
 	id: string;
 	type: "analysis" | "planning" | "search" | "synthesis";
 	message: string;
@@ -32,7 +32,7 @@ interface AgenticChatProps {
 export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 	const { token: csrfToken } = useCsrfToken();
 	const [input, setInput] = useState("");
-	const [reasoningSteps, setReasoningSteps] = useState<ReasoningStep[]>([]);
+	const [reasoningSteps, setReasoningSteps] = useState<ChatReasoningStep[]>([]);
 	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 	const [isSearching, setIsSearching] = useState(false);
 	const [selectedModel, setSelectedModel] = useState<ModelProvider>(ModelProvider.OLLAMA);
@@ -47,7 +47,15 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 					headers.set("X-CSRF-Token", csrfToken);
 				}
 				// Add model provider to the request
-				const body = options?.body ? JSON.parse(options.body as string) : {};
+				let body = {};
+				try {
+					if (typeof options?.body === "string") {
+						body = JSON.parse(options.body);
+					}
+				} catch (error) {
+					console.error("Failed to parse request body:", error);
+					// Continue with empty object as fallback
+				}
 				const enhancedBody = {
 					...body,
 					modelProvider: selectedModel,
@@ -107,8 +115,8 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 		scrollToBottom();
 	}, [messages, reasoningSteps]);
 
-	const addReasoningStep = (type: ReasoningStep["type"], message: string) => {
-		const step: ReasoningStep = {
+	const addReasoningStep = (type: ChatReasoningStep["type"], message: string) => {
+		const step: ChatReasoningStep = {
 			id: Date.now().toString(),
 			type,
 			message,
@@ -184,7 +192,7 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 		sendMessage({ text: userMessage });
 	};
 
-	const ReasoningIcon = ({ type }: { type: ReasoningStep["type"] }) => {
+	const ReasoningIcon = ({ type }: { type: ChatReasoningStep["type"] }) => {
 		switch (type) {
 			case "analysis": return <Brain className="w-4 h-4 text-blue-500" />;
 			case "planning": return <Sparkles className="w-4 h-4 text-purple-500" />;

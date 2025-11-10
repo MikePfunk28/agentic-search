@@ -85,7 +85,7 @@ export function useSelectedModel(): {
         setSelectedModelState({
           provider: config.provider,
           modelId: config.modelId,
-          displayName: config.modelId,
+          displayName: config.displayName || config.modelId,
         });
       } catch (error) {
         console.error('[useSelectedModel] Failed to load saved model:', error);

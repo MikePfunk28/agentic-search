@@ -14,10 +14,22 @@ import { v } from "convex/values";
 export const listMyConfigs = query({
   args: {},
   handler: async (ctx) => {
-    // TODO: Add authentication when ready
-    return await ctx.db
+    const userId = await ctx.auth.getUserIdentity();
+    if (!userId) {
+      throw new Error("Unauthorized: Authentication required");
+    }
+
+    const configs = await ctx.db
       .query("modelConfigurations")
+      .filter(q => q.eq(q.field("userId"), userId.subject))
       .collect();
+
+    // Exclude sensitive fields from response
+    return configs.map(config => ({
+      ...config,
+      // Exclude or obfuscate sensitive data
+      baseUrl: config.baseUrl ? "***" : undefined,
+    }));
   }
 });
 
@@ -27,11 +39,30 @@ export const listMyConfigs = query({
 export const getActiveConfig = query({
   args: {},
   handler: async (ctx) => {
-    // TODO: Add authentication when ready
-    return await ctx.db
+    const userId = await ctx.auth.getUserIdentity();
+    if (!userId) {
+      throw new Error("Unauthorized: Authentication required");
+    }
+
+    const config = await ctx.db
       .query("modelConfigurations")
-      .filter(q => q.eq(q.field("isActive"), true))
+      .filter(q =>
+        q.and(
+          q.eq(q.field("userId"), userId.subject),
+          q.eq(q.field("isActive"), true)
+        )
+      )
       .first();
+
+    if (!config) {
+      return null;
+    }
+
+    // Exclude sensitive fields
+    return {
+      ...config,
+      baseUrl: config.baseUrl ? "***" : undefined,
+    };
   }
 });
 
@@ -56,8 +87,11 @@ export const createConfig = mutation({
     maxTokens: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // TODO: Add authentication and get real userId
-    const userId = "anonymous";
+    const userIdentity = await ctx.auth.getUserIdentity();
+    if (!userIdentity) {
+      throw new Error("Unauthorized: Authentication required");
+    }
+    const userId = userIdentity.subject;
 
     const configId = await ctx.db.insert("modelConfigurations", {
       userId,
@@ -85,15 +119,26 @@ export const setActiveConfig = mutation({
     configId: v.id("modelConfigurations"),
   },
   handler: async (ctx, args) => {
-    // TODO: Add authentication
+    const userIdentity = await ctx.auth.getUserIdentity();
+    if (!userIdentity) {
+      throw new Error("Unauthorized: Authentication required");
+    }
+    const userId = userIdentity.subject;
+
     const config = await ctx.db.get(args.configId);
     if (!config) {
       throw new Error("Configuration not found");
     }
 
-    // Deactivate all other configs
+    // Verify ownership
+    if (config.userId !== userId) {
+      throw new Error("Unauthorized: You do not own this configuration");
+    }
+
+    // Deactivate all other configs for this user
     const allConfigs = await ctx.db
       .query("modelConfigurations")
+      .filter(q => q.eq(q.field("userId"), userId))
       .collect();
 
     for (const c of allConfigs) {
@@ -117,10 +162,20 @@ export const deleteConfig = mutation({
     configId: v.id("modelConfigurations"),
   },
   handler: async (ctx, args) => {
-    // TODO: Add authentication
+    const userIdentity = await ctx.auth.getUserIdentity();
+    if (!userIdentity) {
+      throw new Error("Unauthorized: Authentication required");
+    }
+    const userId = userIdentity.subject;
+
     const config = await ctx.db.get(args.configId);
     if (!config) {
       throw new Error("Configuration not found");
+    }
+
+    // Verify ownership before deletion
+    if (config.userId !== userId) {
+      throw new Error("Unauthorized: You do not own this configuration");
     }
 
     await ctx.db.delete(args.configId);

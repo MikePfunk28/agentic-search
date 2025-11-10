@@ -99,26 +99,26 @@ export function getCloudProviderModels(provider: ModelProvider): DetectedModel[]
     [ModelProvider.OPENAI]: [
       { provider: ModelProvider.OPENAI, modelId: 'gpt-5', displayName: 'GPT-5', recommended: true },
       { provider: ModelProvider.OPENAI, modelId: 'gpt-5-mini', displayName: 'GPT-5 Mini' },
-      { provider: ModelProvider.OPENAI, modelId: 'gpt-4-turbo', displayName: 'GPT-4 Turbo' },
+      { provider: ModelProvider.OPENAI, modelId: 'gpt-4o', displayName: 'GPT-4o' },
       { provider: ModelProvider.OPENAI, modelId: 'gpt-4', displayName: 'GPT-4' },
       { provider: ModelProvider.OPENAI, modelId: 'gpt-3.5-turbo', displayName: 'GPT-3.5 Turbo' },
     ],
     [ModelProvider.ANTHROPIC]: [
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-5-sonnet-20241022', displayName: 'Claude 3.5 Sonnet', recommended: true },
+      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-4-sonnet', displayName: 'Claude 4 Sonnet', recommended: true },
+      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-4-haiku', displayName: 'Claude 4 Haiku' },
+      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-5-sonnet-20241022', displayName: 'Claude 3.5 Sonnet' },
       { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-5-haiku-20241022', displayName: 'Claude 3.5 Haiku' },
       { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-opus-20240229', displayName: 'Claude 3 Opus' },
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-sonnet-20240229', displayName: 'Claude 3 Sonnet' },
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-haiku-20240307', displayName: 'Claude 3 Haiku' },
     ],
     [ModelProvider.GOOGLE]: [
-      { provider: ModelProvider.GOOGLE, modelId: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro', recommended: true },
-      { provider: ModelProvider.GOOGLE, modelId: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash' },
-      { provider: ModelProvider.GOOGLE, modelId: 'gemini-1.0-pro', displayName: 'Gemini 1.0 Pro' },
+      { provider: ModelProvider.GOOGLE, modelId: 'gemini-2.5-pro', displayName: 'Gemini 2.5 Pro', recommended: true },
+      { provider: ModelProvider.GOOGLE, modelId: 'gemini-2.0', displayName: 'Gemini 2.0' },
+      { provider: ModelProvider.GOOGLE, modelId: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro' },
     ],
     [ModelProvider.AZURE_OPENAI]: [
       { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-5', displayName: 'GPT-5 (Azure)', recommended: true },
       { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-5-mini', displayName: 'GPT-5 Mini (Azure)' },
-      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-5-nano', displayName: 'GPT-5 Nano (Azure)' },
+      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-4o', displayName: 'GPT-4o (Azure)' },
     ],
   };
 
@@ -179,15 +179,43 @@ export async function detectAllAvailableModels(): Promise<{
 }
 
 /**
- * Check if a specific model is available
+ * Check if a specific provider is available (either Ollama running or API key configured)
  */
-export async function isModelAvailable(provider: ModelProvider, modelId: string): Promise<boolean> {
+export async function isProviderAvailable(provider: ModelProvider, modelId?: string): Promise<boolean> {
   if (provider === 'ollama') {
     const models = await detectOllamaModels();
     return models.some((m) => m.modelId === modelId);
   }
 
-  // For cloud providers, assume available if API key is configured
+  // For cloud providers, check if API key is configured
+  if (typeof window !== 'undefined') {
+    try {
+      const savedConfig = localStorage.getItem('agentic-search-model-config');
+      if (!savedConfig) return false;
+
+      const config = JSON.parse(savedConfig);
+      if (config.provider === provider && config.apiKey) {
+        return true;
+      }
+    } catch (error) {
+      console.error('[ModelDetection] Failed to parse saved config:', error);
+      return false;
+    }
+
+    // Check environment variables as fallback
+    const envVarMap: Record<string, string> = {
+      [ModelProvider.OPENAI]: 'VITE_OPENAI_API_KEY',
+      [ModelProvider.ANTHROPIC]: 'VITE_ANTHROPIC_API_KEY',
+      [ModelProvider.GOOGLE]: 'VITE_GOOGLE_API_KEY',
+      [ModelProvider.AZURE_OPENAI]: 'VITE_AZURE_API_KEY',
+    };
+    
+    const envVar = envVarMap[provider];
+    if (envVar && import.meta.env[envVar]) {
+      return true;
+    }
+  }
+
   return false;
 }
 

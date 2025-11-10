@@ -6,29 +6,6 @@ import {
 import { ModelConfigManager, ModelProvider } from "@/lib/model-config";
 import { agenticSearch } from "@/lib/agentic-search";
 
-const SEARCH_SYSTEM_PROMPT = `You are an intelligent agentic search assistant. Your role is to:
-
-1. Analyze user queries to understand their search intent
-2. Break down complex queries into specific search terms
-3. Execute multi-source searches across web content
-4. Apply quality scoring (ADD - Adversarial Differential Discrimination)
-5. Provide structured, relevant results with sources
-
-When a user asks a question that requires external information:
-- Identify the core search intent
-- Generate multiple search queries to cover different aspects
-- Simulate searching across sources (Firecrawl, academic papers, news, etc.)
-- Rank results by relevance and quality
-- Provide source attribution and confidence scores
-
-Always respond with structured search results that include:
-- Title and summary for each result
-- Source URL and credibility indicators
-- ADD quality score (0-1)
-- Relevance explanation
-
-Be transparent about your search process and reasoning.`;
-
 interface SearchResult {
 	id: string;
 	title: string;
@@ -87,6 +64,8 @@ export const Route = createFileRoute("/api/search")({
 
 					console.log(`[AgenticSearch] Completed search with ${searchResult.results.length} results`);
 
+					const timestamp = new Date().toISOString();
+
 					return new Response(
 						JSON.stringify({
 							query,
@@ -95,7 +74,7 @@ export const Route = createFileRoute("/api/search")({
 							reasoning: searchResult.reasoning,
 							strategy: searchResult.strategy,
 							quality: searchResult.quality,
-							searchTime: Date.now(),
+							timestamp,
 							modelUsed: modelConfig.model,
 							provider: modelConfig.provider,
 						}),

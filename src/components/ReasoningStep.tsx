@@ -84,6 +84,9 @@ export function ReasoningStep({ step, isLast = false, autoExpand = false }: Reas
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-700/30 transition-colors rounded-lg"
+          aria-expanded={isExpanded}
+          aria-label={isExpanded ? `Collapse ${step.phase} step` : `Expand ${step.phase} step`}
+          aria-controls={`reasoning-step-${step.id}`}
         >
           {/* Status indicator */}
           <div className="flex-shrink-0">
@@ -150,7 +153,10 @@ export function ReasoningStep({ step, isLast = false, autoExpand = false }: Reas
 
         {/* Expanded content */}
         {isExpanded && (step.description || step.metadata) && (
-          <div className="px-4 pb-4 pt-0 border-t border-slate-700/50 mt-2">
+          <div
+            className="px-4 pb-4 pt-0 border-t border-slate-700/50 mt-2"
+            id={`reasoning-step-${step.id}`}
+          >
             {step.description && (
               <p className="text-sm text-gray-300 mb-3">
                 {step.description}
@@ -160,14 +166,39 @@ export function ReasoningStep({ step, isLast = false, autoExpand = false }: Reas
             {/* Metadata display */}
             {step.metadata && Object.keys(step.metadata).length > 0 && (
               <div className="bg-slate-900/50 rounded p-3 space-y-2">
-                {Object.entries(step.metadata).map(([key, value]) => (
-                  <div key={key} className="flex justify-between text-xs">
-                    <span className="text-slate-400 capitalize">{key.replace(/_/g, ' ')}:</span>
-                    <span className="text-slate-200 font-mono">
-                      {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-                    </span>
-                  </div>
-                ))}
+                {Object.entries(step.metadata).map(([key, value]) => {
+                  let displayValue: string;
+                  const cache: any[] = [];
+                  try {
+                    if (value === null) {
+                      displayValue = "null";
+                    } else if (typeof value === 'object') {
+                      displayValue = JSON.stringify(value, (_key, val) => {
+                        // Handle circular references
+                        if (typeof val === 'object' && val !== null) {
+                          if (cache.includes(val)) {
+                            return '[Circular]';
+                          }
+                          cache.push(val);
+                        }
+                        return val;
+                      }, 2);
+                    } else {
+                      displayValue = String(value);
+                    }
+                  } catch (error) {
+                    displayValue = "[Unserializable]";
+                  }
+
+                  return (
+                    <div key={key} className="flex justify-between text-xs">
+                      <span className="text-slate-400 capitalize">{key.replace(/_/g, ' ')}:</span>
+                      <span className="text-slate-200 font-mono">
+                        {displayValue}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
