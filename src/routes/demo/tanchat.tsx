@@ -122,6 +122,7 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
 
 function ChatPage() {
 	const { token: csrfToken } = useCsrfToken();
+	
 	const { messages, sendMessage } = useChat({
 		transport: new DefaultChatTransport({
 			api: "/demo/api/tanchat",

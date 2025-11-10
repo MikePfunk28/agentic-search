@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertCircle, Save, Settings as SettingsIcon } from "lucide-react";
 import { useState } from "react";
+import { RequireAuth } from "../components/RequireAuth";
 import { ModelSettings } from "../components/model-config";
 import type { ModelConfig } from "../lib/model-config";
 
@@ -9,6 +10,14 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
+	return (
+		<RequireAuth>
+			<SettingsPageContent />
+		</RequireAuth>
+	);
+}
+
+function SettingsPageContent() {
 	const [isSaved, setIsSaved] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 

@@ -9,9 +9,9 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import Header from "../components/Header";
 
 import ConvexProvider from "../integrations/convex/provider";
+import ConvexAuthProvider from "../integrations/convex/auth-provider";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-import WorkOSProvider from "../integrations/workos/provider";
 import StoreDevtools from "../lib/demo-store-devtools";
 import appCss from "../styles.css?url";
 
@@ -51,8 +51,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				<WorkOSProvider>
-					<ConvexProvider>
+				<ConvexProvider>
+					<ConvexAuthProvider>
 						<Header />
 						{children}
 						<TanStackDevtools
@@ -68,8 +68,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 								StoreDevtools,
 							]}
 						/>
-					</ConvexProvider>
-				</WorkOSProvider>
+					</ConvexAuthProvider>
+				</ConvexProvider>
 				<Scripts />
 			</body>
 		</html>
