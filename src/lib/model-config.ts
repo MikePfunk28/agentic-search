@@ -48,21 +48,21 @@ export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 	},
 	[ModelProvider.ANTHROPIC]: {
 		baseUrl: "https://api.anthropic.com",
-		model: "claude-3-5-sonnet-20241022",
+		model: "claude-4-5-sonnet-20241022",
 		temperature: 0.7,
 		maxTokens: 4096,
 	},
 	[ModelProvider.GOOGLE]: {
 		baseUrl: "https://generativelanguage.googleapis.com/v1",
-		model: "gemini-pro",
+		model: "gemini-2.5-pro",
 		temperature: 0.7,
 		maxTokens: 2048,
 	},
 	[ModelProvider.OLLAMA]: {
-		baseUrl: "http://localhost:11434",
-		model: "llama2",
+		baseUrl: "http://localhost:11434/v1",
+		model: "Qwen3:4b",
 		temperature: 0.7,
-		maxTokens: 2048,
+		maxTokens: 16000,
 	},
 	[ModelProvider.LM_STUDIO]: {
 		baseUrl: "http://localhost:1234/v1",
@@ -71,7 +71,7 @@ export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 		maxTokens: 2048,
 	},
 	[ModelProvider.AZURE_OPENAI]: {
-		model: "gpt-4",
+		model: "gpt-5",
 		temperature: 0.7,
 		maxTokens: 4096,
 	},
@@ -360,8 +360,16 @@ export class ModelConfigManager {
 
 	/**
 	 * Load configurations from JSON file
+	 * Note: Only available in Node.js environments (server-side)
 	 */
 	async loadFromFile(filePath: string): Promise<void> {
+		// Check if we're in a Node.js environment
+		if (typeof window !== "undefined") {
+			throw new Error(
+				"loadFromFile is only available in Node.js environments. Use localStorage in browser.",
+			);
+		}
+
 		try {
 			const fs = await import("fs/promises");
 			const content = await fs.readFile(filePath, "utf-8");

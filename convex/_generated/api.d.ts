@@ -8,9 +8,11 @@
  * @module
  */
 
+import type * as http from "../http.js";
 import type * as lib_ocr_processDocument from "../lib/ocr/processDocument.js";
 import type * as mcp from "../mcp.js";
 import type * as mcp_mutations from "../mcp_mutations.js";
+import type * as modelConfiguration from "../modelConfiguration.js";
 import type * as ocr from "../ocr.js";
 import type * as todos from "../todos.js";
 
@@ -29,9 +31,11 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  http: typeof http;
   "lib/ocr/processDocument": typeof lib_ocr_processDocument;
   mcp: typeof mcp;
   mcp_mutations: typeof mcp_mutations;
+  modelConfiguration: typeof modelConfiguration;
   ocr: typeof ocr;
   todos: typeof todos;
 }>;

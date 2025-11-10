@@ -1,13 +1,12 @@
 /**
  * Model Configuration Convex Functions
  *
- * Authenticated queries and mutations for managing user model configurations.
+ * Queries and mutations for managing user model configurations.
  * Each user can have multiple model configs (Ollama, OpenAI, Anthropic, etc.)
  */
 
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAuth, getCurrentUserId } from "./auth";
 
 /**
  * List all model configurations for the authenticated user
@@ -15,11 +14,9 @@ import { requireAuth, getCurrentUserId } from "./auth";
 export const listMyConfigs = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await requireAuth(ctx);
-
+    // TODO: Add authentication when ready
     return await ctx.db
       .query("modelConfigurations")
-      .withIndex("by_user", q => q.eq("userId", userId))
       .collect();
   }
 });
@@ -30,11 +27,10 @@ export const listMyConfigs = query({
 export const getActiveConfig = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await requireAuth(ctx);
-
+    // TODO: Add authentication when ready
     return await ctx.db
       .query("modelConfigurations")
-      .withIndex("by_user_active", q => q.eq("userId", userId).eq("isActive", true))
+      .filter(q => q.eq(q.field("isActive"), true))
       .first();
   }
 });
@@ -60,7 +56,8 @@ export const createConfig = mutation({
     maxTokens: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
+    // TODO: Add authentication and get real userId
+    const userId = "anonymous";
 
     const configId = await ctx.db.insert("modelConfigurations", {
       userId,
@@ -71,7 +68,7 @@ export const createConfig = mutation({
       hasApiKey: args.hasApiKey,
       temperature: args.temperature,
       maxTokens: args.maxTokens,
-      isActive: false, // New configs are inactive by default
+      isActive: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -88,18 +85,15 @@ export const setActiveConfig = mutation({
     configId: v.id("modelConfigurations"),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
-
-    // Verify the config belongs to the user
+    // TODO: Add authentication
     const config = await ctx.db.get(args.configId);
-    if (!config || config.userId !== userId) {
+    if (!config) {
       throw new Error("Configuration not found");
     }
 
-    // Deactivate all other configs for this user
+    // Deactivate all other configs
     const allConfigs = await ctx.db
       .query("modelConfigurations")
-      .withIndex("by_user", q => q.eq("userId", userId))
       .collect();
 
     for (const c of allConfigs) {
@@ -123,11 +117,9 @@ export const deleteConfig = mutation({
     configId: v.id("modelConfigurations"),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
-
-    // Verify the config belongs to the user
+    // TODO: Add authentication
     const config = await ctx.db.get(args.configId);
-    if (!config || config.userId !== userId) {
+    if (!config) {
       throw new Error("Configuration not found");
     }
 

@@ -30,14 +30,14 @@ export default function AppWorkOSProvider({
 	const navigate = useNavigate();
 
 	// If WorkOS is not configured, render children without auth
-	if (!VITE_WORKOS_CLIENT_ID || !VITE_VITE_WORKOS_API_HOSTNAME) {
+	if (!VITE_WORKOS_CLIENT_ID || !VITE_WORKOS_API_HOSTNAME) {
 		// Use structured logging via Sentry breadcrumbs in production
 		addBreadcrumb(
 			"WorkOS not configured - running without authentication",
 			"auth",
 			{
 				hasClientId: !!VITE_WORKOS_CLIENT_ID,
-				hasApiHostname: !!VITE_VITE_WORKOS_API_HOSTNAME,
+				hasApiHostname: !!VITE_WORKOS_API_HOSTNAME,
 				environment: import.meta.env.MODE,
 			}
 		);
@@ -54,7 +54,7 @@ export default function AppWorkOSProvider({
 	return (
 		<AuthKitProvider
 			clientId={VITE_WORKOS_CLIENT_ID}
-			apiHostname={VITE_VITE_WORKOS_API_HOSTNAME}
+			apiHostname={VITE_WORKOS_API_HOSTNAME}
 			onRedirectCallback={({ state }) => {
 				if (state?.returnTo) {
 					navigate(state.returnTo);

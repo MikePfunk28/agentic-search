@@ -4,12 +4,13 @@ import {
 	createRootRouteWithContext,
 	HeadContent,
 	Scripts,
+	useLocation,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import Header from "../components/Header";
 
 import ConvexProvider from "../integrations/convex/provider";
-import ConvexAuthProvider from "../integrations/convex/auth-provider";
+import WorkOSProvider from "../integrations/workos/provider";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import StoreDevtools from "../lib/demo-store-devtools";
@@ -45,6 +46,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+	const location = useLocation();
+
+	// Hide header on home page for clean chat experience
+	const showHeader = location.pathname !== "/";
+
 	return (
 		<html lang="en">
 			<head>
@@ -52,8 +58,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				<ConvexProvider>
-					<ConvexAuthProvider>
-						<Header />
+					<WorkOSProvider>
+						{showHeader && <Header />}
 						{children}
 						<TanStackDevtools
 							config={{
@@ -68,7 +74,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 								StoreDevtools,
 							]}
 						/>
-					</ConvexAuthProvider>
+					</WorkOSProvider>
 				</ConvexProvider>
 				<Scripts />
 			</body>

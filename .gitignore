@@ -83,3 +83,5 @@ dev-output.log
 # Documentation (outdated/generated)
 docs/tanstack_react.md
 WARP.md
+.tanstack/tmp/*
+claude2.md
