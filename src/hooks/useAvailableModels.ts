@@ -5,10 +5,11 @@
 
 import { useState, useEffect } from 'react';
 import type { DetectedModel } from '../lib/ai/model-detection';
-import { detectAllAvailableModels, getBestOllamaModel } from '../lib/ai/model-detection';
+import { detectAllAvailableModels } from '../lib/ai/model-detection';
 
 export interface UseAvailableModelsResult {
   ollamaModels: DetectedModel[];
+  lmstudioModels: DetectedModel[];
   cloudModels: Record<string, DetectedModel[]>;
   recommendedModel: DetectedModel | null;
   isLoading: boolean;
@@ -22,6 +23,7 @@ export interface UseAvailableModelsResult {
  */
 export function useAvailableModels(): UseAvailableModelsResult {
   const [ollamaModels, setOllamaModels] = useState<DetectedModel[]>([]);
+  const [lmstudioModels, setLmstudioModels] = useState<DetectedModel[]>([]);
   const [cloudModels, setCloudModels] = useState<Record<string, DetectedModel[]>>({});
   const [recommendedModel, setRecommendedModel] = useState<DetectedModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,11 +37,13 @@ export function useAvailableModels(): UseAvailableModelsResult {
       const detected = await detectAllAvailableModels();
 
       setOllamaModels(detected.ollama);
+      setLmstudioModels(detected.lmstudio);
       setCloudModels(detected.cloud);
       setRecommendedModel(detected.recommended);
 
       console.log('[useAvailableModels] Detection complete:', {
         ollama: detected.ollama.length,
+        lmstudio: detected.lmstudio.length,
         cloud: Object.keys(detected.cloud).length,
         recommended: detected.recommended?.modelId,
       });
@@ -59,6 +63,7 @@ export function useAvailableModels(): UseAvailableModelsResult {
 
   return {
     ollamaModels,
+    lmstudioModels,
     cloudModels,
     recommendedModel,
     isLoading,

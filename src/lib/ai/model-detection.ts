@@ -72,22 +72,97 @@ export async function detectOllamaModels(baseURL = 'http://localhost:11434'): Pr
 }
 
 /**
+ * Detect all available LM Studio models on localhost
+ */
+export async function detectLMStudioModels(baseURL = 'http://localhost:1234'): Promise<DetectedModel[]> {
+  try {
+    console.log('[ModelDetection] Checking LM Studio at', baseURL);
+
+    const response = await fetch(`${baseURL}/v1/models`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(2000),
+    });
+
+    if (!response.ok) {
+      console.log('[ModelDetection] LM Studio not available:', response.status);
+      return [];
+    }
+
+    const data = await response.json();
+
+    const models: DetectedModel[] = data.data?.map((model: any) => ({
+      provider: 'lm_studio' as ModelProvider,
+      modelId: model.id,
+      displayName: model.id,
+      recommended: false,
+    })) || [];
+
+    console.log('[ModelDetection] Found', models.length, 'LM Studio models:', models.map(m => m.modelId));
+
+    return models;
+  } catch (error) {
+    console.log('[ModelDetection] Failed to detect LM Studio models:', error instanceof Error ? error.message : 'Unknown error');
+    return [];
+  }
+}
+
+/**
  * Get the best available Ollama model
- * Prioritizes qwen3:4b only - user chooses best for their machine
+ * Prioritizes recommended models: qwen3:4b, qwen3:1.7b, gemma3:270m, gemma3:1b, gemma3:4b
  */
 export function getBestOllamaModel(models: DetectedModel[]): DetectedModel | null {
   if (models.length === 0) return null;
 
-  // Only look for qwen3:4b variants
-  const model = models.find((m) => m.modelId.startsWith('qwen3:4b'));
+  // Priority order of recommended models
+  const recommendedModels = [
+    'qwen3:4b',
+    'qwen3:1.7b',
+    'gemma3:4b',
+    'gemma3:1b',
+    'gemma3:270m',
+  ];
 
-  if (model) {
-    console.log('[ModelDetection] Ollama model: Qwen3:4B:', model.modelId);
-    return { ...model, recommended: true };
+  // Find first recommended model that's installed
+  for (const modelId of recommendedModels) {
+    const model = models.find((m) => m.modelId === modelId);
+    if (model) {
+      console.log('[ModelDetection] Recommended Ollama model found:', model.modelId);
+      return { ...model, recommended: true };
+    }
   }
 
-  // If qwen3:4b not found, return first available and let user choose
-  console.log('[ModelDetection] qwen3:4b not found. Available models:', models.map(m => m.modelId).join(', '));
+  // If no recommended models found, return first available
+  console.log('[ModelDetection] No recommended models found. Available:', models.map(m => m.modelId).join(', '));
+  return { ...models[0], recommended: false };
+}
+
+/**
+ * Get the best available LM Studio model
+ * Same priority as Ollama: qwen3:4b, qwen3:1.7b, gemma3:270m, gemma3:1b, gemma3:4b
+ */
+export function getBestLMStudioModel(models: DetectedModel[]): DetectedModel | null {
+  if (models.length === 0) return null;
+
+  // Priority order of recommended models
+  const recommendedModels = [
+    'qwen3:4b',
+    'qwen3:1.7b',
+    'gemma3:4b',
+    'gemma3:1b',
+    'gemma3:270m',
+  ];
+
+  // Find first recommended model that's installed
+  for (const modelId of recommendedModels) {
+    const model = models.find((m) => m.modelId.includes(modelId) || m.modelId === modelId);
+    if (model) {
+      console.log('[ModelDetection] Recommended LM Studio model found:', model.modelId);
+      return { ...model, recommended: true };
+    }
+  }
+
+  // If no recommended models found, return first available
+  console.log('[ModelDetection] No recommended LM Studio models found. Available:', models.map(m => m.modelId).join(', '));
   return { ...models[0], recommended: false };
 }
 
@@ -99,26 +174,21 @@ export function getCloudProviderModels(provider: ModelProvider): DetectedModel[]
     [ModelProvider.OPENAI]: [
       { provider: ModelProvider.OPENAI, modelId: 'gpt-5', displayName: 'GPT-5', recommended: true },
       { provider: ModelProvider.OPENAI, modelId: 'gpt-5-mini', displayName: 'GPT-5 Mini' },
-      { provider: ModelProvider.OPENAI, modelId: 'gpt-4o', displayName: 'GPT-4o' },
-      { provider: ModelProvider.OPENAI, modelId: 'gpt-4', displayName: 'GPT-4' },
-      { provider: ModelProvider.OPENAI, modelId: 'gpt-3.5-turbo', displayName: 'GPT-3.5 Turbo' },
+      { provider: ModelProvider.OPENAI, modelId: 'gpt-5-nano', displayName: 'GPT-5 Nano' },
     ],
     [ModelProvider.ANTHROPIC]: [
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-4-sonnet', displayName: 'Claude 4 Sonnet', recommended: true },
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-4-haiku', displayName: 'Claude 4 Haiku' },
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-5-sonnet-20241022', displayName: 'Claude 3.5 Sonnet' },
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-5-haiku-20241022', displayName: 'Claude 3.5 Haiku' },
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-opus-20240229', displayName: 'Claude 3 Opus' },
+      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-sonnet-4.5', displayName: 'Claude Sonnet 4.5', recommended: true },
+      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-haiku-4.5', displayName: 'Claude Haiku 4.5' },
+      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-opus-4.1', displayName: 'Claude Opus 4.1' },
     ],
     [ModelProvider.GOOGLE]: [
-      { provider: ModelProvider.GOOGLE, modelId: 'gemini-2.5-pro', displayName: 'Gemini 2.5 Pro', recommended: true },
-      { provider: ModelProvider.GOOGLE, modelId: 'gemini-2.0', displayName: 'Gemini 2.0' },
-      { provider: ModelProvider.GOOGLE, modelId: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro' },
+      { provider: ModelProvider.GOOGLE, modelId: 'gemini-2.0-flash-exp', displayName: 'Gemini 2.0 Flash', recommended: true },
+      { provider: ModelProvider.GOOGLE, modelId: 'gemini-2.0-pro', displayName: 'Gemini 2.0 Pro' },
     ],
     [ModelProvider.AZURE_OPENAI]: [
       { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-5', displayName: 'GPT-5 (Azure)', recommended: true },
       { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-5-mini', displayName: 'GPT-5 Mini (Azure)' },
-      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-4o', displayName: 'GPT-4o (Azure)' },
+      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-5-nano', displayName: 'GPT-5 Nano (Azure)' },
     ],
   };
 
@@ -130,14 +200,24 @@ export function getCloudProviderModels(provider: ModelProvider): DetectedModel[]
  */
 export async function detectAllAvailableModels(): Promise<{
   ollama: DetectedModel[];
+  lmstudio: DetectedModel[];
   cloud: Record<string, DetectedModel[]>;
   recommended: DetectedModel | null;
 }> {
   // Detect Ollama models
   const ollamaModels = await detectOllamaModels();
 
+  // Detect LM Studio models
+  const lmstudioModels = await detectLMStudioModels();
+
   // Get best Ollama model
-  const recommended = getBestOllamaModel(ollamaModels);
+  const ollamaRecommended = getBestOllamaModel(ollamaModels);
+
+  // Get best LM Studio model
+  const lmstudioRecommended = getBestLMStudioModel(lmstudioModels);
+
+  // Prefer Ollama recommendation, fallback to LM Studio
+  const recommended = ollamaRecommended || lmstudioRecommended;
 
   // Check for cloud provider API keys (client-side only)
   const cloudModels: Record<string, DetectedModel[]> = {};
@@ -173,17 +253,23 @@ export async function detectAllAvailableModels(): Promise<{
 
   return {
     ollama: ollamaModels,
+    lmstudio: lmstudioModels,
     cloud: cloudModels,
     recommended,
   };
 }
 
 /**
- * Check if a specific provider is available (either Ollama running or API key configured)
+ * Check if a specific provider is available (either Ollama/LM Studio running or API key configured)
  */
 export async function isProviderAvailable(provider: ModelProvider, modelId?: string): Promise<boolean> {
   if (provider === 'ollama') {
     const models = await detectOllamaModels();
+    return models.some((m) => m.modelId === modelId);
+  }
+
+  if (provider === 'lm_studio') {
+    const models = await detectLMStudioModels();
     return models.some((m) => m.modelId === modelId);
   }
 

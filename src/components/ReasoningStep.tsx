@@ -82,6 +82,7 @@ export function ReasoningStep({ step, isLast = false, autoExpand = false }: Reas
       >
         {/* Header */}
         <button
+          type="button"
           onClick={() => setIsExpanded(!isExpanded)}
           className="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-700/30 transition-colors rounded-lg"
           aria-expanded={isExpanded}
