@@ -19,8 +19,6 @@ import { SecurityBanner } from "./SecurityBanner";
 import { ComparisonDashboard } from "./ComparisonDashboard";
 import type { SearchResult } from "../lib/types";
 import type { UnifiedSearchResult } from "../lib/unified-search-orchestrator";
-import { ModelProvider } from "../lib/model-config";
-
 interface ChatReasoningStep {
 	id: string;
 	type: "analysis" | "planning" | "search" | "synthesis";
