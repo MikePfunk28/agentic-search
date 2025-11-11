@@ -8,7 +8,13 @@
 import { useEffect, useState } from "react";
 
 /**
- * Get CSRF token from document cookies
+ * Read the CSRF token value stored in document cookies.
+ *
+ * Returns the value of the cookie named by `cookieName`, or `null` if the cookie is not present
+ * or if `document` is unavailable (e.g., server-side).
+ *
+ * @param cookieName - Name of the cookie that holds the CSRF token; defaults to `"csrf-token"`.
+ * @returns The CSRF token string if found, `null` otherwise.
  */
 function getCsrfTokenFromCookies(
 	cookieName: string = "csrf-token",
@@ -179,7 +185,10 @@ export function createCsrfHeaders(
 }
 
 /**
- * Utility to check if CSRF token is present
+ * Determine whether a CSRF token cookie exists.
+ *
+ * @param cookieName - The name of the cookie to check; defaults to `"csrf-token"`.
+ * @returns `true` if a CSRF token cookie with the given name exists, `false` otherwise.
  */
 export function hasCsrfToken(cookieName: string = "csrf-token"): boolean {
 	return getCsrfTokenFromCookies(cookieName) !== null;
