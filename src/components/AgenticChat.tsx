@@ -32,6 +32,16 @@ interface AgenticChatProps {
 	onSearchResults?: (results: SearchResult[]) => void;
 }
 
+/**
+ * Renders the Agentic Search Chat interface that combines a conversational chat UI with
+ * interleaved reasoning steps, multi-model selection, integrated agentic search, and a results/metrics dashboard.
+ *
+ * The component manages security readiness (CSRF), detects user search intent, performs agentic searches, displays
+ * reasoning steps and search results, and exposes search dashboard metrics when available.
+ *
+ * @param onSearchResults - Optional callback invoked with the array of `SearchResult` items whenever a search completes (including fallbacks).
+ * @returns The rendered chat interface element.
+ */
 export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 	const { token: csrfToken, error: csrfError } = useCsrfToken();
 	const [input, setInput] = useState("");

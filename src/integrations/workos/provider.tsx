@@ -6,21 +6,16 @@ const VITE_WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID;
 const VITE_WORKOS_API_HOSTNAME = import.meta.env.VITE_WORKOS_API_HOSTNAME;
 
 /**
- * WorkOS Authentication Provider
+ * Provides WorkOS authentication to its descendant components when WorkOS is configured.
  *
- * This provider is OPTIONAL - when WorkOS env vars are not configured,
- * the app runs without authentication (children are rendered directly).
+ * When the WorkOS environment variables are missing, this component renders `children` directly
+ * and records a breadcrumb so the app continues to run without client-side WorkOS authentication.
  *
- * ⚠️ SECURITY NOTE:
- * This intentional pass-through behavior means client-side auth guards alone
- * are insufficient for protecting resources. Protected routes/components MUST:
+ * Security: client-side pass-through does not protect resources. Server-side validation and
+ * explicit authentication guards (e.g., RequireAuth) are required for any protected routes or
+ * sensitive operations.
  *
- * 1. Use RequireAuth component (src/components/RequireAuth.tsx) to enforce
- *    authentication when WorkOS is configured
- * 2. Validate authentication server-side in API routes/server functions
- * 3. Never trust client-side auth state for sensitive operations
- *
- * See docs/authentication-guards.md for implementation guide.
+ * @returns The children wrapped with `AuthKitProvider` when WorkOS is configured; otherwise the children as rendered.
  */
 export default function AppWorkOSProvider({
 	children,

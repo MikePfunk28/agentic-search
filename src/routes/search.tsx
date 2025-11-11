@@ -13,6 +13,13 @@ interface SearchResult {
 	source: string;
 }
 
+/**
+ * Renders the Agentic Search page and manages user-initiated search requests.
+ *
+ * Maintains local state for the query, results, loading, and error; retrieves a CSRF token from cookies and posts the query to /api/search, updates results on success, sets an error message on failure, and supports aborting pending requests with cleanup on unmount.
+ *
+ * @returns The rendered search page element.
+ */
 function SearchPage() {
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<SearchResult[]>([]);
