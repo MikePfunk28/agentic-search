@@ -8,7 +8,7 @@ import type { ModelConfig } from "./model-config";
 import { agenticSearch } from "./agentic-search";
 import { ParallelModelOrchestrator } from "./parallel-model-orchestrator";
 import { InterleavedReasoningEngine } from "./interleaved-reasoning-engine";
-import { ADDDiscriminator } from "./add-discriminator";
+import { AdversarialDifferentialDiscriminator } from "./add-discriminator";
 import { ComponentValidationPipeline } from "./component-validation-pipeline";
 import type { SearchResult } from "./types";
 import { QuerySegmenter, SegmentCoordinator } from "./segment";
@@ -103,11 +103,11 @@ export interface SearchOptions {
 }
 
 export class UnifiedSearchOrchestrator {
-  private addDiscriminator: ADDDiscriminator;
+  private addDiscriminator: AdversarialDifferentialDiscriminator;
   private validationPipeline: ComponentValidationPipeline;
 
   constructor() {
-    this.addDiscriminator = new ADDDiscriminator();
+    this.addDiscriminator = new AdversarialDifferentialDiscriminator();
     this.validationPipeline = new ComponentValidationPipeline();
   }
 

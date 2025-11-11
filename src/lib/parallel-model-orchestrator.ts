@@ -12,7 +12,7 @@
  */
 
 import { generateText } from "ai";
-import { createOllama } from "ollama-ai-provider";
+import { createOpenAI } from "@ai-sdk/openai";
 
 export interface ParallelModelConfig {
 	name: string;
@@ -75,12 +75,16 @@ export const ORCHESTRATOR_MODEL: ParallelModelConfig = {
 };
 
 export class ParallelModelOrchestrator {
-	private ollama: ReturnType<typeof createOllama>;
+	private ollama: ReturnType<typeof createOpenAI>;
 	private baseUrl: string;
 
 	constructor(baseUrl: string = "http://localhost:11434") {
 		this.baseUrl = baseUrl;
-		this.ollama = createOllama({ baseURL: baseUrl });
+		// Use OpenAI-compatible API for Ollama
+		this.ollama = createOpenAI({
+			baseURL: `${baseUrl}/v1`,
+			apiKey: 'ollama', // Ollama doesn't require a real API key
+		});
 	}
 
 	/**

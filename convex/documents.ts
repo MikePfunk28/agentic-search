@@ -30,7 +30,7 @@ export const uploadDocument = mutation({
 			s3Url: args.s3Url,
 			metadata: args.metadata,
 			uploadedAt: Date.now(),
-			processedAt: null,
+			processedAt: undefined,
 			status: "pending" as const,
 			chunks: [],
 		});
