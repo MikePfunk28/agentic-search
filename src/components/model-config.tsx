@@ -112,16 +112,17 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 
     const config: ModelConfig = {
       provider: selectedProvider,
-      modelId: selectedModel,
-      baseURL: baseURL || undefined,
+      model: selectedModel,
+      baseUrl: baseURL || undefined,
       apiKey: apiKey || undefined,
       temperature: 0.7,
       maxTokens: 4096,
+      timeout: 60000,
+      enableStreaming: false,
     };
 
     // Save to localStorage
     localStorage.setItem('agentic-search-model-config', JSON.stringify(config));
-
     onSave?.(config);
   };
 
