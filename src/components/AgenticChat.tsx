@@ -291,17 +291,14 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 									? "bg-slate-800 text-white"
 									: "bg-primary-600 text-white"
 							}`}>
-								{message.parts.map((part, index) => {
-									if (part.type === "text") {
-										return (
-											<div key={index} className="prose prose-sm dark:prose-invert max-w-none">
-												<ReactMarkdown
-													rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeHighlight, remarkGfm]}
-												>
-													{part.text}
-												</ReactMarkdown>
-											</div>
-										);
+								<div key={index} className="prose prose-sm dark:prose-invert max-w-none">
+													<ReactMarkdown
+														remarkPlugins={[remarkGfm]}
+														rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeHighlight]}
+													>
+														{part.text}
+													</ReactMarkdown>
+												</div>
 									}
 									return null;
 								})}
