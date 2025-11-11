@@ -170,4 +170,116 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_uploaded", ["uploadedAt"])
     .index("by_processed", ["processedAt"]),
+
+  // Segmented Agentic Search (SAS) - Query Segmentations Cache
+  querySegmentations: defineTable({
+    userId: v.string(),
+    queryText: v.string(),
+    queryHash: v.string(), // SHA256 hash for fast lookup
+    segmentCount: v.number(),
+    segments: v.array(v.object({
+      id: v.string(),
+      text: v.string(),
+      type: v.union(
+        v.literal("entity"),
+        v.literal("relation"),
+        v.literal("constraint"),
+        v.literal("intent"),
+        v.literal("context"),
+        v.literal("comparison"),
+        v.literal("synthesis")
+      ),
+      priority: v.number(),
+      dependencies: v.array(v.string()),
+      estimatedComplexity: v.union(
+        v.literal("tiny"),
+        v.literal("small"),
+        v.literal("medium"),
+        v.literal("large")
+      ),
+      recommendedModel: v.string(), // SUGGESTION ONLY!
+      estimatedTokens: v.number(),
+    })),
+    executionGraphStages: v.number(),
+    quality: v.number(), // User feedback or ADD score
+    usageCount: v.number(),
+    lastUsed: v.number(),
+    expiresAt: v.number(), // TTL: 5 minutes
+    createdAt: v.number(),
+  })
+    .index("by_user_hash", ["userId", "queryHash"])
+    .index("by_expires", ["expiresAt"])
+    .index("by_quality", ["quality"])
+    .index("by_usage", ["usageCount"]),
+
+  // Segment Execution Results (track how segments perform)
+  segmentExecutions: defineTable({
+    userId: v.string(),
+    queryId: v.string(), // Links to querySegmentations
+    segmentId: v.string(),
+    segmentType: v.union(
+      v.literal("entity"),
+      v.literal("relation"),
+      v.literal("constraint"),
+      v.literal("intent"),
+      v.literal("context"),
+      v.literal("comparison"),
+      v.literal("synthesis")
+    ),
+    segmentText: v.string(),
+    modelUsed: v.string(),
+    tokensUsed: v.number(),
+    executionTimeMs: v.number(),
+    success: v.boolean(),
+    confidence: v.number(), // 0-1
+    resultsCount: v.number(),
+    findings: v.object({
+      entities: v.any(), // JSON object
+      facts: v.array(v.string()),
+      sources: v.array(v.string()),
+    }),
+    wasEscalated: v.boolean(), // Did we escalate to a more powerful model?
+    coordinationEvents: v.number(), // How many times did segments coordinate?
+    createdAt: v.number(),
+  })
+    .index("by_user_query", ["userId", "queryId"])
+    .index("by_segment_type", ["segmentType"])
+    .index("by_model", ["modelUsed"])
+    .index("by_success", ["success"])
+    .index("by_created", ["createdAt"]),
+
+  // Segment Templates (learned patterns for query decomposition)
+  segmentTemplates: defineTable({
+    userId: v.optional(v.string()), // null = global template
+    templateName: v.string(),
+    pattern: v.string(), // Regex or description for matching queries
+    segmentType: v.union(
+      v.literal("entity"),
+      v.literal("relation"),
+      v.literal("constraint"),
+      v.literal("intent"),
+      v.literal("context"),
+      v.literal("comparison"),
+      v.literal("synthesis")
+    ),
+    recommendedModel: v.string(),
+    avgComplexity: v.union(
+      v.literal("tiny"),
+      v.literal("small"),
+      v.literal("medium"),
+      v.literal("large")
+    ),
+    avgTokens: v.number(),
+    avgTimeMs: v.number(),
+    successRate: v.number(), // 0-1
+    usageCount: v.number(),
+    lastUsed: v.number(),
+    examples: v.array(v.string()), // Example queries that match
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_type", ["segmentType"])
+    .index("by_success_rate", ["successRate"])
+    .index("by_usage", ["usageCount"])
+    .index("by_last_used", ["lastUsed"]),
 })

@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/search")({
 				}
 
 				try {
-					const { query, modelProvider = "ollama", useParallelModels = true, useInterleavedReasoning = true } = await request.json();
+					const { query, modelProvider = "ollama", useParallelModels = true, useInterleavedReasoning = true, useSegmentation = false } = await request.json();
 
 					if (!query || typeof query !== "string") {
 						return new Response(
@@ -72,11 +72,12 @@ export const Route = createFileRoute("/api/search")({
 
 					// Execute unified search with all advanced features
 					console.log(`[UnifiedSearch] Starting search for: "${query}" using ${modelConfig.provider}:${modelConfig.model}`);
-					console.log(`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}`);
+					console.log(`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}, segmentation=${useSegmentation}`);
 
 					const searchResult = await unifiedSearchOrchestrator.search(query, modelConfig, {
 						useParallelModels,
 						useInterleavedReasoning,
+						useSegmentation, // Enable query segmentation and coordination
 						enableValidation: true,
 						parallelModelConfigs: [], // Can be populated with additional models if needed
 					});

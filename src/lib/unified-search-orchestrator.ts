@@ -11,6 +11,7 @@ import { InterleavedReasoningEngine } from "./interleaved-reasoning-engine";
 import { ADDDiscriminator } from "./add-discriminator";
 import { ComponentValidationPipeline } from "./component-validation-pipeline";
 import type { SearchResult } from "./types";
+import { QuerySegmenter, SegmentCoordinator } from "./segment";
 
 export interface UnifiedSearchResult {
   // Search results
@@ -41,6 +42,27 @@ export interface UnifiedSearchResult {
     error?: string;
     duration: number;
   }>;
+
+  // Segmentation results (if enabled)
+  segmentation?: {
+    segmentCount: number;
+    segments: Array<{
+      id: string;
+      type: string;
+      text: string;
+      modelUsed: string;
+      tokensUsed: number;
+      timeMs: number;
+      success: boolean;
+    }>;
+    coordinationLog: Array<{
+      timestamp: number;
+      segmentId: string;
+      action: string;
+      metadata: any;
+    }>;
+    synthesizedResponse: string;
+  };
 
   // Quality metrics
   addMetrics: {
@@ -77,6 +99,7 @@ export interface SearchOptions {
   useInterleavedReasoning?: boolean;
   enableValidation?: boolean;
   parallelModelConfigs?: ModelConfig[];
+  useSegmentation?: boolean; // Enable query segmentation and coordination
 }
 
 export class UnifiedSearchOrchestrator {
@@ -102,10 +125,17 @@ export class UnifiedSearchOrchestrator {
       useInterleavedReasoning = true,
       enableValidation = true,
       parallelModelConfigs = [],
+      useSegmentation = false,
     } = options;
 
     console.log(`[UnifiedSearch] Starting search for: "${query}"`);
-    console.log(`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}, validation=${enableValidation}`);
+    console.log(`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}, validation=${enableValidation}, segmentation=${useSegmentation}`);
+
+    // Route to segmented search if enabled
+    if (useSegmentation) {
+      console.log('[UnifiedSearch] Routing to segmented search...');
+      return this.searchWithSegmentation(query, primaryModelConfig, options);
+    }
 
     try {
       // Phase 1: Execute base agentic search
@@ -280,6 +310,184 @@ export class UnifiedSearchOrchestrator {
         },
         strategy: "error",
         reasoning: [`Search failed: ${error instanceof Error ? error.message : "Unknown error"}`],
+        quality: 0,
+        timestamp: new Date().toISOString(),
+        modelUsed: primaryModelConfig.model,
+        provider: primaryModelConfig.provider,
+        totalTokens: 0,
+        totalProcessingTime: Date.now() - startTime,
+      };
+    }
+  }
+
+  /**
+   * Execute search with query segmentation and coordination
+   * This is how we beat RAG - intelligent segmentation vs passive chunking
+   */
+  async searchWithSegmentation(
+    query: string,
+    primaryModelConfig: ModelConfig,
+    options: SearchOptions = {}
+  ): Promise<UnifiedSearchResult> {
+    const startTime = Date.now();
+    const { enableValidation = true } = options;
+
+    console.log(`[SegmentedSearch] Starting segmented search for: "${query}"`);
+    console.log(`[SegmentedSearch] This will work equally well with tiny or powerful models!`);
+
+    try {
+      // Phase 1: Query Segmentation
+      console.log("[SegmentedSearch] Phase 1: Segmenting query...");
+      const segmenter = new QuerySegmenter(primaryModelConfig);
+      const segmentation = await segmenter.segment(query);
+
+      console.log(`[SegmentedSearch] Created ${segmentation.segments.length} segments:`);
+      segmentation.segments.forEach(seg => {
+        console.log(`  - ${seg.type}: "${seg.text}" (priority: ${seg.priority}, complexity: ${seg.estimatedComplexity})`);
+        console.log(`    Recommended model: ${seg.recommendedModel} (SUGGESTION ONLY - user controls actual model)`);
+      });
+
+      // Phase 2: Segment Coordination and Execution
+      console.log(`[SegmentedSearch] Phase 2: Executing ${segmentation.segments.length} segments with coordination...`);
+      const coordinator = new SegmentCoordinator(primaryModelConfig);
+      const coordinatedResult = await coordinator.execute(segmentation);
+
+      console.log(`[SegmentedSearch] Coordination complete!`);
+      console.log(`  - Completed segments: ${coordinatedResult.coordinationState.completedSegments.size}`);
+      console.log(`  - Failed segments: ${coordinatedResult.coordinationState.failedSegments.size}`);
+      console.log(`  - Total coordination events: ${coordinatedResult.coordinationState.coordinationLog.length}`);
+
+      // Phase 3: ADD Quality Scoring
+      console.log("[SegmentedSearch] Phase 3: Calculating ADD quality metrics...");
+      const addScore = this.addDiscriminator.scoreSearch(
+        query,
+        coordinatedResult.finalResults,
+        {}
+      );
+
+      this.addDiscriminator.updateHistory(
+        query,
+        coordinatedResult.finalResults,
+        addScore.overallScore
+      );
+
+      const driftAnalysis = this.addDiscriminator.detectDrift();
+
+      const addMetrics = {
+        relevance: addScore.relevanceScore,
+        diversity: addScore.diversityScore,
+        freshness: addScore.freshnessScore,
+        consistency: addScore.consistencyScore,
+        overallScore: addScore.overallScore,
+        drift: driftAnalysis.drift,
+        trend: driftAnalysis.trend,
+        recommendation: driftAnalysis.recommendation,
+      };
+
+      // Phase 4: Component Validation (if enabled)
+      let validation = {
+        retrieval: { valid: true, confidence: 1.0, errors: [] as string[] },
+        reasoning: { valid: true, confidence: 1.0, errors: [] as string[] },
+        response: { valid: true, confidence: 1.0, errors: [] as string[] },
+      };
+
+      if (enableValidation) {
+        console.log("[SegmentedSearch] Phase 4: Validating components...");
+
+        // Validate retrieval
+        const retrievalValidation = this.validationPipeline.validateRetrieval(
+          coordinatedResult.finalResults
+        );
+        validation.retrieval = {
+          valid: retrievalValidation.valid,
+          confidence: retrievalValidation.confidence,
+          errors: retrievalValidation.errors,
+        };
+
+        // Validate final response
+        const responseValidation = this.validationPipeline.validateResponse(
+          query,
+          coordinatedResult.synthesizedResponse,
+          coordinatedResult.finalResults
+        );
+        validation.response = {
+          valid: responseValidation.valid,
+          confidence: responseValidation.confidence,
+          errors: responseValidation.errors,
+        };
+
+        console.log(
+          `[SegmentedSearch] Validation complete. Retrieval: ${retrievalValidation.valid}, Response: ${responseValidation.valid}`
+        );
+      }
+
+      const totalProcessingTime = Date.now() - startTime;
+
+      // Prepare segmentation details for response
+      const segmentationDetails = {
+        segmentCount: segmentation.segments.length,
+        segments: coordinatedResult.segmentBreakdown.map(seg => ({
+          id: seg.segmentId,
+          type: seg.type,
+          text: segmentation.segments.find(s => s.id === seg.segmentId)?.text || '',
+          modelUsed: seg.modelUsed,
+          tokensUsed: seg.tokensUsed,
+          timeMs: seg.timeMs,
+          success: seg.success,
+        })),
+        coordinationLog: coordinatedResult.coordinationState.coordinationLog,
+        synthesizedResponse: coordinatedResult.synthesizedResponse,
+      };
+
+      const result: UnifiedSearchResult = {
+        results: coordinatedResult.finalResults,
+        segmentation: segmentationDetails,
+        addMetrics,
+        validation,
+        strategy: 'segmented',
+        reasoning: [
+          `Query segmented into ${segmentation.segments.length} coordinated parts`,
+          `Execution graph: ${segmentation.executionGraph.totalStages} stages`,
+          `Segments communicated via shared context pool`,
+          coordinatedResult.synthesizedResponse,
+        ],
+        quality: coordinatedResult.quality.overall,
+        timestamp: new Date().toISOString(),
+        modelUsed: primaryModelConfig.model,
+        provider: primaryModelConfig.provider,
+        totalTokens: coordinatedResult.totalTokens,
+        totalProcessingTime,
+      };
+
+      console.log(`[SegmentedSearch] Search completed in ${totalProcessingTime}ms`);
+      console.log(`[SegmentedSearch] Quality: ${coordinatedResult.quality.overall.toFixed(2)}, Tokens: ${coordinatedResult.totalTokens}`);
+      console.log(`[SegmentedSearch] Segmentation beats RAG through intelligent coordination!`);
+
+      return result;
+
+    } catch (error) {
+      console.error("[SegmentedSearch] Search failed:", error);
+
+      // Return fallback result
+      return {
+        results: [],
+        addMetrics: {
+          relevance: 0,
+          diversity: 0,
+          freshness: 0,
+          consistency: 0,
+          overallScore: 0,
+          drift: 0,
+          trend: "declining",
+          recommendation: "Segmented search error - please retry",
+        },
+        validation: {
+          retrieval: { valid: false, confidence: 0, errors: ["Segmented search failed"] },
+          reasoning: { valid: false, confidence: 0, errors: ["Not executed"] },
+          response: { valid: false, confidence: 0, errors: ["Not generated"] },
+        },
+        strategy: "segmented-error",
+        reasoning: [`Segmented search failed: ${error instanceof Error ? error.message : "Unknown error"}`],
         quality: 0,
         timestamp: new Date().toISOString(),
         modelUsed: primaryModelConfig.model,
