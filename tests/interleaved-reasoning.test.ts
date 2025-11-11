@@ -12,6 +12,19 @@ describe("InterleavedReasoningEngine", () => {
 
 	beforeEach(() => {
 		engine = new InterleavedReasoningEngine();
+		vi.spyOn(engine as any, "executeStep").mockImplementation(
+			async (type: any, input: string) => ({
+				id: `${type}-mock`,
+				type,
+				input,
+				output: `${type} output`,
+				confidence: 0.9,
+				validated: true,
+				validationErrors: [],
+				timestamp: Date.now(),
+				tokenCount: 12,
+			}),
+		);
 	});
 
 	describe("Security", () => {
