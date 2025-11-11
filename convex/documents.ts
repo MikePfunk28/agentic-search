@@ -5,7 +5,6 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
 
 // Document upload mutation
 export const uploadDocument = mutation({
@@ -144,6 +143,19 @@ export const listDocuments = query({
 export const deleteDocument = mutation({
 	args: { id: v.id("documents") },
 	handler: async (ctx, args) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+		if (!userIdentity) {
+			throw new Error("Authentication required");
+		}
+
+		const document = await ctx.db.get(args.id);
+		if (!document) {
+			throw new Error("Document not found");
+		}
+
+		if (document.userId !== userIdentity.subject) {
+			throw new Error("Unauthorized: You do not own this document");
+		}
 		await ctx.db.delete(args.id);
 	},
 });

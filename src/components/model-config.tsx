@@ -5,8 +5,8 @@
 
 import { useState, useEffect } from 'react';
 import { Check, Loader2, AlertCircle } from 'lucide-react';
-import type { ModelConfig, ModelProvider } from '../lib/model-config';
-import { detectAvailableProviders, listModelsForProvider, getProviderDisplayName } from '../lib/ai/providers';
+import type { ModelConfig } from '../lib/model-config';
+import { detectAvailableProviders, listModelsForProvider, getProviderDisplayName, type ModelProvider } from '../lib/ai/providers';
 
 export interface ModelSettingsProps {
   onSave?: (config: ModelConfig) => void;
@@ -112,16 +112,17 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 
     const config: ModelConfig = {
       provider: selectedProvider,
-      modelId: selectedModel,
-      baseURL: baseURL || undefined,
+      model: selectedModel,
+      baseUrl: baseURL || undefined,
       apiKey: apiKey || undefined,
       temperature: 0.7,
       maxTokens: 4096,
+      timeout: 60000,
+      enableStreaming: false,
     };
 
     // Save to localStorage
     localStorage.setItem('agentic-search-model-config', JSON.stringify(config));
-
     onSave?.(config);
   };
 
