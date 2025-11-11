@@ -33,6 +33,32 @@ function Log($msg) { Write-Host "[import-plan] $msg" -ForegroundColor Cyan }
 function Warn($msg) { Write-Host "[import-plan][WARN] $msg" -ForegroundColor Yellow }
 function Err($msg) { Write-Host "[import-plan][ERROR] $msg" -ForegroundColor Red }
 
+# Helper function to remove markdown formatting from titles
+function Remove-MarkdownFormatting($title) {
+  # Remove markdown links [text](url) - keep only the text
+  $sanitized = $title -replace '\[([^\]]+)\]\([^\)]+\)', '$1'
+
+  # Remove bold/italic markers
+  $sanitized = $sanitized -replace '\*\*', '' -replace '\*', '' -replace '__', '' -replace '_', ''
+
+  # Remove strikethrough
+  $sanitized = $sanitized -replace '~~', ''
+
+  # Remove inline code and code markers
+  $sanitized = $sanitized -replace '`', ''
+
+  # Remove heading markers
+  $sanitized = $sanitized -replace '#', ''
+
+  # Remove blockquote markers
+  $sanitized = $sanitized -replace '^>\s*', ''
+
+  # Remove horizontal rules (if somehow in a title)
+  $sanitized = $sanitized -replace '---+', '' -replace '\*\*\*+', ''
+
+  return $sanitized.Trim()
+}
+
 # Resolve owner/repo
 if ([string]::IsNullOrEmpty($Owner)) {
   if ($env:GITHUB_REPOSITORY) {
@@ -135,15 +161,24 @@ foreach ($line in $lines) {
 
   # Find unchecked checkboxes: - [ ] or * [ ] Task name
   if ($line -match '^\s*[-*]\s+\[\s\]\s+(.+)$') {
-    $taskTitle = $matches[1].Trim()
-    
-    # Sanitize title: remove markdown formatting
-    $taskTitle = $taskTitle -replace '\*\*', '' -replace '\*', '' -replace '`', '' -replace '#', ''
-    $taskTitle = $taskTitle.Trim()
+    $originalTitle = $matches[1].Trim()
 
-    # Skip if issue already exists
-    if ($existingIssues -contains $taskTitle) {
-      Log "  ⏭️  Skipping (already exists): $taskTitle"
+    # Sanitize title: remove markdown formatting for issue creation
+    $taskTitle = Remove-MarkdownFormatting $originalTitle
+
+    # Check for duplicates by comparing both original and sanitized forms
+    # Normalize existing issues for comparison
+    $isDuplicate = $false
+    foreach ($existingTitle in $existingIssues) {
+      $sanitizedExisting = Remove-MarkdownFormatting $existingTitle
+      # Compare sanitized versions for duplicate detection
+      if ($taskTitle -eq $sanitizedExisting) {        $isDuplicate = $true
+        Log "  ⏭️  Skipping (already exists): $taskTitle"
+        break
+      }
+    }
+
+    if ($isDuplicate) {
       continue
     }
 
@@ -211,18 +246,18 @@ if ($failedTasks.Count -gt 0 -and -not $DryRun) {
   Log ""
   Log "Retrying $($failedTasks.Count) failed issues with sanitization..."
   $retried = 0
-  
+
   foreach ($task in $failedTasks) {
     $title = $task.Title
     # More aggressive sanitization
     $title = $title -replace '[^a-zA-Z0-9\s\-_.,()\[\]:]', ''
     $title = $title -replace '\s+', ' '
     $title = $title.Trim()
-    
+
     if ($title.Length -gt 256) {
       $title = $title.Substring(0, 253) + "..."
     }
-    
+
     Log "Retrying: $title"
     try {
       $issueUrl = gh issue create --repo $Repo --title $title --label $task.Label --body "Created from $PlanFile" 2>&1
@@ -238,7 +273,7 @@ if ($failedTasks.Count -gt 0 -and -not $DryRun) {
       Warn "  ✗ Still failed: $title"
     }
   }
-  
+
   if ($retried -gt 0) {
     Log "Successfully created $retried issues on retry"
   }

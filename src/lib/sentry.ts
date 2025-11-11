@@ -2,8 +2,7 @@
  * Sentry Error Tracking Setup
  * Monitors frontend errors and performance for the agentic search platform
  */
-
-import * as Sentry from "@sentry/react";
+import * as Sentry from "@sentry/tanstackstart-react";
 
 export interface SentryConfig {
 	dsn?: string;

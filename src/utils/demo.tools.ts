@@ -1,7 +1,10 @@
-// Unused AI SDK imports removed - MCP functionality moved to convex/mcp*.ts
-// import { experimental_createMCPClient, tool } from "ai";
-//import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+// AI SDK imports for demo tools
+import { tool } from "ai";
 import { z } from "zod";
+
+// MCP functionality moved to convex/mcp*.ts
+// import { experimental_createMCPClient } from "ai";
+// import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 import guitars from "../data/example-guitars";
 

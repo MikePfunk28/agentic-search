@@ -77,7 +77,7 @@ export const DEFAULT_CSRF_COOKIE_OPTIONS: Required<CsrfCookieOptions> = {
 	maxAge: 3600, // 1 hour
 	path: "/",
 	domain: "",
-	secure: process.env.NODE_ENV === "production",
+	secure: import.meta.env.PROD ?? false,
 	httpOnly: true,
 	sameSite: "Strict",
 };

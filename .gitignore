@@ -67,3 +67,32 @@ docs/IMPLEMENTATION_PLAN.md
 
 
 docs/coderabbit_review01.md
+.env
+dev-output.log
+
+.tanstack/tmp/1cc230e8-45f3ceeb03919f83ba9b0e7dd4b4e13f
+.tanstack/tmp/1cc230e8-a7af0a075f9ddf22d001d67d00733c62
+.tanstack/tmp/16d97855-45f3ceeb03919f83ba9b0e7dd4b4e13f
+.tanstack/tmp/16d97855-a7af0a075f9ddf22d001d67d00733c62
+.tanstack/tmp/55d863ec-a7af0a075f9ddf22d001d67d00733c62
+.tanstack/tmp/aa4aa629-a7af0a075f9ddf22d001d67d00733c62
+.tanstack/tmp/b323688d-a7af0a075f9ddf22d001d67d00733c62
+.tanstack/tmp/edce7f02-45f3ceeb03919f83ba9b0e7dd4b4e13f
+.tanstack/tmp/edce7f02-a7af0a075f9ddf22d001d67d00733c62
+
+# Documentation (outdated/generated)
+docs/tanstack_react.md
+WARP.md
+.tanstack/tmp/*
+claude2.md
+src/components/AgenticChat.tsx
+docs/IMPLEMENTATION_STATUS.md
+docs/CLAUDE_CODE_INTEGRATION.md
+.env.example
+
+docs/AWS_S3_SETUP.md
+SECURITY.md
+IMPLEMENTATION_COMPLETE.md
+docs/SYSTEM_ARCHITECTURE.md
+
+docs/codeRabbit_review02.md

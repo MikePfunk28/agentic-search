@@ -8,11 +8,18 @@
  * @module
  */
 
+import type * as documents from "../documents.js";
+import type * as http from "../http.js";
+import type * as interactiveSegmentation from "../interactiveSegmentation.js";
 import type * as lib_ocr_processDocument from "../lib/ocr/processDocument.js";
 import type * as mcp from "../mcp.js";
 import type * as mcp_mutations from "../mcp_mutations.js";
+import type * as modelConfiguration from "../modelConfiguration.js";
 import type * as ocr from "../ocr.js";
+import type * as searchHistory from "../searchHistory.js";
+import type * as secureApiKeys from "../secureApiKeys.js";
 import type * as todos from "../todos.js";
+import type * as usageTracking from "../usageTracking.js";
 
 import type {
   ApiFromModules,
@@ -29,11 +36,18 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  documents: typeof documents;
+  http: typeof http;
+  interactiveSegmentation: typeof interactiveSegmentation;
   "lib/ocr/processDocument": typeof lib_ocr_processDocument;
   mcp: typeof mcp;
   mcp_mutations: typeof mcp_mutations;
+  modelConfiguration: typeof modelConfiguration;
   ocr: typeof ocr;
+  searchHistory: typeof searchHistory;
+  secureApiKeys: typeof secureApiKeys;
   todos: typeof todos;
+  usageTracking: typeof usageTracking;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

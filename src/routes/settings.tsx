@@ -9,6 +9,10 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
+	return <SettingsPageContent />;
+}
+
+function SettingsPageContent() {
 	const [isSaved, setIsSaved] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 

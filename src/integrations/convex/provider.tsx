@@ -1,11 +1,9 @@
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { ConvexProvider } from "convex/react";
+import { convexClient } from "./auth-provider";
 
-const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL;
-if (!CONVEX_URL) {
-	console.error("missing envar CONVEX_URL");
-}
-const convexQueryClient = new ConvexQueryClient(CONVEX_URL);
+// Create query client using the shared Convex client
+const convexQueryClient = new ConvexQueryClient(convexClient);
 
 export default function AppConvexProvider({
 	children,
@@ -13,8 +11,11 @@ export default function AppConvexProvider({
 	children: React.ReactNode;
 }) {
 	return (
-		<ConvexProvider client={convexQueryClient.convexClient}>
+		<ConvexProvider client={convexClient}>
 			{children}
 		</ConvexProvider>
 	);
 }
+
+// Export query client for use with TanStack Query
+export { convexQueryClient };
