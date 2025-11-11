@@ -364,6 +364,7 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 								totalTime: dashboardData.parallelResults.models.reduce((sum, m) => sum + m.processingTime, 0),
 							} : undefined}
 							reasoningResult={dashboardData.reasoningSteps ? {
+							reasoningResult={dashboardData.reasoningSteps && dashboardData.reasoningSteps.length > 0 ? {
 								steps: dashboardData.reasoningSteps.map((s, idx) => ({
 									id: `step-${idx}`,
 									type: s.type,
