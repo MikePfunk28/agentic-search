@@ -80,46 +80,94 @@ console.log(env.VITE_APP_TITLE);
 
 
 
-# TanStack Chat Application
+# Agentic Search Platform
 
-An example chat application built with TanStack Start, TanStack Store, and Claude AI.
+Production-ready intelligent search platform with **human-in-the-loop learning**, multi-model support (local + cloud), encrypted API storage, and automated training data collection.
 
-## .env Updates
+## Status: Production Ready
+
+✅ **All Critical Bugs Fixed**:
+- TanStack devtools menu removed
+- CSRF 403 errors resolved with token endpoint
+- Infinite Ollama detection loop fixed with useRef guard
+- Hydration warnings suppressed
+
+## .env Setup
 
 ```env
+# Required for Convex backend
+VITE_CONVEX_URL=your_convex_deployment_url
+CONVEX_DEPLOYMENT=your_convex_deployment
+
+# Required for WorkOS authentication
+VITE_WORKOS_CLIENT_ID=your_workos_client_id
+
+# Optional: AI providers (or use UI to configure encrypted keys)
 ANTHROPIC_API_KEY=your_anthropic_api_key
+OPENAI_API_KEY=your_openai_api_key
+
+# Optional: Error tracking
+VITE_SENTRY_DSN=your_sentry_dsn
 ```
 
-## ✨ Features
+## Features
 
-### AI Capabilities
-- 🤖 Powered by Anthropic Haiku, Opus, Sonnet, 4.5, 4.1, 4.5, and Ollama, LMStudio, or gguf, any local model they have.  As I am testing it with a local model, and a anthropic or openai model.
+### Human-in-the-Loop Learning
+- 🧠 **Interactive Segmentation**: AI proposes query segments, user approves/modifies before execution
+- 📊 **Search History Browsing**: View past searches, results, quality scores, re-run queries
+- 🎯 **Reasoning Step Control**: Validate AI reasoning at each step, provide corrections
+- 📈 **Training Data Collection**: All interactions stored for model fine-tuning
+- 🔄 **Comparison Dashboard**: Side-by-side results from different segment approaches
 
-- 📝 Rich markdown formatting with syntax highlighting
-- 🎯 Customizable system prompts for tailored AI behavior
-- 🔄 Real-time message updates and streaming responses (coming soon)
+### AI Model Support
+- 🤖 **6 Providers**: OpenAI, Anthropic, Google, Ollama, LM Studio, Azure
+- 🔍 **Auto-Detection**: Finds local Ollama models at localhost:11434
+- 🔐 **Encrypted Keys**: Web Crypto API + Convex encrypted storage (AES-256-GCM)
+- ⚡ **Smart Switching**: Auto-selects best model based on cost/quality/speed
+- 📝 **Rich Formatting**: Markdown with syntax highlighting, streaming responses
+
+### Security & Quality
+- 🔒 **CSRF Protection**: HttpOnly cookies with X-CSRF-Token headers
+- 🔑 **Key Encryption**: Client-side Web Crypto API + server-side Convex backup
+- 📊 **Quality Metrics**: ADD discriminator scores, user approval rates
+- 🎭 **PII Detection**: Automatic anonymization of sensitive data
+- 🚨 **Sentry Monitoring**: Error tracking and performance monitoring
 
 ### User Experience
-- 🎨 Modern UI with Tailwind CSS and Lucide icons
-- 🔍 Conversation management and history
-- 🔐 Secure API key management
-- 📋 Markdown rendering with code highlighting
-
-### Technical Features
-- 📦 Centralized state management with TanStack Store
-- 🔌 Extensible architecture for multiple AI providers
-- 🛠️ TypeScript for type safety
+- 🎨 **Modern UI**: Tailwind CSS, Lucide icons, responsive design
+- 🔍 **Segment Approval**: Edit/approve/reject AI-proposed search segments
+- 📚 **History Browser**: Filter by model, date, quality; export as JSON/CSV
+- 🔄 **Re-run Searches**: One-click to retry with same query
+- 📋 **Export Training Data**: S3 + JSONL format for OpenAI fine-tuning
 
 ## Architecture
 
 ### Tech Stack
-- **Frontend Framework**: TanStack Start
-- **Routing**: TanStack Router
-- **State Management**: TanStack Store
-- **Styling**: Tailwind CSS
-- **AI Integration**: Anthropic's Claude API. Local Models via Ollama, LMStudio, gguf.
-OpenAI API (can be added similarly)
+- **Frontend**: TanStack Start, TanStack Router, TanStack Store
+- **Backend**: Convex (real-time database + functions)
+- **Auth**: WorkOS (enterprise SSO)
+- **Styling**: Tailwind CSS + Shadcn/ui
+- **AI**: Anthropic, OpenAI, Google, Ollama, LM Studio, Azure
+- **Monitoring**: Sentry (errors + performance)
+- **Deployment**: Cloudflare Pages at mikepfunk.com
 
+### Key Components
+- **EnhancedModelSelector**: Multi-provider model selection with auto-detection
+- **AgenticChat**: Chat interface with CSRF protection and streaming
+- **SegmentApprovalModal**: Interactive UI for approving AI query segments (pending)
+- **SearchHistoryPage**: Browse past searches with results (pending)
+- **ComparisonDashboard**: Side-by-side segment results (pending)
+
+
+## Documentation
+
+For complete system architecture, see [SYSTEM_ARCHITECTURE.md](./docs/SYSTEM_ARCHITECTURE.md)
+
+**Key Docs**:
+- [CHANGELOG](./CHANGELOG.md) - Recent bug fixes and system updates
+- [Project Plan](./docs/plan.md) - Full roadmap and current status
+- [System Architecture](./docs/SYSTEM_ARCHITECTURE.md) - Complete technical design
+- [Convex Schema](./convex/schema.ts) - Database tables for human-in-the-loop learning
 
 ## Routing
 This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
@@ -370,10 +418,33 @@ Once we've created the derived store we can use it in the `App` component just l
 
 You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
 
-# Demo files
+## Recent Bug Fixes
+
+### Fixed: TanStack Devtools Menu (2024-01-XX)
+**Issue**: Unwanted settings panel appearing on page
+**Solution**: Removed TanStackDevtools component from `__root.tsx`, added `suppressHydrationWarning`
+
+### Fixed: CSRF 403 Forbidden (2024-01-XX)
+**Issue**: POST `/api/chat` failing with 403 due to missing CSRF token
+**Solution**: 
+- Created `/api/csrf-token` GET endpoint to set HttpOnly cookie
+- Modified `useCsrfToken` hook to fetch token on mount
+- Added `isReady` state to `AgenticChat` to disable chat until token ready
+
+### Fixed: Infinite Ollama Detection Loop (2024-01-XX)
+**Issue**: `http://localhost:11434/api/tags` fetching repeatedly in infinite loop
+**Solution**: 
+- Wrapped `modelOptions` in `useMemo` to prevent recreation
+- Added `useRef` guard (`hasDetected`) to ensure detection runs once
+- Updated `useEffect` dependency array correctly
+
+## Demo Files
 
 Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
 
-# Learn More
+## Learn More
 
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+- [TanStack Documentation](https://tanstack.com)
+- [Convex TanStack Start Guide](https://docs.convex.dev/quickstart/tanstack-start)
+- [System Architecture](./docs/SYSTEM_ARCHITECTURE.md)
+- [Project Plan](./docs/plan.md)

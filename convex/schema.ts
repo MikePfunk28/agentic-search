@@ -282,4 +282,139 @@ export default defineSchema({
     .index("by_success_rate", ["successRate"])
     .index("by_usage", ["usageCount"])
     .index("by_last_used", ["lastUsed"]),
+
+  // Secure API Key Storage (server-side only, NOT in localStorage!)
+  apiKeys: defineTable({
+    userId: v.string(), // WorkOS user ID
+    configId: v.id("modelConfigurations"),
+    encryptedKey: v.string(), // Encrypted at rest by Convex
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_config", ["userId", "configId"]),
+
+  // Usage Tracking for Fine-tuning
+  usageEvents: defineTable({
+    userId: v.string(),
+    eventType: v.union(
+      v.literal("search"),
+      v.literal("segment_execution"),
+      v.literal("model_call"),
+      v.literal("user_feedback")
+    ),
+    query: v.optional(v.string()),
+    modelUsed: v.optional(v.string()),
+    tokensUsed: v.optional(v.number()),
+    executionTimeMs: v.optional(v.number()),
+    success: v.boolean(),
+    quality: v.optional(v.number()), // 0-1 from ADD discriminator
+    userFeedback: v.optional(v.union(
+      v.literal("positive"),
+      v.literal("negative"),
+      v.literal("neutral")
+    )),
+    metadata: v.optional(v.any()), // Additional context as JSON
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_event_type", ["eventType"])
+    .index("by_created", ["createdAt"])
+    .index("by_user_created", ["userId", "createdAt"]),
+
+  // Fine-tuning Datasets
+  finetuningDatasets: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    description: v.optional(v.string()),
+    format: v.union(
+      v.literal("openai_jsonl"),
+      v.literal("anthropic_jsonl"),
+      v.literal("generic_json")
+    ),
+    eventCount: v.number(),
+    exportedAt: v.number(),
+    s3Url: v.optional(v.string()), // S3 URL for exported dataset
+    metadata: v.optional(v.object({
+      avgQuality: v.optional(v.number()),
+      totalTokens: v.optional(v.number()),
+      modelDistribution: v.optional(v.any()),
+    })),
+  })
+    .index("by_user", ["userId"])
+    .index("by_exported", ["exportedAt"]),
+
+  // Search History (saved searches with results)
+  searchHistory: defineTable({
+    userId: v.string(),
+    query: v.string(),
+    modelUsed: v.string(),
+    results: v.array(v.object({
+      title: v.string(),
+      url: v.string(),
+      snippet: v.string(),
+      addScore: v.optional(v.number()),
+      confidence: v.optional(v.number()),
+    })),
+    segmentCount: v.optional(v.number()),
+    segments: v.optional(v.array(v.any())), // Store segment details
+    executionTimeMs: v.number(),
+    tokensUsed: v.number(),
+    quality: v.optional(v.number()), // ADD discriminator score
+    userApproved: v.optional(v.boolean()), // Did user approve results?
+    userModifications: v.optional(v.any()), // What did user change?
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_created", ["userId", "createdAt"])
+    .index("by_created", ["createdAt"]),
+
+  // Interactive Segment Approvals (human-in-the-loop)
+  segmentApprovals: defineTable({
+    userId: v.string(),
+    searchHistoryId: v.id("searchHistory"),
+    segmentId: v.string(),
+    segmentText: v.string(),
+    originalSegmentText: v.string(), // What AI proposed
+    modifiedSegmentText: v.optional(v.string()), // What user changed it to
+    approved: v.boolean(),
+    rejected: v.boolean(),
+    userFeedback: v.optional(v.string()), // Why user approved/rejected
+    suggestedImprovement: v.optional(v.string()), // User's suggestion
+    segmentType: v.union(
+      v.literal("entity"),
+      v.literal("relation"),
+      v.literal("constraint"),
+      v.literal("intent"),
+      v.literal("context"),
+      v.literal("comparison"),
+      v.literal("synthesis")
+    ),
+    aiConfidence: v.number(), // How confident was AI about this segment?
+    userConfidence: v.optional(v.number()), // How confident is user?
+    createdAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_search", ["searchHistoryId"])
+    .index("by_user_created", ["userId", "createdAt"])
+    .index("by_approved", ["approved"])
+    .index("by_rejected", ["rejected"]),
+
+  // Reasoning Step Approvals (step-by-step validation)
+  reasoningStepApprovals: defineTable({
+    userId: v.string(),
+    searchHistoryId: v.id("searchHistory"),
+    stepNumber: v.number(),
+    stepType: v.string(), // "analysis", "synthesis", "validation", etc.
+    aiReasoning: v.string(), // What AI thought
+    userModification: v.optional(v.string()), // User's correction
+    approved: v.boolean(),
+    shouldRetry: v.boolean(), // Should AI retry this step with user's guidance?
+    userGuidance: v.optional(v.string()), // Instruction for retry
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_search", ["searchHistoryId"])
+    .index("by_search_step", ["searchHistoryId", "stepNumber"]),
 })

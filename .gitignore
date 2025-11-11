@@ -91,3 +91,7 @@ docs/CLAUDE_CODE_INTEGRATION.md
 .env.example
 .gitignore
 docs/AWS_S3_SETUP.md
+SECURITY.md
+IMPLEMENTATION_COMPLETE.md
+docs/SYSTEM_ARCHITECTURE.md
+
