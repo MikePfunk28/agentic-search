@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf-protection";
+import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf-protection.ts";
 
 export const Route = createFileRoute("/api/csrf-token")({
 	server: {

@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection";
-import { ModelConfigManager, ModelProvider } from "@/lib/model-config";
-import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
+} from "@/lib/csrf-protection.ts";
+import { ModelConfigManager, ModelProvider } from "@/lib/model-config.ts";
+import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator.ts";
 
 interface SearchResult {
 	id: string;
@@ -57,17 +57,9 @@ export const Route = createFileRoute("/api/search")({
 						);
 					}
 
-					// Load API key from localStorage if not in env (for cloud providers)
+					// API keys should be configured in model config or environment
 					if (!modelConfig.apiKey && modelConfig.provider !== ModelProvider.OLLAMA && modelConfig.provider !== ModelProvider.LM_STUDIO) {
-						// Import model storage dynamically (server-side only in TanStack Start)
-						const { loadModelConfig } = await import("@/lib/model-storage");
-						const storedConfig = await loadModelConfig(modelProvider);
-						if (storedConfig?.apiKey) {
-							modelConfig = { ...modelConfig, apiKey: storedConfig.apiKey };
-							console.log(`[SearchAPI] Loaded API key from storage for ${modelProvider}`);
-						} else {
-							console.warn(`[SearchAPI] No API key found for ${modelProvider} in storage or environment`);
-						}
+						console.warn(`[SearchAPI] No API key found for ${modelProvider}. Configure in Settings or environment variables.`);
 					}
 
 					// Execute unified search with all advanced features

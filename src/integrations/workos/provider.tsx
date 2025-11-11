@@ -4,16 +4,18 @@ import { addBreadcrumb } from "../../lib/sentry";
 
 const VITE_WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID;
 const VITE_WORKOS_API_HOSTNAME = import.meta.env.VITE_WORKOS_API_HOSTNAME;
+const DISABLE_AUTH = import.meta.env.VITE_DISABLE_AUTH === 'true';
 
 /**
  * WorkOS Authentication Provider
  *
- * This provider is OPTIONAL - when WorkOS env vars are not configured,
- * the app runs without authentication (children are rendered directly).
+ * Authentication behavior:
+ * - If VITE_DISABLE_AUTH=true is set explicitly, runs without authentication (for development/testing)
+ * - If WorkOS env vars are not configured, throws an error (production safety)
+ * - If WorkOS is configured, enforces authentication
  *
  * ⚠️ SECURITY NOTE:
- * This intentional pass-through behavior means client-side auth guards alone
- * are insufficient for protecting resources. Protected routes/components MUST:
+ * Protected routes/components MUST:
  *
  * 1. Use RequireAuth component (src/components/RequireAuth.tsx) to enforce
  *    authentication when WorkOS is configured
@@ -29,11 +31,25 @@ export default function AppWorkOSProvider({
 }) {
 	const navigate = useNavigate();
 
-	// If WorkOS is not configured, render children without auth
-	if (!VITE_WORKOS_CLIENT_ID || !VITE_WORKOS_API_HOSTNAME) {
-		// Use structured logging via Sentry breadcrumbs in production
+	// Handle explicit auth disabling (for development/testing)
+	if (DISABLE_AUTH) {
 		addBreadcrumb(
-			"WorkOS not configured - running without authentication",
+			"Authentication explicitly disabled via VITE_DISABLE_AUTH",
+			"auth",
+			{ environment: import.meta.env.MODE }
+		);
+		if (import.meta.env.DEV) {
+			console.warn("[WorkOS] Authentication DISABLED via VITE_DISABLE_AUTH environment variable");
+		}
+		return <>{children}</>;
+	}
+
+	// If WorkOS is not configured and auth not explicitly disabled, throw error in production
+	if (!VITE_WORKOS_CLIENT_ID || !VITE_WORKOS_API_HOSTNAME) {
+		const error = "WorkOS not configured. Set VITE_WORKOS_CLIENT_ID and VITE_WORKOS_API_HOSTNAME, or set VITE_DISABLE_AUTH=true for development.";
+		
+		addBreadcrumb(
+			"WorkOS configuration missing",
 			"auth",
 			{
 				hasClientId: !!VITE_WORKOS_CLIENT_ID,
@@ -42,12 +58,19 @@ export default function AppWorkOSProvider({
 			}
 		);
 
-		// Keep console.info for development visibility
+		// In development, allow pass-through with warning
 		if (import.meta.env.DEV) {
-			console.info("[WorkOS] Not configured - running without WorkOS auth");
+			console.warn(`[WorkOS] ${error}`);
+			return <>{children}</>;
 		}
 
-		return <>{children}</>;
+		// In production, show error
+		return (
+			<div style={{ padding: '2rem', color: 'red' }}>
+				<h1>Configuration Error</h1>
+				<p>{error}</p>
+			</div>
+		);
 	}
 
 	// If WorkOS is configured, wrap with AuthKitProvider

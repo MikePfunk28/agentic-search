@@ -19,25 +19,44 @@ const server = new McpServer({
 	version: "1.0.0",
 });
 
+// Properly typed MCP tool schema
+interface AddTodoInput {
+	title: string;
+}
+
+interface ToolSchema {
+	title: string;
+	description: string;
+	inputSchema: {
+		type: string;
+		properties: Record<string, any>;
+		required: string[];
+	};
+}
+
+const addTodoSchema: ToolSchema = {
+	title: "Tool to add a todo to a list of todos",
+	description: "Add a todo to a list of todos",
+	inputSchema: {
+		type: "object",
+		properties: {
+			title: {
+				type: "string",
+				description: "The title of the todo",
+			},
+		},
+		required: ["title"],
+	},
+};
+
+const addTodoHandler = ({ title }: AddTodoInput) => ({
+	content: [{ type: "text", text: JSON.stringify(addTodo(title)) }],
+});
+
 server.registerTool(
 	"addTodo",
-	{
-		title: "Tool to add a todo to a list of todos",
-		description: "Add a todo to a list of todos",
-		inputSchema: {
-			type: "object",
-			properties: {
-				title: {
-					type: "string",
-					description: "The title of the todo",
-				},
-			},
-			required: ["title"],
-		},
-	} as any,
-	(({ title }: any) => ({
-		content: [{ type: "text", text: String(addTodo(title)) }],
-	})) as any,
+	addTodoSchema,
+	addTodoHandler,
 );
 
 // server.registerResource(
