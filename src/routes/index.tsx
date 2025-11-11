@@ -210,6 +210,24 @@ function Home() {
 					</button>
 				</div>
 			</section>
+
+			{/* Footer */}
+			<footer className="py-8 px-6 border-t border-slate-700/50">
+				<div className="max-w-7xl mx-auto text-center">
+					<p className="text-gray-400 text-sm">
+						Built with{" "}
+						<a
+							href="https://tanstack.com/start"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors"
+						>
+							TanStack Start
+						</a>
+						{" "}&middot; The modern web framework for React
+					</p>
+				</div>
+			</footer>
 		</div>
 	);
 }

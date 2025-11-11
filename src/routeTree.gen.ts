@@ -14,6 +14,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
+import { Route as ApiCsrfTokenRouteImport } from './routes/api/csrf-token'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as ApiRpcSplatRouteImport } from './routes/api.rpc.$'
@@ -43,6 +44,11 @@ const ApiSearchRoute = ApiSearchRouteImport.update({
   path: '/api/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCsrfTokenRoute = ApiCsrfTokenRouteImport.update({
+  id: '/api/csrf-token',
+  path: '/api/csrf-token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/csrf-token': typeof ApiCsrfTokenRoute
   '/api/search': typeof ApiSearchRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/csrf-token': typeof ApiCsrfTokenRoute
   '/api/search': typeof ApiSearchRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/csrf-token': typeof ApiCsrfTokenRoute
   '/api/search': typeof ApiSearchRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/$'
     | '/api/chat'
+    | '/api/csrf-token'
     | '/api/search'
     | '/api/rpc/$'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/$'
     | '/api/chat'
+    | '/api/csrf-token'
     | '/api/search'
     | '/api/rpc/$'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/$'
     | '/api/chat'
+    | '/api/csrf-token'
     | '/api/search'
     | '/api/rpc/$'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiCsrfTokenRoute: typeof ApiCsrfTokenRoute
   ApiSearchRoute: typeof ApiSearchRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
 }
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/csrf-token': {
+      id: '/api/csrf-token'
+      path: '/api/csrf-token'
+      fullPath: '/api/csrf-token'
+      preLoaderRoute: typeof ApiCsrfTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiCsrfTokenRoute: ApiCsrfTokenRoute,
   ApiSearchRoute: ApiSearchRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,
 }

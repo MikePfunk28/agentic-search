@@ -168,27 +168,30 @@ export function getBestLMStudioModel(models: DetectedModel[]): DetectedModel | n
 
 /**
  * Get cloud provider models (when API keys are configured)
+ * Updated with real 2024/2025 model IDs
  */
 export function getCloudProviderModels(provider: ModelProvider): DetectedModel[] {
   const cloudModels: Record<Exclude<ModelProvider, ModelProvider.OLLAMA | ModelProvider.LM_STUDIO>, DetectedModel[]> = {
     [ModelProvider.OPENAI]: [
-      { provider: ModelProvider.OPENAI, modelId: 'gpt-5', displayName: 'GPT-5', recommended: true },
-      { provider: ModelProvider.OPENAI, modelId: 'gpt-5-mini', displayName: 'GPT-5 Mini' },
-      { provider: ModelProvider.OPENAI, modelId: 'gpt-5-nano', displayName: 'GPT-5 Nano' },
+      { provider: ModelProvider.OPENAI, modelId: 'gpt-4o', displayName: 'GPT-4o', recommended: true },
+      { provider: ModelProvider.OPENAI, modelId: 'gpt-4o-mini', displayName: 'GPT-4o Mini' },
+      { provider: ModelProvider.OPENAI, modelId: 'gpt-4-turbo', displayName: 'GPT-4 Turbo' },
+      { provider: ModelProvider.OPENAI, modelId: 'gpt-3.5-turbo', displayName: 'GPT-3.5 Turbo' },
     ],
     [ModelProvider.ANTHROPIC]: [
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-sonnet-4.5', displayName: 'Claude Sonnet 4.5', recommended: true },
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-haiku-4.5', displayName: 'Claude Haiku 4.5' },
-      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-opus-4.1', displayName: 'Claude Opus 4.1' },
+      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-5-sonnet-20241022', displayName: 'Claude 3.5 Sonnet', recommended: true },
+      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-5-haiku-20241022', displayName: 'Claude 3.5 Haiku' },
+      { provider: ModelProvider.ANTHROPIC, modelId: 'claude-3-opus-20240229', displayName: 'Claude 3 Opus' },
     ],
     [ModelProvider.GOOGLE]: [
-      { provider: ModelProvider.GOOGLE, modelId: 'gemini-2.0-flash-exp', displayName: 'Gemini 2.0 Flash', recommended: true },
-      { provider: ModelProvider.GOOGLE, modelId: 'gemini-2.0-pro', displayName: 'Gemini 2.0 Pro' },
+      { provider: ModelProvider.GOOGLE, modelId: 'gemini-2.0-flash-exp', displayName: 'Gemini 2.0 Flash (Experimental)', recommended: true },
+      { provider: ModelProvider.GOOGLE, modelId: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro' },
+      { provider: ModelProvider.GOOGLE, modelId: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash' },
     ],
     [ModelProvider.AZURE_OPENAI]: [
-      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-5', displayName: 'GPT-5 (Azure)', recommended: true },
-      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-5-mini', displayName: 'GPT-5 Mini (Azure)' },
-      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-5-nano', displayName: 'GPT-5 Nano (Azure)' },
+      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-4o', displayName: 'GPT-4o (Azure)', recommended: true },
+      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-4o-mini', displayName: 'GPT-4o Mini (Azure)' },
+      { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-4-turbo', displayName: 'GPT-4 Turbo (Azure)' },
     ],
   };
 

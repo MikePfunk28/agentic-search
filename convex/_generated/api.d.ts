@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as documents from "../documents.js";
 import type * as http from "../http.js";
 import type * as lib_ocr_processDocument from "../lib/ocr/processDocument.js";
 import type * as mcp from "../mcp.js";
@@ -31,6 +32,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  documents: typeof documents;
   http: typeof http;
   "lib/ocr/processDocument": typeof lib_ocr_processDocument;
   mcp: typeof mcp;

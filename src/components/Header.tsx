@@ -4,30 +4,52 @@ import {
 	Menu,
 	Settings,
 	X,
+	Key,
 } from "lucide-react";
 import { useState } from "react";
 import WorkOSHeader from "./workos-user.tsx";
+import { SettingsModal } from "./SettingsModal";
 
 export default function Header() {
 	const [isOpen, setIsOpen] = useState(false);
+	const [showSettings, setShowSettings] = useState(false);
 
 	return (
 		<>
-			<header className="p-4 flex items-center bg-gray-800 text-white shadow-lg">
+			<header className="p-4 flex items-center justify-between bg-gray-800 text-white shadow-lg">
+				<div className="flex items-center">
+					<button
+						type="button"
+						onClick={() => setIsOpen(true)}
+						className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+						aria-label="Open menu"
+					>
+						<Menu size={24} />
+					</button>
+					<h1 className="ml-4 text-xl font-semibold">
+						<Link to="/" className="hover:text-primary-400 transition-colors">
+							Agentic Search
+						</Link>
+					</h1>
+				</div>
+
+				{/* Quick Settings Button */}
 				<button
 					type="button"
-					onClick={() => setIsOpen(true)}
-					className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-					aria-label="Open menu"
+					onClick={() => setShowSettings(true)}
+					className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors"
+					aria-label="Configure API Keys"
 				>
-					<Menu size={24} />
+					<Key size={18} />
+					<span className="font-medium">Configure Models</span>
 				</button>
-				<h1 className="ml-4 text-xl font-semibold">
-					<Link to="/" className="hover:text-primary-400 transition-colors">
-						Agentic Search
-					</Link>
-				</h1>
 			</header>
+
+			{/* Settings Modal */}
+			<SettingsModal
+				isOpen={showSettings}
+				onClose={() => setShowSettings(false)}
+			/>
 
 			<aside
 				className={`fixed top-0 left-0 h-full w-80 bg-gray-900 text-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${

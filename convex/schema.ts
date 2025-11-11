@@ -139,4 +139,35 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"]),
+
+  // Document Storage (Convex + S3 hybrid)
+  documents: defineTable({
+    name: v.string(),
+    type: v.string(), // pdf, docx, txt, md, etc.
+    size: v.number(),
+    content: v.optional(v.string()), // For small text files (<1MB)
+    s3Url: v.optional(v.string()), // For large files in S3
+    metadata: v.optional(v.object({
+      author: v.optional(v.string()),
+      createdAt: v.optional(v.string()),
+      tags: v.optional(v.array(v.string())),
+    })),
+    uploadedAt: v.number(),
+    processedAt: v.optional(v.number()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("processed"),
+      v.literal("failed")
+    ),
+    chunks: v.array(v.object({
+      text: v.string(),
+      embedding: v.optional(v.array(v.number())),
+      page: v.optional(v.number()),
+      chunkIndex: v.number(),
+    })),
+  })
+    .index("by_status", ["status"])
+    .index("by_uploaded", ["uploadedAt"])
+    .index("by_processed", ["processedAt"]),
 })

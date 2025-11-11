@@ -4,7 +4,7 @@ import {
 	validateCsrfRequest,
 } from "@/lib/csrf-protection";
 import { ModelConfigManager, ModelProvider } from "@/lib/model-config";
-import { agenticSearch } from "@/lib/agentic-search";
+import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
 
 interface SearchResult {
 	id: string;
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/search")({
 				}
 
 				try {
-					const { query, modelProvider = "ollama" } = await request.json();
+					const { query, modelProvider = "ollama", useParallelModels = true, useInterleavedReasoning = true } = await request.json();
 
 					if (!query || typeof query !== "string") {
 						return new Response(
@@ -45,11 +45,11 @@ export const Route = createFileRoute("/api/search")({
 
 					// Get model configuration
 					const modelManager = new ModelConfigManager();
-					const modelConfig = modelManager.getConfig(modelProvider as ModelProvider) || modelManager.getActiveConfig();
+					let modelConfig = modelManager.getConfig(modelProvider as ModelProvider) || modelManager.getActiveConfig();
 
 					if (!modelConfig) {
 						return new Response(
-							JSON.stringify({ error: "No valid model configuration found" }),
+							JSON.stringify({ error: "No valid model configuration found. Please configure a model in Settings." }),
 							{
 								status: 500,
 								headers: { "Content-Type": "application/json" },
@@ -57,26 +57,38 @@ export const Route = createFileRoute("/api/search")({
 						);
 					}
 
-					// Execute agentic search using the real engine
-					console.log(`[AgenticSearch] Starting search for: "${query}" using ${modelConfig.provider}:${modelConfig.model}`);
+					// Load API key from localStorage if not in env (for cloud providers)
+					if (!modelConfig.apiKey && modelConfig.provider !== ModelProvider.OLLAMA && modelConfig.provider !== ModelProvider.LM_STUDIO) {
+						// Import model storage dynamically (server-side only in TanStack Start)
+						const { loadModelConfig } = await import("@/lib/model-storage");
+						const storedConfig = await loadModelConfig(modelProvider);
+						if (storedConfig?.apiKey) {
+							modelConfig = { ...modelConfig, apiKey: storedConfig.apiKey };
+							console.log(`[SearchAPI] Loaded API key from storage for ${modelProvider}`);
+						} else {
+							console.warn(`[SearchAPI] No API key found for ${modelProvider} in storage or environment`);
+						}
+					}
 
-					const searchResult = await agenticSearch.search(query, modelConfig);
+					// Execute unified search with all advanced features
+					console.log(`[UnifiedSearch] Starting search for: "${query}" using ${modelConfig.provider}:${modelConfig.model}`);
+					console.log(`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}`);
 
-					console.log(`[AgenticSearch] Completed search with ${searchResult.results.length} results`);
+					const searchResult = await unifiedSearchOrchestrator.search(query, modelConfig, {
+						useParallelModels,
+						useInterleavedReasoning,
+						enableValidation: true,
+						parallelModelConfigs: [], // Can be populated with additional models if needed
+					});
 
-					const timestamp = new Date().toISOString();
+					console.log(`[UnifiedSearch] Completed search with ${searchResult.results.length} results`);
+					console.log(`[UnifiedSearch] Quality: ${searchResult.addMetrics.overallScore.toFixed(2)}, Tokens: ${searchResult.totalTokens}`);
 
 					return new Response(
 						JSON.stringify({
 							query,
-							results: searchResult.results,
+							...searchResult,
 							totalResults: searchResult.results.length,
-							reasoning: searchResult.reasoning,
-							strategy: searchResult.strategy,
-							quality: searchResult.quality,
-							timestamp,
-							modelUsed: modelConfig.model,
-							provider: modelConfig.provider,
 						}),
 						{
 							status: 200,

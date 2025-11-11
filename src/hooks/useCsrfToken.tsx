@@ -33,28 +33,53 @@ function getCsrfTokenFromCookies(
 export function useCsrfToken(cookieName: string = "csrf-token") {
 	const [token, setToken] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [isInitialized, setIsInitialized] = useState(false);
 
 	useEffect(() => {
+		if (isInitialized) return;
+
 		const csrfToken = getCsrfTokenFromCookies(cookieName);
 
 		if (csrfToken) {
 			setToken(csrfToken);
 			setError(null);
+			setIsInitialized(true);
 		} else {
-			setToken(null);
-			setError("CSRF token not found in cookies");
+			// Fetch token from server if not in cookie
+			fetch("/api/csrf-token")
+				.then((res) => res.json())
+				.then((data) => {
+					// Cookie is set by server, read it
+					const newToken = getCsrfTokenFromCookies(cookieName);
+					if (newToken) {
+						setToken(newToken);
+						setError(null);
+					} else {
+						setError("Failed to initialize CSRF token");
+					}
+					setIsInitialized(true);
+				})
+				.catch((err) => {
+					console.error("Failed to fetch CSRF token:", err);
+					setError("Failed to fetch CSRF token");
+					setIsInitialized(true);
+				});
 		}
+	}, [cookieName, isInitialized]);
 
-		// Watch for cookie changes (token rotation)
+	// Watch for cookie changes (token rotation)
+	useEffect(() => {
+		if (!isInitialized) return;
+
 		const interval = setInterval(() => {
 			const currentToken = getCsrfTokenFromCookies(cookieName);
 			if (currentToken !== token) {
 				setToken(currentToken);
 			}
-		}, 1000); // Check every second
+		}, 1000);
 
 		return () => clearInterval(interval);
-	}, [cookieName, token]);
+	}, [cookieName, token, isInitialized]);
 
 	return { token, error };
 }

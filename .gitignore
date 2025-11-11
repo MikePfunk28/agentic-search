@@ -87,3 +87,7 @@ WARP.md
 claude2.md
 src/components/AgenticChat.tsx
 docs/IMPLEMENTATION_STATUS.md
+docs/CLAUDE_CODE_INTEGRATION.md
+.env.example
+.gitignore
+docs/AWS_S3_SETUP.md

@@ -38,42 +38,50 @@ export const ModelConfigSchema = z.object({
 
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 
+// Available models per provider (2024/2025 latest - Real model IDs)
+export const AVAILABLE_MODELS = {
+	OpenAI: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
+	Anthropic: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
+	Google: ["gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"],
+	Ollama: ["qwen3:1.7b", "qwen3:4b", "gemma3:270m", "gemma3:1b", "gemma3:4b"],
+} as const;
+
 // Provider-specific default configurations
 export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 	[ModelProvider.OPENAI]: {
 		baseUrl: "https://api.openai.com/v1",
-		model: "gpt-4-turbo-preview",
+		model: "gpt-4o",
 		temperature: 0.7,
-		maxTokens: 4096,
+		maxTokens: 16000,
 	},
 	[ModelProvider.ANTHROPIC]: {
 		baseUrl: "https://api.anthropic.com",
 		model: "claude-3-5-sonnet-20241022",
 		temperature: 0.7,
-		maxTokens: 4096,
+		maxTokens: 8192,
 	},
 	[ModelProvider.GOOGLE]: {
 		baseUrl: "https://generativelanguage.googleapis.com/v1",
-		model: "gemini-2.5-pro",
+		model: "gemini-2.0-flash-exp",
 		temperature: 0.7,
-		maxTokens: 2048,
+		maxTokens: 8192,
 	},
 	[ModelProvider.OLLAMA]: {
 		baseUrl: "http://localhost:11434/v1",
-		model: "Qwen3:4b",
+		model: "qwen3:4b",
 		temperature: 0.7,
-		maxTokens: 16000,
+		maxTokens: 32000,
 	},
 	[ModelProvider.LM_STUDIO]: {
 		baseUrl: "http://localhost:1234/v1",
-		model: "local-model",
+		model: "qwen3:4b",
 		temperature: 0.7,
-		maxTokens: 2048,
+		maxTokens: 32000,
 	},
 	[ModelProvider.AZURE_OPENAI]: {
-		model: "gpt-5",
+		model: "gpt-4o",
 		temperature: 0.7,
-		maxTokens: 4096,
+		maxTokens: 16000,
 	},
 };
 
@@ -87,6 +95,34 @@ export class ModelConfigManager {
 
 	constructor() {
 		this.loadFromEnvironment();
+		
+		// If no configurations loaded, initialize with default Ollama
+		if (this.configs.size === 0) {
+			this.initializeDefaults();
+		}
+	}
+	
+	/**
+	 * Initialize with default Ollama configuration
+	 */
+	private initializeDefaults(): void {
+		try {
+			const defaults = ProviderDefaults[ModelProvider.OLLAMA];
+			const config: ModelConfig = {
+				provider: ModelProvider.OLLAMA,
+				baseUrl: defaults.baseUrl || "http://localhost:11434/v1",
+				model: defaults.model || "qwen3:4b",
+				temperature: defaults.temperature || 0.7,
+				maxTokens: defaults.maxTokens || 32000,
+				timeout: 60000,
+				enableStreaming: false,
+			};
+			this.addConfig("ollama", config);
+			this.setActiveConfig("ollama");
+			console.log("[ModelConfig] Initialized with default Ollama configuration");
+		} catch (error) {
+			console.error("Failed to initialize default configuration:", error);
+		}
 	}
 
 	/**

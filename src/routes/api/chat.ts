@@ -47,16 +47,29 @@ export const Route = createFileRoute("/api/chat")({
 
 					// Get model configuration
 					const modelManager = new ModelConfigManager();
-					const modelConfig = modelManager.getConfig(modelProvider as ModelProvider) || modelManager.getActiveConfig();
+					let modelConfig = modelManager.getConfig(modelProvider as ModelProvider) || modelManager.getActiveConfig();
 
 					if (!modelConfig) {
 						return new Response(
-							JSON.stringify({ error: "No valid model configuration found" }),
+							JSON.stringify({ error: "No valid model configuration found. Please configure a model in Settings." }),
 							{
 								status: 500,
 								headers: { "Content-Type": "application/json" },
 							},
 						);
+					}
+
+					// Load API key from localStorage if not in env (for cloud providers)
+					if (!modelConfig.apiKey && modelConfig.provider !== ModelProvider.OLLAMA && modelConfig.provider !== ModelProvider.LM_STUDIO) {
+						// Import model storage dynamically (server-side only in TanStack Start)
+						const { loadModelConfig } = await import("@/lib/model-storage");
+						const storedConfig = await loadModelConfig(modelProvider);
+						if (storedConfig?.apiKey) {
+							modelConfig = { ...modelConfig, apiKey: storedConfig.apiKey };
+							console.log(`[ChatAPI] Loaded API key from storage for ${modelProvider}`);
+						} else {
+							console.warn(`[ChatAPI] No API key found for ${modelProvider} in storage or environment`);
+						}
 					}
 
 					// Create dynamic model instance based on provider
