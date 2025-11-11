@@ -1,4 +1,4 @@
-import "@/polyfill";
+import "@/polyfill.ts";
 
 import { experimental_SmartCoercionPlugin as SmartCoercionPlugin } from "@orpc/json-schema";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
@@ -11,9 +11,9 @@ import {
 	ensureCsrfToken,
 	requiresCsrfProtection,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection";
-import router from "@/orpc/router";
-import { TodoSchema } from "@/orpc/schema";
+} from "@/lib/csrf-protection.ts";
+import router from "@/orpc/router.ts";
+import { TodoSchema } from "@/orpc/schema.ts";
 
 const handler = new OpenAPIHandler(router, {
 	interceptors: [

@@ -5,8 +5,8 @@ import { createOpenAI } from "@ai-sdk/openai";
 import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection";
-import { ModelConfigManager, ModelProvider } from "@/lib/model-config";
+} from "@/lib/csrf-protection.ts";
+import { ModelConfigManager, ModelProvider } from "@/lib/model-config.ts";
 
 const SYSTEM_PROMPT = `You are an intelligent AI assistant with access to agentic search capabilities. You can help users with:
 
@@ -59,17 +59,9 @@ export const Route = createFileRoute("/api/chat")({
 						);
 					}
 
-					// Load API key from localStorage if not in env (for cloud providers)
+					// API keys should be configured in model config or environment
 					if (!modelConfig.apiKey && modelConfig.provider !== ModelProvider.OLLAMA && modelConfig.provider !== ModelProvider.LM_STUDIO) {
-						// Import model storage dynamically (server-side only in TanStack Start)
-						const { loadModelConfig } = await import("@/lib/model-storage");
-						const storedConfig = await loadModelConfig(modelProvider);
-						if (storedConfig?.apiKey) {
-							modelConfig = { ...modelConfig, apiKey: storedConfig.apiKey };
-							console.log(`[ChatAPI] Loaded API key from storage for ${modelProvider}`);
-						} else {
-							console.warn(`[ChatAPI] No API key found for ${modelProvider} in storage or environment`);
-						}
+						console.warn(`[ChatAPI] No API key found for ${modelProvider}. Configure in Settings or environment variables.`);
 					}
 
 					// Create dynamic model instance based on provider

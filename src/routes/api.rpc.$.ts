@@ -1,4 +1,4 @@
-import "@/polyfill";
+import "@/polyfill.ts";
 
 import { RPCHandler } from "@orpc/server/fetch";
 import { createFileRoute } from "@tanstack/react-router";
@@ -7,8 +7,8 @@ import {
 	ensureCsrfToken,
 	requiresCsrfProtection,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection";
-import router from "@/orpc/router";
+} from "@/lib/csrf-protection.ts";
+import router from "@/orpc/router.ts";
 
 const handler = new RPCHandler(router);
 

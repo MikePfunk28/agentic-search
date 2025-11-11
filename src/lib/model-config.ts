@@ -46,6 +46,11 @@ export const AVAILABLE_MODELS = {
 	Ollama: ["qwen3:1.7b", "qwen3:4b", "gemma3:270m", "gemma3:1b", "gemma3:4b"],
 } as const;
 
+// Export type for type-safe model selection
+export type AvailableModels = typeof AVAILABLE_MODELS;
+export type ModelProviderName = keyof AvailableModels;
+export type ModelForProvider<T extends ModelProviderName> = AvailableModels[T][number];
+
 // Provider-specific default configurations
 export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 	[ModelProvider.OPENAI]: {

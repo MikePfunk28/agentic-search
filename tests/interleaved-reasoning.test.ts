@@ -4,7 +4,7 @@
  * Tests security, validation, and reasoning capabilities
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { InterleavedReasoningEngine } from "../src/lib/interleaved-reasoning-engine";
 
 describe("InterleavedReasoningEngine", () => {

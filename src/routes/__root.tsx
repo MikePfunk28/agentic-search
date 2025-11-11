@@ -129,7 +129,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<head>
 				<HeadContent />
 			</head>
-			<body suppressHydrationWarning>
+			<body>
 				<Sentry.ErrorBoundary fallback={<div>An error occurred. Please refresh the page.</div>}>
 					<ConvexProvider>
 						<WorkOSProvider>

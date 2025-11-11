@@ -14,9 +14,15 @@ import type {
 import { agenticSearch } from "../agentic-search";
 import type { SearchResult } from "../types";
 
+interface VerificationCache {
+  verified: boolean;
+  timestamp: number;
+}
+
 export class SegmentExecutor {
   private modelConfig: ModelConfig;
-  private verifiedModels = new Map<string, boolean>();
+  private verifiedModels = new Map<string, VerificationCache>();
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor(modelConfig: ModelConfig) {
     this.modelConfig = modelConfig;
@@ -109,14 +115,23 @@ export class SegmentExecutor {
 
   /**
    * VERIFY MODEL CONNECTION - Send test query to confirm it works
+   * Cache has 5-minute TTL to re-verify if model becomes unavailable
    */
   private async verifyAndSelectModel(segment: QuerySegment): Promise<ModelConfig> {
     // Check if we already verified this model
     const cacheKey = `${this.modelConfig.provider}:${this.modelConfig.model}`;
+    const cached = this.verifiedModels.get(cacheKey);
 
-    if (this.verifiedModels.has(cacheKey)) {
-      console.log(`[Executor] Using cached verification for ${cacheKey}`);
-      return this.modelConfig;
+    // Check cache with TTL
+    if (cached) {
+      const age = Date.now() - cached.timestamp;
+      if (age < this.CACHE_TTL_MS) {
+        console.log(`[Executor] Using cached verification for ${cacheKey} (age: ${Math.floor(age / 1000)}s)`);
+        return this.modelConfig;
+      } else {
+        console.log(`[Executor] Cache expired for ${cacheKey}, re-verifying...`);
+        this.verifiedModels.delete(cacheKey);
+      }
     }
 
     console.log(`[Executor] Verifying model connection: ${cacheKey}...`);
@@ -133,8 +148,11 @@ export class SegmentExecutor {
         console.log(`✓ [Executor] Model ${cacheKey} verified successfully!`);
         console.log(`✓ [Executor] Test response: "${response.substring(0, 50)}..."`);
 
-        // Cache successful verification
-        this.verifiedModels.set(cacheKey, true);
+        // Cache successful verification with timestamp
+        this.verifiedModels.set(cacheKey, {
+          verified: true,
+          timestamp: Date.now(),
+        });
 
         return testConfig;
       } else {

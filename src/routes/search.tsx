@@ -38,7 +38,7 @@ function SearchPage() {
 			// Get CSRF token from cookie
 			const csrfToken = document.cookie
 				.split("; ")
-				.find((row) => row.startsWith("csrfToken="))
+				.find((row) => row.startsWith("csrf-token="))
 				?.split("=")[1];
 
 			if (!csrfToken) {

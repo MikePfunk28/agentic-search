@@ -12,7 +12,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
-import { useCsrfToken } from "@/hooks/useCsrfToken";
+import { useCsrfToken } from "../hooks/useCsrfToken.tsx";
 import { EnhancedModelSelector } from "./EnhancedModelSelector";
 import { ResultsList } from "./ResultsList";
 import { SecurityBanner } from "./SecurityBanner";
@@ -291,14 +291,18 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 									? "bg-slate-800 text-white"
 									: "bg-primary-600 text-white"
 							}`}>
-								<div key={index} className="prose prose-sm dark:prose-invert max-w-none">
-													<ReactMarkdown
-														remarkPlugins={[remarkGfm]}
-														rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeHighlight]}
-													>
-														{part.text}
-													</ReactMarkdown>
-												</div>
+								{message.parts.map((part, index) => {
+									if (part.type === "text") {
+										return (
+											<div key={index} className="prose prose-sm dark:prose-invert max-w-none">
+												<ReactMarkdown
+													remarkPlugins={[remarkGfm]}
+													rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeHighlight]}
+												>
+													{part.text}
+												</ReactMarkdown>
+											</div>
+										);
 									}
 									return null;
 								})}

@@ -209,8 +209,17 @@ Build an intelligent agentic search platform with multi-model support (local + c
 - [x] **TanStack devtools menu appearing** (removed TanStackDevtools component)
 - [x] **CSRF 403 errors on /api/chat** (created /api/csrf-token endpoint + useCsrfToken hook)
 - [x] **Infinite Ollama detection loop** (fixed with useMemo + useRef guard)
-- [x] **Hydration warnings** (added suppressHydrationWarning to body tag)
-- [ ] ModelConfigManager not connected to AI SDK
+- [x] **Hydration warnings** (removed suppressHydrationWarning, fixed ReactMarkdown plugin order)
+- [x] **ReactMarkdown build error** (fixed remarkGfm in wrong plugin array)
+- [x] **Vite production build import errors** (added .ts/.tsx extensions to all local imports)
+- [x] **ADD discriminator not implemented** (built real adversarial validation with 5 parallel discriminators)
+- [x] **Model verification cache missing TTL** (added 5-minute cache expiration)
+- [x] **MCP type bypasses with 'as any'** (properly typed tool handlers)
+- [x] **ParallelModelOrchestrator Ollama-only** (refactored to support all providers)
+- [x] **Auth not explicitly controlled** (added VITE_DISABLE_AUTH env var)
+- [x] **tsconfig.json invalid ignoreDeprecations** (removed deprecated option)
+- [x] **Missing useCsrfToken import extension** (fixed for Vite SSR build)
+- [x] ModelConfigManager connected to AI SDK (types exported, end-to-end verified)
 - [x] No Convex schema for user data (comprehensive schema created)
 - [ ] Missing wrangler.toml configuration
 
@@ -286,10 +295,18 @@ Total Estimated Time: 18-28 days
 - [x] 6. Fix CSRF 403 errors (**DONE: /api/csrf-token endpoint**)
 - [x] 7. Fix infinite Ollama detection loop (**DONE: useMemo + useRef**)
 - [x] 8. Document complete system architecture (**DONE: SYSTEM_ARCHITECTURE.md**)
+- [x] 9. **Implement ADD discriminator** (**DONE: 5 parallel discriminators with adversarial detection**)
+- [x] 10. **Build researcher-style results storage** (**DONE: ResearchStorage with annotations, indexing, 4 export formats**)
+- [x] 11. **Fix type safety issues** (**DONE: removed 'as any', added cache TTL, proper MCP typing**)
+- [x] 12. **Refactor ParallelModelOrchestrator** (**DONE: supports OpenAI, Anthropic, Google, Ollama, Azure**)
+- [x] 13. **Add explicit auth control** (**DONE: VITE_DISABLE_AUTH with 3-tier behavior**)
+- [x] 14. **Fix all build errors** (**DONE: Vite SSR imports, tsconfig, ReactMarkdown**)
+- [x] 15. **Build SegmentApprovalModal.tsx** (**DONE: interactive segment control with QuerySegment types**)
+- [x] 16. **Build SearchHistoryPage.tsx** (**DONE: browse/filter/export past searches**)
+- [x] 17. **Export model types** (**DONE: ModelProvider, AvailableModels types exported**)
+- [x] 18. **Production build passing** (**DONE: builds successfully, 751KB main.js, 376KB server.js**)
 
 ### In Progress 🔵
-- [ ] 9. **Build SegmentApprovalModal.tsx** - Interactive segment approval UI
-- [ ] 10. **Build SearchHistoryPage.tsx** - Browse past searches with results
 - [ ] 11. **Create /api/search/interactive** - Segment proposal endpoint
 - [ ] 12. **Create /api/search/execute** - Execute approved segments
 - [ ] 13. **Build ComparisonDashboard.tsx** - Side-by-side results comparison
