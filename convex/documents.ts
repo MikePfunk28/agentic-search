@@ -22,7 +22,12 @@ export const uploadDocument = mutation({
 		})),
 	},
 	handler: async (ctx, args) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+    	if (!userIdentity) {
+      		throw new Error("Authentication required");
+    }
 		const documentId = await ctx.db.insert("documents", {
+			userId: userIdentity.subject,
 			name: args.name,
 			type: args.type,
 			size: args.size,
@@ -51,6 +56,15 @@ export const processDocument = mutation({
 		})),
 	},
 	handler: async (ctx, args) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+		if (!userIdentity) {
+		throw new Error("Authentication required");
+		}
+
+		const document = await ctx.db.get(args.documentId);
+		if (!document || document.userId !== userIdentity.subject) {
+		throw new Error("Unauthorized: You do not own this document");
+		}
 		await ctx.db.patch(args.documentId, {
 			chunks: args.chunks,
 			processedAt: Date.now(),
@@ -81,7 +95,7 @@ export const searchDocuments = query({
 				return (
 					doc.name.toLowerCase().includes(searchLower) ||
 					doc.content?.toLowerCase().includes(searchLower) ||
-					doc.chunks.some((chunk) => 
+					doc.chunks.some((chunk) =>
 						chunk.text.toLowerCase().includes(searchLower)
 					)
 				);

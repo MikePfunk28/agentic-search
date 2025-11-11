@@ -287,7 +287,8 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 										return (
 											<div key={index} className="prose prose-sm dark:prose-invert max-w-none">
 												<ReactMarkdown
-													rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeHighlight, remarkGfm]}
+													remarkPlugins={[remarkGfm]}
+													rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeHighlight]}
 												>
 													{part.text}
 												</ReactMarkdown>

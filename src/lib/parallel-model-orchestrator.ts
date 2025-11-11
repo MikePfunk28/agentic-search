@@ -1,24 +1,20 @@
 /**
  * Parallel Model Orchestrator
  * 
- * Runs multiple small models in parallel to compare/contrast responses.
+ * Runs multiple models in parallel to compare/contrast responses.
  * Uses prompt chaining to refine outputs through multiple reasoning steps.
- * 
- * Supported models:
- * - qwen3:1.7b (ultra-lightweight reasoning)
- * - gemma3:1b (compact general purpose)
- * - gemma3:270m (nano model for quick validation)
- * - qwen3:4b (orchestrator for interleaved reasoning)
+ * Supports ANY model provider (OpenAI, Anthropic, Google, Ollama, LM Studio, Azure)
  */
 
 import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import type { ModelConfig } from "./model-config";
 
 export interface ParallelModelConfig {
 	name: string;
-	model: string;
-	temperature?: number;
-	maxTokens?: number;
+	config: ModelConfig;
 	role: "validator" | "reasoner" | "synthesizer" | "orchestrator";
 }
 
@@ -40,51 +36,84 @@ export interface ParallelPromptResult {
 }
 
 /**
- * Default parallel model configurations
+ * Default parallel model configurations for Ollama
+ * Users can provide their own configs for any provider
  */
 export const DEFAULT_PARALLEL_MODELS: ParallelModelConfig[] = [
 	{
 		name: "qwen3-1.7b",
-		model: "qwen3:1.7b",
-		temperature: 0.3,
-		maxTokens: 500,
+		config: {
+			provider: "ollama" as const,
+			model: "qwen3:1.7b",
+			baseUrl: "http://localhost:11434/v1",
+			temperature: 0.3,
+			maxTokens: 500,
+			timeout: 60000,
+			enableStreaming: false,
+		},
 		role: "validator",
 	},
 	{
 		name: "gemma3-1b",
-		model: "gemma3:1b",
-		temperature: 0.5,
-		maxTokens: 500,
+		config: {
+			provider: "ollama" as const,
+			model: "gemma3:1b",
+			baseUrl: "http://localhost:11434/v1",
+			temperature: 0.5,
+			maxTokens: 500,
+			timeout: 60000,
+			enableStreaming: false,
+		},
 		role: "reasoner",
-	},
-	{
-		name: "gemma3-270m",
-		model: "gemma3:270m",
-		temperature: 0.2,
-		maxTokens: 300,
-		role: "validator",
 	},
 ];
 
-export const ORCHESTRATOR_MODEL: ParallelModelConfig = {
-	name: "qwen3-4b",
-	model: "qwen3:4b",
-	temperature: 0.7,
-	maxTokens: 1000,
-	role: "orchestrator",
-};
-
 export class ParallelModelOrchestrator {
-	private ollama: ReturnType<typeof createOpenAI>;
-	private baseUrl: string;
+	private modelConfigs: Map<string, ModelConfig> = new Map();
 
-	constructor(baseUrl: string = "http://localhost:11434") {
-		this.baseUrl = baseUrl;
-		// Use OpenAI-compatible API for Ollama
-		this.ollama = createOpenAI({
-			baseURL: `${baseUrl}/v1`,
-			apiKey: 'ollama', // Ollama doesn't require a real API key
-		});
+	constructor(configs?: ParallelModelConfig[]) {
+		// Initialize with provided configs or defaults
+		const modelsToUse = configs || DEFAULT_PARALLEL_MODELS;
+		for (const parallelConfig of modelsToUse) {
+			this.modelConfigs.set(parallelConfig.name, parallelConfig.config);
+		}
+	}
+
+	/**
+	 * Create provider-specific model instance
+	 */
+	private createModelInstance(config: ModelConfig): any {
+		switch (config.provider) {
+			case "openai":
+				return createOpenAI({
+					baseURL: config.baseUrl,
+					apiKey: config.apiKey,
+				})(config.model);
+			case "anthropic":
+				return createAnthropic({
+					baseURL: config.baseUrl,
+					apiKey: config.apiKey,
+				})(config.model);
+			case "google":
+				return createGoogleGenerativeAI({
+					baseURL: config.baseUrl,
+					apiKey: config.apiKey,
+				})(config.model);
+			case "ollama":
+			case "lm_studio":
+				// Use OpenAI-compatible API
+				return createOpenAI({
+					baseURL: config.baseUrl,
+					apiKey: config.apiKey || "local", // Local models don't need real keys
+				})(config.model);
+			case "azure_openai":
+				return createOpenAI({
+					baseURL: config.baseUrl,
+					apiKey: config.apiKey,
+				})(config.model);
+			default:
+				throw new Error(`Unsupported provider: ${config.provider}`);
+		}
 	}
 
 	/**
@@ -161,36 +190,39 @@ export class ParallelModelOrchestrator {
 	 */
 	private async executeModel(
 		prompt: string,
-		config: ParallelModelConfig,
+		parallelConfig: ParallelModelConfig,
 	): Promise<ModelResponse> {
 		const startTime = Date.now();
+		const config = parallelConfig.config;
 
 		try {
+			const modelInstance = this.createModelInstance(config);
+			
 			const result = await generateText({
-				model: this.ollama(config.model),
+				model: modelInstance,
 				prompt,
-				temperature: config.temperature ?? 0.7,
-				maxTokens: config.maxTokens ?? 500,
+				temperature: config.temperature,
+				maxTokens: config.maxTokens,
 			});
 
 			const processingTime = Date.now() - startTime;
 
 			// Calculate confidence based on response length and coherence
-			const confidence = this.estimateConfidence(result.text, config.role);
+			const confidence = this.estimateConfidence(result.text, parallelConfig.role);
 
 			return {
-				modelName: config.name,
+				modelName: parallelConfig.name,
 				response: result.text,
 				confidence,
 				tokenCount: result.usage?.totalTokens ?? 0,
 				processingTime,
 			};
 		} catch (error) {
-			console.error(`Error executing model ${config.name}:`, error);
+			console.error(`Error executing model ${parallelConfig.name}:`, error);
 
 			return {
-				modelName: config.name,
-				response: `Error: Model ${config.name} failed to respond`,
+				modelName: parallelConfig.name,
+				response: `Error: Model ${parallelConfig.name} failed to respond`,
 				confidence: 0,
 				tokenCount: 0,
 				processingTime: Date.now() - startTime,

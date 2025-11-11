@@ -142,6 +142,8 @@ export default defineSchema({
 
   // Document Storage (Convex + S3 hybrid)
   documents: defineTable({
+    userId: v.string(),
+
     name: v.string(),
     type: v.string(), // pdf, docx, txt, md, etc.
     size: v.number(),

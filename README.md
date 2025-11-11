@@ -90,7 +90,7 @@ Production-ready intelligent search platform with **human-in-the-loop learning**
 - TanStack devtools menu removed
 - CSRF 403 errors resolved with token endpoint
 - Infinite Ollama detection loop fixed with useRef guard
-- Hydration warnings suppressed
+- Hydration warnings suppression turned off.
 
 ## .env Setup
 
@@ -426,14 +426,14 @@ You can find out everything you need to know on how to use TanStack Store in the
 
 ### Fixed: CSRF 403 Forbidden (2024-01-XX)
 **Issue**: POST `/api/chat` failing with 403 due to missing CSRF token
-**Solution**: 
+**Solution**:
 - Created `/api/csrf-token` GET endpoint to set HttpOnly cookie
 - Modified `useCsrfToken` hook to fetch token on mount
 - Added `isReady` state to `AgenticChat` to disable chat until token ready
 
 ### Fixed: Infinite Ollama Detection Loop (2024-01-XX)
 **Issue**: `http://localhost:11434/api/tags` fetching repeatedly in infinite loop
-**Solution**: 
+**Solution**:
 - Wrapped `modelOptions` in `useMemo` to prevent recreation
 - Added `useRef` guard (`hasDetected`) to ensure detection runs once
 - Updated `useEffect` dependency array correctly
