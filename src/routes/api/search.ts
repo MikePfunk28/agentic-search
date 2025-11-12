@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection.ts";
-import { ModelConfigManager, ModelProvider } from "@/lib/model-config.ts";
-import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator.ts";
-import { researchStorage } from "@/lib/results-storage.ts";
+} from "@/lib/csrf-protection";
+import { ModelConfigManager, ModelProvider } from "@/lib/model-config";
+import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
+import { researchStorage } from "@/lib/results-storage";
 
 interface SearchResult {
 	id: string;

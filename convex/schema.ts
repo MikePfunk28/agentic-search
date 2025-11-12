@@ -169,6 +169,7 @@ export default defineSchema({
       chunkIndex: v.number(),
     })),
   })
+    .index("by_user", ["userId"])
     .index("by_status", ["status"])
     .index("by_uploaded", ["uploadedAt"])
     .index("by_processed", ["processedAt"]),

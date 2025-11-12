@@ -5,6 +5,9 @@ import {
 	Settings,
 	X,
 	Key,
+	History,
+	Download,
+	GitCompare,
 } from "lucide-react";
 import { useState } from "react";
 import WorkOSHeader from "./workos-user.tsx";
@@ -80,6 +83,45 @@ export default function Header() {
 					>
 						<Home size={20} />
 						<span className="font-medium">Home</span>
+					</Link>
+
+					<Link
+						to="/history"
+						onClick={() => setIsOpen(false)}
+						className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+						activeProps={{
+							className:
+								"flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2",
+						}}
+					>
+						<History size={20} />
+						<span className="font-medium">Search History</span>
+					</Link>
+
+					<Link
+						to="/comparison"
+						onClick={() => setIsOpen(false)}
+						className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+						activeProps={{
+							className:
+								"flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2",
+						}}
+					>
+						<GitCompare size={20} />
+						<span className="font-medium">Compare Searches</span>
+					</Link>
+
+					<Link
+						to="/export"
+						onClick={() => setIsOpen(false)}
+						className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+						activeProps={{
+							className:
+								"flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2",
+						}}
+					>
+						<Download size={20} />
+						<span className="font-medium">Export Datasets</span>
 					</Link>
 
 					<Link

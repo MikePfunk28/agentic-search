@@ -12,6 +12,8 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { useCsrfToken } from "../hooks/useCsrfToken.tsx";
 import { EnhancedModelSelector } from "./EnhancedModelSelector";
 import { ResultsList } from "./ResultsList";
@@ -33,6 +35,7 @@ interface AgenticChatProps {
 
 export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 	const { token: csrfToken, error: csrfError } = useCsrfToken();
+	const saveSearch = useMutation(api.searchHistory.saveSearch);
 	const [input, setInput] = useState("");
 	const [reasoningSteps, setReasoningSteps] = useState<ChatReasoningStep[]>([]);
 	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -186,7 +189,9 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 			// Perform actual agentic search
 			try {
 				addReasoningStep("search", "Searching across web sources with Firecrawl");
+				const startTime = Date.now();
 				const searchResults = await performAgenticSearch(userMessage);
+				const executionTime = Date.now() - startTime;
 
 				addReasoningStep("search", "Applying ADD quality scoring to results");
 				addReasoningStep("synthesis", "Synthesizing and ranking search results");
@@ -196,6 +201,22 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 				onSearchResults?.(searchResults);
 
 				addReasoningStep("synthesis", `Found ${searchResults.length} high-quality results`);
+
+				// Save search to history
+				try {
+					await saveSearch({
+						query: userMessage,
+						modelUsed: selectedModels[0] || "ollama:qwen3:4b",
+						results: searchResults,
+						segments: [], // Can be populated from segmentation if implemented
+						executionTimeMs: executionTime,
+						tokensUsed: dashboardData.parallelResults?.models.reduce((sum, m) => sum + m.tokenCount, 0) || 0,
+						quality: dashboardData.addMetrics?.overallScore || 0.5,
+					});
+				} catch (saveError) {
+					console.error("Failed to save search history:", saveError);
+					// Don't fail the search if history save fails
+				}
 			} catch (error) {
 				console.error("Search failed:", error);
 				addReasoningStep("synthesis", "Search completed with some issues - showing available results");

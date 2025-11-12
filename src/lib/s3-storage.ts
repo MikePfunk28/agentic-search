@@ -75,7 +75,9 @@ export async function uploadDocument(
 
 	await s3Client.send(command);
 
-	// Generate public URL (or use presigned URL for private access)
+	// Note: This generates a public URL assuming the bucket is publicly accessible
+	// For private buckets, use getPresignedDownloadUrl() instead
+	// The URL format assumes bucket policy allows public read access
 	const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || "us-east-1"}.amazonaws.com/${key}`;
 
 	return {
@@ -124,8 +126,11 @@ export async function downloadDocument(key: string): Promise<Buffer> {
 
 	// Convert stream to buffer
 	const chunks: Uint8Array[] = [];
-	for await (const chunk of response.Body as any) {
-		chunks.push(chunk);
+	// AWS SDK v3 Body is an async iterable stream
+	if (response.Body && Symbol.asyncIterator in response.Body) {
+		for await (const chunk of response.Body) {
+			chunks.push(chunk as Uint8Array);
+		}
 	}
 
 	return Buffer.concat(chunks);

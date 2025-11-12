@@ -14,7 +14,7 @@ import {
 	requiresCsrfProtection,
 	setCsrfCookie,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection.ts";
+} from "@/lib/csrf-protection";
 
 /**
  * Middleware configuration options
