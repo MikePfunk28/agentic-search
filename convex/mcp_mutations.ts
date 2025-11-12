@@ -83,10 +83,13 @@ export const acquireConnectionLock = internalMutation({
 export const updateConnectionStatus = internalMutation({
   args: {
     serverName: v.string(),
-    status: v.string(), // 'connected' | 'failed' | 'disconnected'
+    status: v.union(
+      v.literal('connected'),
+      v.literal('failed'),
+      v.literal('disconnected')
+    ),
     error: v.optional(v.string())
-  },
-  handler: async (ctx, args) => {
+  },  handler: async (ctx, args) => {
     const existing = await ctx.db
       .query('mcpConnections')
       .withIndex('by_server', q => q.eq('serverName', args.serverName))
