@@ -8,7 +8,6 @@ import path from 'node:path'
 
 const config = defineConfig({
   plugins: [
-    // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],
     }),
@@ -28,7 +27,7 @@ const config = defineConfig({
   ],
   resolve: {
     alias: {
-      '@': './src',
+      '@': path.resolve(__dirname, './src'),
     },
   },
   ssr: {
