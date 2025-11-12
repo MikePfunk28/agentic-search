@@ -33,6 +33,12 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 
   // Detect available providers on mount
   useEffect(() => {
+    /**
+     * Detects available AI model providers and updates component state accordingly.
+     *
+     * Sets the loading state while detection runs, populates `availableProviders`, and
+     * auto-selects the first provider when any are found. Logs an error if detection fails.
+     */
     async function detectProviders() {
       setIsLoading(true);
       try {
@@ -55,6 +61,11 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 
   // Load models when provider changes
   useEffect(() => {
+    /**
+     * Load models for the currently selected provider and update component state.
+     *
+     * Fetches the provider's model list (using `baseURL` when present) and updates `availableModels`. If the list is non-empty the first model is selected. If no provider is selected the function is a no-op; on failure it clears `availableModels` and logs an error.
+     */
     async function loadModels() {
       if (!selectedProvider) return;
 

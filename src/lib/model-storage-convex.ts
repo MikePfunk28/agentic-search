@@ -17,12 +17,10 @@ import type { Id } from "../../convex/_generated/dataModel";
 import { useMutation, useQuery } from "@convex-dev/react-query";
 
 /**
- * Returns a function that stores a model configuration in Convex and, if present, saves its API key in secure storage linked to the created configuration.
+ * Create and persist a model configuration in Convex and store its API key separately when present.
  *
- * The returned function creates a configuration record (without the API key) and then persists the API key separately when provided.
- *
- * @returns A function that accepts `(configName: string, config: ModelConfig)` and returns the new configuration's Id.
- * @throws Any error encountered while creating the configuration or saving the API key; errors are logged and rethrown.
+ * @returns A function that accepts `(configName: string, config: ModelConfig)` and returns the created configuration's Id.
+ * @throws Any error encountered while creating the configuration or saving the API key.
  */
 export function useSaveModelConfig() {
   const createConfig = useMutation(api.modelConfiguration.createConfig);
@@ -81,9 +79,11 @@ export function useLoadModelConfig(configId: Id<"modelConfigurations">) {
 }
 
 /**
- * List the current user's model configurations.
+ * Lists the current user's model configurations.
  *
- * @returns A query result containing an array of model configuration records
+ * Each returned configuration record does not include any stored API key.
+ *
+ * @returns A query result containing an array of model configuration records for the current user
  */
 export function useListModelConfigs() {
   return useQuery(api.modelConfiguration.listMyConfigs, {});
@@ -116,7 +116,7 @@ export function useActiveModelConfig() {
 }
 
 /**
- * Provides a mutation hook to mark a model configuration as the active configuration.
+ * Provide a mutation hook that marks a model configuration as active.
  *
  * @returns A mutation function that sets the active model configuration by its `configId`
  */
@@ -125,11 +125,11 @@ export function useSetActiveConfig() {
 }
 
 /**
- * Returns a function that deletes a model configuration and its associated API key.
+ * Produce a function that deletes a model configuration and its associated API key.
  *
- * The returned function removes the API key for the given configuration, then deletes the configuration itself. Any error encountered during deletion is propagated to the caller.
+ * The returned function removes the stored API key for the given configuration, then deletes the configuration record. Any error encountered during deletion is rethrown.
  *
- * @returns A function that accepts a `configId` and deletes the related API key and configuration; throws the encountered error if deletion fails.
+ * @returns A function that accepts a `configId` and deletes its API key and configuration; throws the encountered error if deletion fails.
  */
 export function useDeleteModelConfig() {
   const deleteConfig = useMutation(api.modelConfiguration.deleteConfig);
