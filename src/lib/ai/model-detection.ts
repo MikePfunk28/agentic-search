@@ -35,10 +35,10 @@ export interface DetectedModel {
 }
 
 /**
- * Discover Ollama models available at the specified Ollama API base URL.
+ * Detect available Ollama models hosted at the given base URL.
  *
- * @param baseURL - The base URL of the Ollama API (default: 'http://localhost:11434')
- * @returns An array of DetectedModel entries for each discovered Ollama model; an empty array if Ollama is unreachable, the API responds with a non-OK status, or an error occurs during detection
+ * @param baseURL - The base URL of the Ollama API (defaults to 'http://localhost:11434')
+ * @returns An array of detected models; returns an empty array if Ollama is unreachable, the API responds with a non-OK status, or an error occurs during detection
  */
 export async function detectOllamaModels(baseURL = 'http://localhost:11434'): Promise<DetectedModel[]> {
   try {
@@ -75,10 +75,10 @@ export async function detectOllamaModels(baseURL = 'http://localhost:11434'): Pr
 }
 
 /**
- * Discover available models served by an LM Studio instance at the given base URL.
+ * Detects LM Studio models available at the given base URL.
  *
- * @param baseURL - LM Studio server base URL to query (defaults to `http://localhost:1234`)
- * @returns An array of detected models; empty if LM Studio is unreachable or no models are found
+ * @param baseURL - The LM Studio server base URL to query; defaults to `http://localhost:1234`
+ * @returns An array of detected models. Returns an empty array if LM Studio is unreachable or no models are found
  */
 export async function detectLMStudioModels(baseURL = 'http://localhost:1234'): Promise<DetectedModel[]> {
   try {
@@ -145,10 +145,10 @@ export function getBestOllamaModel(models: DetectedModel[]): DetectedModel | nul
 }
 
 /**
- * Choose the preferred LM Studio model from a list using a fixed priority order.
+ * Selects the preferred LM Studio model from a list of detected models.
  *
- * @param models - Available LM Studio models to evaluate.
- * @returns The preferred `DetectedModel` with `recommended: true` when it matches a priority entry; if no priority match exists, the first model with `recommended: false`; `null` if `models` is empty.
+ * @param models - The available LM Studio models to evaluate.
+ * @returns The most-preferred `DetectedModel` according to the built-in priority list, with its `recommended` flag set to `true` if it matches a priority item; if no priority match exists, returns the first model with `recommended` set to `false`; returns `null` if `models` is empty.
  */
 export function getBestLMStudioModel(models: DetectedModel[]): DetectedModel | null {
   if (models.length === 0) return null;

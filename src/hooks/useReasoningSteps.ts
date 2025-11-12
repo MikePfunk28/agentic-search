@@ -151,10 +151,10 @@ export const AGENTIC_SEARCH_PHASES: Array<{
 ];
 
 /**
- * Create helpers that start predefined agentic search phases using a reasoning-steps hook.
+ * Create a set of helper functions that start standard agentic search phases using the provided reasoning steps hook.
  *
- * @param hooks - The result of `useReasoningSteps` used to add and manage reasoning steps
- * @returns An object with methods `startIntent`, `startStrategy`, `startSearch`, `startScoring`, `startSynthesis`, and `startLearning`; each method adds a new reasoning step and returns the created step's id
+ * @param hooks - The result of `useReasoningSteps` used to add and manage reasoning steps.
+ * @returns An object with methods to start each phase (`startIntent`, `startStrategy`, `startSearch`, `startScoring`, `startSynthesis`, `startLearning`); each method adds a new reasoning step and returns the created step's id.
  */
 export function createAgenticSearchFlow(hooks: UseReasoningStepsResult) {
   return {

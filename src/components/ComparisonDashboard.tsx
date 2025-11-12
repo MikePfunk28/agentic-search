@@ -255,9 +255,13 @@ export function ComparisonDashboard({
 }
 
 /**
- * Render a compact metric card that displays an icon, a prominent value, and a label with color accents.
+ * Renders a compact metric card showing an icon, a prominent value, and a label with color accents.
  *
- * @returns A JSX element containing the metric card styled with the selected color accents and displaying the provided icon, value, and label.
+ * @param icon - Visual icon displayed above the metric value.
+ * @param label - Short descriptive label shown below the value.
+ * @param value - Primary metric text shown prominently.
+ * @param color - Accent color used for text, background tint, and border (`"cyan" | "blue" | "purple" | "green"`).
+ * @returns A styled card element containing the provided icon, value, and label with the selected color accents.
  */
 function MetricCard({
 	icon,
@@ -287,10 +291,12 @@ function MetricCard({
 }
 
 /**
- * Render a compact card that displays a single model's output, token count, confidence, and processing time.
+ * Renders a compact card showing a single model's output, tokens, confidence and processing time.
  *
- * @param response - Model response containing `modelName`, `tokenCount`, `response` (preview text), `confidence` (0–1), and `processingTime` (ms)
- * @returns A JSX element representing a styled model output card
+ * The card displays the model name, token count, a truncated response preview, a confidence value that is color-coded for visual emphasis, and the processing duration.
+ *
+ * @param response - The model response object to display
+ * @returns A JSX element representing the model output card
  */
 function ModelOutputCard({ response }: { response: ModelResponse }) {
 	return (
