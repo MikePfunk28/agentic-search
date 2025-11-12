@@ -29,8 +29,14 @@ interface StoredConfig {
 }
 
 /**
- * Save model configuration to localStorage
- * API keys are encrypted and stored separately
+ * Save a model configuration to localStorage and store any API key in encrypted secure storage.
+ *
+ * The configuration's API key (if present) is removed from the stored config and saved separately in encrypted secure storage; the saved config will reference the key by an `apiKeyRef`. The saved configuration becomes the active config and the storage timestamp is updated.
+ *
+ * @param id - Identifier for the model configuration
+ * @param config - The model configuration to save; if `config.apiKey` is present it will be stored in encrypted secure storage and not kept directly in localStorage
+ * @throws Error if an API key is provided but secure storage is unavailable (unencrypted storage of API keys is not allowed)
+ * @throws Any error encountered while persisting the configuration or secure storage operations
  */
 export async function saveModelConfig(
 	id: string,
@@ -70,8 +76,10 @@ export async function saveModelConfig(
 }
 
 /**
- * Load specific model configuration from localStorage
- * Decrypts API key if present
+ * Load a saved model configuration by id, including decrypting its API key when present.
+ *
+ * @param id - The identifier of the model configuration to load
+ * @returns The reconstructed `ModelConfig` with a decrypted `apiKey` if available, or `null` if the config is not found or loading fails (for example, when an API key reference exists but secure storage is unavailable)
  */
 export async function loadModelConfig(id: string): Promise<ModelConfig | null> {
 	try {
