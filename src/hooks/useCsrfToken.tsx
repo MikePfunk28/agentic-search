@@ -8,7 +8,13 @@
 import { useEffect, useState } from "react";
 
 /**
- * Get CSRF token from document cookies
+ * Read the CSRF token value stored in document cookies.
+ *
+ * Returns the value of the cookie named by `cookieName`, or `null` if the cookie is not present
+ * or if `document` is unavailable (e.g., server-side).
+ *
+ * @param cookieName - Name of the cookie that holds the CSRF token; defaults to `"csrf-token"`.
+ * @returns The CSRF token string if found, `null` otherwise.
  */
 function getCsrfTokenFromCookies(
 	cookieName: string = "csrf-token",
@@ -28,7 +34,15 @@ function getCsrfTokenFromCookies(
 }
 
 /**
- * Hook to access CSRF token from cookies
+ * Exposes the current CSRF token read from cookies and any initialization error.
+ *
+ * If the token is not present in cookies on first use, the hook attempts to obtain one from the server
+ * and then keeps the returned token synchronized with subsequent cookie changes.
+ *
+ * @param cookieName - Name of the cookie that stores the CSRF token. Defaults to `"csrf-token"`.
+ * @returns An object containing:
+ *  - `token`: the current CSRF token string, or `null` if unavailable.
+ *  - `error`: an error message string if initialization or fetch failed, or `null` otherwise.
  */
 export function useCsrfToken(cookieName: string = "csrf-token") {
 	const [token, setToken] = useState<string | null>(null);
@@ -171,7 +185,10 @@ export function createCsrfHeaders(
 }
 
 /**
- * Utility to check if CSRF token is present
+ * Determine whether a CSRF token cookie exists.
+ *
+ * @param cookieName - The name of the cookie to check; defaults to `"csrf-token"`.
+ * @returns `true` if a CSRF token cookie with the given name exists, `false` otherwise.
  */
 export function hasCsrfToken(cookieName: string = "csrf-token"): boolean {
 	return getCsrfTokenFromCookies(cookieName) !== null;

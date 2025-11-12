@@ -54,6 +54,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	shellComponent: RootDocument,
 });
 
+/**
+ * Render the application's top-level HTML document, wrapping content with providers and a conditional header.
+ *
+ * On first mount, initialize Sentry and perform local model detection/configuration (e.g., auto-configure Ollama when available).
+ *
+ * @returns The root HTML document element containing head, body, providers, and application content
+ */
 function RootDocument({ children }: { children: React.ReactNode }) {
 	const location = useLocation();
 
@@ -72,6 +79,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			console.error("[Sentry] Failed to initialize:", error);
 		}
 
+		/**
+		 * Detects available local models (Ollama and LM Studio) and configures the application model settings.
+		 *
+		 * If an Ollama model is found, adds a default Ollama provider configuration and sets it as the active config.
+		 * Logs detected models and configuration counts to the console. On failure, records the error with Sentry.
+		 *
+		 * Notes:
+		 * - API keys are expected to be stored securely in Convex, not in browser localStorage.
+		 */
 		async function initializeModels() {
 			try {
 				// NOTE: API keys are now stored securely in Convex, NOT localStorage!

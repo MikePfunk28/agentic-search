@@ -10,6 +10,15 @@ import { useState } from "react";
 import WorkOSHeader from "./workos-user.tsx";
 import { SettingsModal } from "./SettingsModal";
 
+/**
+ * Renders the application's top navigation bar with a quick-settings trigger and a slide-out side menu.
+ *
+ * The header includes a menu button that opens the side navigation, a title link to the home route,
+ * and a "Configure Models" button that opens the settings modal. The side menu provides navigation
+ * links (Home, Settings), a close control, and a footer area containing the WorkOS header.
+ *
+ * @returns The React element tree for the header, settings modal, and side navigation
+ */
 export default function Header() {
 	const [isOpen, setIsOpen] = useState(false);
 	const [showSettings, setShowSettings] = useState(false);

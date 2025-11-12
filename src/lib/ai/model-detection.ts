@@ -35,7 +35,10 @@ export interface DetectedModel {
 }
 
 /**
- * Detect all available Ollama models on localhost
+ * Discover Ollama models available at the specified Ollama API base URL.
+ *
+ * @param baseURL - The base URL of the Ollama API (default: 'http://localhost:11434')
+ * @returns An array of DetectedModel entries for each discovered Ollama model; an empty array if Ollama is unreachable, the API responds with a non-OK status, or an error occurs during detection
  */
 export async function detectOllamaModels(baseURL = 'http://localhost:11434'): Promise<DetectedModel[]> {
   try {
@@ -72,7 +75,10 @@ export async function detectOllamaModels(baseURL = 'http://localhost:11434'): Pr
 }
 
 /**
- * Detect all available LM Studio models on localhost
+ * Discover available models served by an LM Studio instance at the given base URL.
+ *
+ * @param baseURL - LM Studio server base URL to query (defaults to `http://localhost:1234`)
+ * @returns An array of detected models; empty if LM Studio is unreachable or no models are found
  */
 export async function detectLMStudioModels(baseURL = 'http://localhost:1234'): Promise<DetectedModel[]> {
   try {
@@ -107,8 +113,10 @@ export async function detectLMStudioModels(baseURL = 'http://localhost:1234'): P
 }
 
 /**
- * Get the best available Ollama model
- * Prioritizes recommended models: qwen3:4b, qwen3:1.7b, gemma3:270m, gemma3:1b, gemma3:4b
+ * Selects the preferred Ollama model from a list using a fixed priority order.
+ *
+ * @param models - Available detected Ollama models to choose from.
+ * @returns The chosen DetectedModel (its `recommended` flag is `true` when it matches a prioritized ID, `false` when returning the first available), or `null` if `models` is empty.
  */
 export function getBestOllamaModel(models: DetectedModel[]): DetectedModel | null {
   if (models.length === 0) return null;
@@ -137,8 +145,10 @@ export function getBestOllamaModel(models: DetectedModel[]): DetectedModel | nul
 }
 
 /**
- * Get the best available LM Studio model
- * Same priority as Ollama: qwen3:4b, qwen3:1.7b, gemma3:270m, gemma3:1b, gemma3:4b
+ * Choose the preferred LM Studio model from a list using a fixed priority order.
+ *
+ * @param models - Available LM Studio models to evaluate.
+ * @returns The preferred `DetectedModel` with `recommended: true` when it matches a priority entry; if no priority match exists, the first model with `recommended: false`; `null` if `models` is empty.
  */
 export function getBestLMStudioModel(models: DetectedModel[]): DetectedModel | null {
   if (models.length === 0) return null;
@@ -167,8 +177,10 @@ export function getBestLMStudioModel(models: DetectedModel[]): DetectedModel | n
 }
 
 /**
- * Get cloud provider models (when API keys are configured)
- * Updated with real 2024/2025 model IDs
+ * Return a curated list of known cloud models for the specified provider.
+ *
+ * @param provider - The cloud model provider to retrieve models for (excludes Ollama and LM Studio)
+ * @returns An array of `DetectedModel` entries for the provider, or an empty array if none are defined
  */
 export function getCloudProviderModels(provider: ModelProvider): DetectedModel[] {
   const cloudModels: Record<Exclude<ModelProvider, ModelProvider.OLLAMA | ModelProvider.LM_STUDIO>, DetectedModel[]> = {
@@ -199,7 +211,16 @@ export function getCloudProviderModels(provider: ModelProvider): DetectedModel[]
 }
 
 /**
- * Detect all available models across all providers
+ * Discover available models from local Ollama and LM Studio instances and from configured cloud providers.
+ *
+ * Detects models for Ollama and LM Studio, collects cloud provider model sets when API keys/config are present
+ * (client-side), and determines a single recommended model preferring an Ollama recommendation when available.
+ *
+ * @returns An object containing:
+ *  - `ollama`: Detected Ollama models.
+ *  - `lmstudio`: Detected LM Studio models.
+ *  - `cloud`: A mapping of cloud provider keys to their detected/provided models.
+ *  - `recommended`: The chosen recommended model or `null` if none detected.
  */
 export async function detectAllAvailableModels(): Promise<{
   ollama: DetectedModel[];
@@ -263,7 +284,13 @@ export async function detectAllAvailableModels(): Promise<{
 }
 
 /**
- * Check if a specific provider is available (either Ollama/LM Studio running or API key configured)
+ * Determine whether a model provider is available, optionally verifying a specific model.
+ *
+ * For local providers ('ollama' and 'lm_studio') this checks whether the corresponding local service exposes the requested model (or any model if `modelId` is omitted). For cloud providers this checks for a configured API key either in a saved client-side config or in build-time environment variables.
+ *
+ * @param provider - The model provider to check.
+ * @param modelId - Optional model identifier to verify exists for the provider.
+ * @returns `true` if the provider is available (and the specified `modelId` exists when provided), `false` otherwise.
  */
 export async function isProviderAvailable(provider: ModelProvider, modelId?: string): Promise<boolean> {
   if (provider === 'ollama') {
@@ -309,7 +336,13 @@ export async function isProviderAvailable(provider: ModelProvider, modelId?: str
 }
 
 /**
- * Get recommended model based on task type
+ * Selects a recommended model from the provided list tailored to the specified task.
+ *
+ * Uses task-specific priority lists to prefer models suitable for 'chat', 'search', 'reasoning', or 'coding'. If no prioritized model is present, the first model in `availableModels` is returned.
+ *
+ * @param task - The intended task: 'chat', 'search', 'reasoning', or 'coding'
+ * @param availableModels - Candidate models to choose from
+ * @returns The `DetectedModel` chosen as recommended for the task, or `null` if `availableModels` is empty
  */
 export function getRecommendedModelForTask(
   task: 'chat' | 'search' | 'reasoning' | 'coding',

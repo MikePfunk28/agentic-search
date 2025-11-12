@@ -18,8 +18,9 @@ export interface UseAvailableModelsResult {
 }
 
 /**
- * Hook to detect and track available AI models
- * Auto-detects on mount and provides refresh function
+ * Detects available AI models on mount and provides categorized lists, a recommended model, loading/error state, and a refresh function.
+ *
+ * @returns An object with `ollamaModels`, `lmstudioModels`, `cloudModels`, `recommendedModel`, `isLoading`, `error`, and `refresh` to re-run detection.
  */
 export function useAvailableModels(): UseAvailableModelsResult {
   const [ollamaModels, setOllamaModels] = useState<DetectedModel[]>([]);
@@ -73,7 +74,17 @@ export function useAvailableModels(): UseAvailableModelsResult {
 }
 
 /**
- * Hook to get the currently selected model from localStorage
+ * Manages the user's selected model, loading it from and persisting it to localStorage.
+ *
+ * The hook initializes `selectedModel` from the saved JSON under the key
+ * "agentic-search-model-config" (if present) and returns a setter that updates
+ * state and writes the same config back to localStorage.
+ *
+ * @returns An object containing:
+ * - `selectedModel` — the currently selected `DetectedModel`, or `null` if none was saved.
+ * - `setSelectedModel` — a function that accepts a `DetectedModel`, updates the selection,
+ *   and saves `{ provider, modelId, displayName }` to localStorage under
+ *   "agentic-search-model-config".
  */
 export function useSelectedModel(): {
   selectedModel: DetectedModel | null;

@@ -23,6 +23,15 @@ interface ModelSelectorProps {
 	allowMultiple?: boolean;
 }
 
+/**
+ * Renders a model selection UI with local (Ollama) and cloud models, showing per-model connection status and supporting single or multiple selection.
+ *
+ * @param selectedModels - Array of selected model IDs.
+ * @param onChange - Callback invoked with the updated array of selected model IDs.
+ * @param disabled - If true, disables user interaction and prevents selection changes.
+ * @param allowMultiple - If true, allows multiple models to be selected; if false, selecting a model replaces the current selection.
+ * @returns The model selector React element.
+ */
 export function EnhancedModelSelector({
 	selectedModels,
 	onChange,
