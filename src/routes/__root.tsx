@@ -54,6 +54,14 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	shellComponent: RootDocument,
 });
 
+/**
+ * The top-level HTML document component that wraps the app UI and providers.
+ *
+ * Renders the full HTML structure (head and body), conditionally shows the header except on the root path, and on first mount initializes Sentry and performs local model detection/configuration.
+ *
+ * @param children - React nodes to render inside the document body within the app providers
+ * @returns The complete HTML document element containing head, body, providers, and app content
+ */
 function RootDocument({ children }: { children: React.ReactNode }) {
 	const location = useLocation();
 

@@ -8,6 +8,12 @@ const todos: Array<{ id: number; title: string }> = [
 	{ id: 1, title: "Buy groceries" },
 ];
 
+/**
+ * Create a new todo, append it to the server's in-memory todo list, and return the created item.
+ *
+ * @param title - The todo's title
+ * @returns The created todo object with `id` and `title`
+ */
 function addTodo(title: string) {
 	const newTodo = { id: todos.length + 1, title };
 	todos.push(newTodo);

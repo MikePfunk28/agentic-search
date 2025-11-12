@@ -28,7 +28,15 @@ function getCsrfTokenFromCookies(
 }
 
 /**
- * Hook to access CSRF token from cookies
+ * Exposes the current CSRF token read from cookies and any initialization error.
+ *
+ * If the token is not present in cookies on first use, the hook attempts to obtain one from the server
+ * and then keeps the returned token synchronized with subsequent cookie changes.
+ *
+ * @param cookieName - Name of the cookie that stores the CSRF token. Defaults to `"csrf-token"`.
+ * @returns An object containing:
+ *  - `token`: the current CSRF token string, or `null` if unavailable.
+ *  - `error`: an error message string if initialization or fetch failed, or `null` otherwise.
  */
 export function useCsrfToken(cookieName: string = "csrf-token") {
 	const [token, setToken] = useState<string | null>(null);

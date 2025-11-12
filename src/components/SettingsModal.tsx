@@ -25,6 +25,16 @@ interface SettingsModalProps {
 	onClose: () => void;
 }
 
+/**
+ * Renders a settings modal for configuring provider API keys and custom models.
+ *
+ * The modal exposes two tabs: "API Keys" for managing OpenAI, Anthropic, and Ollama settings,
+ * and "Custom Models" for adding/removing user-defined models with optional base URLs.
+ *
+ * @param isOpen - Whether the modal is visible.
+ * @param onClose - Callback invoked to request closing the modal (e.g., backdrop or close button).
+ * @returns The Settings modal element when `isOpen` is true, `null` when `isOpen` is false.
+ */
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 	const [apiKeys, setApiKeys] = useState<Record<string, ApiKeyConfig>>({});
 	const [customModels, setCustomModels] = useState<CustomModel[]>([]);

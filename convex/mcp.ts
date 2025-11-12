@@ -35,9 +35,13 @@ import { internal } from './_generated/api'
 import type { ActionCtx } from './_generated/server'
 
 /**
- * Helper: Ensure MCP server connection with distributed locking and exponential backoff
- * Implements retry logic with fail-fast for failed connections
- */
+   * Ensure a connection to the named MCP server using a distributed lock, polling with exponential backoff and failing fast on prior failures.
+   *
+   * @param connectFn - Function that establishes the server connection; called only by the instance that acquires the lock
+   * @throws Error if a previous connection attempt has failed and must be cleared before retrying
+   * @throws Error if another instance reports a failed connection while polling
+   * @throws Error if the connection could not be established within the configured retry/backoff window
+   */
 async function ensureConnection(
   ctx: ActionCtx,
   serverName: string,

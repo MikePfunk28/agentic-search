@@ -17,7 +17,12 @@ import type { Id } from "../../convex/_generated/dataModel";
 import { useMutation, useQuery } from "@convex-dev/react-query";
 
 /**
- * Hook to save model configuration to Convex
+ * Returns a function that stores a model configuration in Convex and, if present, saves its API key in secure storage linked to the created configuration.
+ *
+ * The returned function creates a configuration record (without the API key) and then persists the API key separately when provided.
+ *
+ * @returns A function that accepts `(configName: string, config: ModelConfig)` and returns the new configuration's Id.
+ * @throws Any error encountered while creating the configuration or saving the API key; errors are logged and rethrown.
  */
 export function useSaveModelConfig() {
   const createConfig = useMutation(api.modelConfiguration.createConfig);
@@ -53,7 +58,10 @@ export function useSaveModelConfig() {
 }
 
 /**
- * Hook to load model configuration from Convex
+ * Load a model configuration and its API key from Convex.
+ *
+ * @param configId - The id of the model configuration to load
+ * @returns The reconstructed `ModelConfig` (with `apiKey` when present) or `null` if no configuration exists
  */
 export function useLoadModelConfig(configId: Id<"modelConfigurations">) {
   const config = useQuery(api.modelConfiguration.getActiveConfig, {});
@@ -73,14 +81,18 @@ export function useLoadModelConfig(configId: Id<"modelConfigurations">) {
 }
 
 /**
- * Hook to list all model configurations
+ * List the current user's model configurations.
+ *
+ * @returns A query result containing an array of model configuration records
  */
 export function useListModelConfigs() {
   return useQuery(api.modelConfiguration.listMyConfigs, {});
 }
 
 /**
- * Hook to get active model configuration
+ * Loads the currently active model configuration and its associated API key.
+ *
+ * @returns `{ id: Id<'modelConfigurations'>, config: ModelConfig }` containing the active configuration and its id, or `null` if no active configuration exists. The returned `config`'s `apiKey` property will be `undefined` when no API key is stored.
  */
 export function useActiveModelConfig() {
   const activeConfig = useQuery(api.modelConfiguration.getActiveConfig, {});
@@ -104,14 +116,20 @@ export function useActiveModelConfig() {
 }
 
 /**
- * Hook to set active model configuration
+ * Provides a mutation hook to mark a model configuration as the active configuration.
+ *
+ * @returns A mutation function that sets the active model configuration by its `configId`
  */
 export function useSetActiveConfig() {
   return useMutation(api.modelConfiguration.setActiveConfig);
 }
 
 /**
- * Hook to delete model configuration
+ * Returns a function that deletes a model configuration and its associated API key.
+ *
+ * The returned function removes the API key for the given configuration, then deletes the configuration itself. Any error encountered during deletion is propagated to the caller.
+ *
+ * @returns A function that accepts a `configId` and deletes the related API key and configuration; throws the encountered error if deletion fails.
  */
 export function useDeleteModelConfig() {
   const deleteConfig = useMutation(api.modelConfiguration.deleteConfig);
@@ -132,8 +150,12 @@ export function useDeleteModelConfig() {
 }
 
 /**
- * Migration utility: Move localStorage configs to Convex
- * Run this once to migrate existing users
+ * Detects legacy model configuration stored in localStorage and warns that it must be migrated to Convex.
+ *
+ * This function checks for the legacy "agentic-search-model-config" entry and logs guidance for performing
+ * a migration from insecure localStorage to Convex-backed storage. It does not perform any migration or
+ * authentication itself and serves as a placeholder to be invoked from an authenticated UI flow that can
+ * securely transfer API keys and configuration data.
  */
 export async function migrateLocalStorageToConvex() {
   console.warn(

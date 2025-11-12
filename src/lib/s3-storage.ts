@@ -32,11 +32,13 @@ export interface UploadResult {
 }
 
 /**
- * Upload document to S3
- * @param file File buffer or string content
- * @param filename Original filename
- * @param contentType MIME type
- * @returns Upload result with S3 key and URL
+ * Upload a file to S3 and return its storage details.
+ *
+ * @param file - The file content to upload; either a Buffer or a UTF-8 string.
+ * @param filename - The original filename to preserve in object metadata and key.
+ * @param contentType - The MIME type of the file.
+ * @returns The upload result containing the S3 object `key`, a public `url`, and the object `size` in bytes.
+ * @throws If `AWS_ACCESS_KEY_ID` or `AWS_SECRET_ACCESS_KEY` environment variables are not set.
  */
 export async function uploadDocument(
 	file: Buffer | string,
@@ -86,10 +88,11 @@ export async function uploadDocument(
 }
 
 /**
- * Generate presigned URL for temporary private access
- * @param key S3 object key
- * @param expiresIn Expiration time in seconds (default: 1 hour)
- * @returns Presigned URL valid for specified duration
+ * Generates a presigned URL for temporary private access to an S3 object.
+ *
+ * @param key - The S3 object key.
+ * @param expiresIn - Expiration time in seconds (default: 3600).
+ * @returns A presigned URL that grants access to the specified object for the given number of seconds.
  */
 export async function getPresignedDownloadUrl(
 	key: string,
@@ -106,9 +109,10 @@ export async function getPresignedDownloadUrl(
 }
 
 /**
- * Download document from S3
- * @param key S3 object key
- * @returns Document content as Buffer
+ * Retrieve an S3 object and return its complete contents as a Buffer.
+ *
+ * @returns The object's bytes as a `Buffer`.
+ * @throws Error if the S3 response has no body.
  */
 export async function downloadDocument(key: string): Promise<Buffer> {
 	const command = new GetObjectCommand({
@@ -132,8 +136,9 @@ export async function downloadDocument(key: string): Promise<Buffer> {
 }
 
 /**
- * Delete document from S3
- * @param key S3 object key
+ * Remove an object from the configured S3 bucket.
+ *
+ * @param key - The S3 object key identifying the file to delete
  */
 export async function deleteDocument(key: string): Promise<void> {
 	const command = new DeleteObjectCommand({
@@ -145,8 +150,9 @@ export async function deleteDocument(key: string): Promise<void> {
 }
 
 /**
- * Check if S3 is properly configured
- * @returns true if credentials and bucket are set
+ * Determine whether S3 credentials and bucket are configured.
+ *
+ * @returns `true` if `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_S3_BUCKET` are set, `false` otherwise.
  */
 export function isS3Configured(): boolean {
 	return !!(
@@ -160,7 +166,12 @@ export function isS3Configured(): boolean {
  * Decide storage strategy based on file size
  * Small files (<1MB) go to Convex, large files to S3
  */
-export const FILE_SIZE_THRESHOLD = 1024 * 1024; // 1MB
+export const FILE_SIZE_THRESHOLD = 1024 * 1024; /**
+ * Decides whether a file should be stored in S3 based on its size and current S3 configuration.
+ *
+ * @param fileSize - File size in bytes
+ * @returns `true` if `fileSize` is greater than `FILE_SIZE_THRESHOLD` and S3 is configured, `false` otherwise.
+ */
 
 export function shouldUseS3(fileSize: number): boolean {
 	return fileSize > FILE_SIZE_THRESHOLD && isS3Configured();

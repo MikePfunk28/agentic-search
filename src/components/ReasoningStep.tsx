@@ -49,6 +49,14 @@ const phaseColors: Record<ReasoningPhase, string> = {
   learn: 'from-pink-500 to-rose-500',
 };
 
+/**
+ * Renders a single collapsible reasoning step card with phase-specific visuals, status indicator, timing, description and metadata.
+ *
+ * @param step - Data for the step (phase, title, optional description, status, optional start/end times, and metadata).
+ * @param isLast - When true, omits the vertical connector used to link this step to the next step in the timeline.
+ * @param autoExpand - When true, starts the step expanded; the component also auto-expands when the step status becomes `inprogress`.
+ * @returns The rendered step card element.
+ */
 export function ReasoningStep({ step, isLast = false, autoExpand = false }: ReasoningStepProps) {
   const [isExpanded, setIsExpanded] = useState(autoExpand);
   const Icon = phaseIcons[step.phase];
@@ -218,6 +226,16 @@ export interface ReasoningTimelineProps {
   className?: string;
 }
 
+/**
+ * Render a titled vertical timeline of reasoning steps.
+ *
+ * Renders a header with the provided title and a list of ReasoningStep items; returns `null` when `steps` is empty.
+ *
+ * @param steps - The sequence of reasoning steps to render in the timeline
+ * @param title - Header text displayed above the timeline (defaults to "Reasoning Process")
+ * @param className - Additional CSS classes applied to the timeline container
+ * @returns A React element for the timeline, or `null` if `steps` is empty
+ */
 export function ReasoningTimeline({ steps, title = "Reasoning Process", className = "" }: ReasoningTimelineProps) {
   if (steps.length === 0) {
     return null;

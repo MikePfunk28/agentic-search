@@ -51,8 +51,7 @@ function Remove-MarkdownFormatting($title) {
   $sanitized = $sanitized -replace '#', ''
 
   # Remove blockquote markers
-  $sanitized = $sanitized -replace '^>\s*', ''
-
+  $sanitized = $sanitized -replace '^\s*>+\s*', ''
   # Remove horizontal rules (if somehow in a title)
   $sanitized = $sanitized -replace '---+', '' -replace '\*\*\*+', ''
 
