@@ -341,6 +341,16 @@ function ReasoningStepCard({
 	const color =
 		typeColors[step.type as keyof typeof typeColors] || "slate";
 
+	// Map color names to Tailwind classes for JIT compiler compatibility
+	const colorClasses: Record<string, string> = {
+		blue: "bg-blue-500/20 text-blue-400",
+		purple: "bg-purple-500/20 text-purple-400",
+		cyan: "bg-cyan-500/20 text-cyan-400",
+		green: "bg-green-500/20 text-green-400",
+		orange: "bg-orange-500/20 text-orange-400",
+		slate: "bg-slate-500/20 text-slate-400",
+	};
+
 	return (
 		<div
 			className={`p-4 rounded-lg border ${
@@ -352,7 +362,7 @@ function ReasoningStepCard({
 			<div className="flex items-center justify-between mb-2">
 				<div className="flex items-center gap-2">
 					<span
-						className={`text-xs font-medium px-2 py-1 rounded bg-${color}-500/20 text-${color}-400`}
+						className={`text-xs font-medium px-2 py-1 rounded ${colorClasses[color]}`}
 					>
 						Step {index + 1}: {step.type}
 					</span>

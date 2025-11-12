@@ -11,9 +11,9 @@ import {
 	ensureCsrfToken,
 	requiresCsrfProtection,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection.ts";
-import router from "@/orpc/router.ts";
-import { TodoSchema } from "@/orpc/schema.ts";
+} from "@/lib/csrf-protection";
+import router from "@/orpc/router";
+import { TodoSchema } from "@/orpc/schema";
 
 const handler = new OpenAPIHandler(router, {
 	interceptors: [

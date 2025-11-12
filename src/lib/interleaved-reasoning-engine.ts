@@ -448,7 +448,8 @@ export class InterleavedReasoningEngine {
 				`${this.ollama.baseURL ?? "http://localhost:11434"}/api/tags`,
 			);
 
-			if (!response.ok) {
+			// Validate HTTP response status (200-299 range)
+			if (!response.ok || response.status < 200 || response.status >= 300) {
 				return {
 					healthy: false,
 					orchestratorAvailable: false,

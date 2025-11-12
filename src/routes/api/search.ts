@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection.ts";
-import { ModelConfigManager, ModelProvider } from "@/lib/model-config.ts";
-import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator.ts";
+} from "@/lib/csrf-protection";
+import { ModelConfigManager, ModelProvider } from "@/lib/model-config";
+import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
+import { researchStorage } from "@/lib/results-storage";
 
 interface SearchResult {
 	id: string;
@@ -77,11 +78,21 @@ export const Route = createFileRoute("/api/search")({
 					console.log(`[UnifiedSearch] Completed search with ${searchResult.results.length} results`);
 					console.log(`[UnifiedSearch] Quality: ${searchResult.addMetrics.overallScore.toFixed(2)}, Tokens: ${searchResult.totalTokens}`);
 
+					// Store results in research storage for history/export
+					const storageResult = researchStorage.storeResults(
+						query,
+						searchResult.results,
+						`${modelConfig.provider}:${modelConfig.model}`,
+						searchResult.addMetrics.overallScore
+					);
+					console.log(`[ResearchStorage] Stored search with ID: ${storageResult.id}`);
+
 					return new Response(
 						JSON.stringify({
 							query,
 							...searchResult,
 							totalResults: searchResult.results.length,
+							storageId: storageResult.id, // Include storage ID for potential follow-up actions
 						}),
 						{
 							status: 200,

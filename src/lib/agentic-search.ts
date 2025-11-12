@@ -268,12 +268,15 @@ Make queries specific and effective for the intent type.`;
 			assessments.push(assessment);
 
 			if (assessment.addScore >= strategy.qualityThreshold) {
+				// Map source to valid SearchResult source types
+				const sourceType: 'autumn' | 'firecrawl' = result.source === 'web' ? 'firecrawl' : 'autumn';
+
 				filteredResults.push({
 					id: result.id,
 					title: result.title,
 					snippet: result.snippet,
 					url: result.url,
-					source: result.source as any,
+					source: sourceType,
 					addScore: assessment.addScore,
 					publishedDate: result.publishedDate,
 				});
@@ -631,8 +634,9 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 				}),
 			});
 
-			if (!response.ok) {
-				throw new Error(`Ollama API error: ${response.status}`);
+			// Validate HTTP response status (200-299 range)
+			if (!response.ok || response.status < 200 || response.status >= 300) {
+				throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
 			}
 
 			const data = await response.json();
@@ -663,8 +667,9 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 				}),
 			});
 
-			if (!response.ok) {
-				throw new Error(`Anthropic API error: ${response.status}`);
+			// Validate HTTP response status (200-299 range)
+			if (!response.ok || response.status < 200 || response.status >= 300) {
+				throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`);
 			}
 
 			const data = await response.json();
@@ -694,8 +699,9 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 				}),
 			});
 
-			if (!response.ok) {
-				throw new Error(`OpenAI API error: ${response.status}`);
+			// Validate HTTP response status (200-299 range)
+			if (!response.ok || response.status < 200 || response.status >= 300) {
+				throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
 			}
 
 			const data = await response.json();

@@ -332,7 +332,9 @@ export class QuerySegmenter {
    * Helper: Extract context around entity
    */
   private extractContext(query: string, entity: string): string {
-    const regex = new RegExp(`${entity}\\s+([\\w\\s]{0,30})`, 'i');
+    // Escape regex special characters to prevent ReDoS vulnerability
+    const escapedEntity = entity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`${escapedEntity}\\s+([\\w\\s]{0,30})`, 'i');
     const match = query.match(regex);
     return match ? match[1].trim() : '';
   }

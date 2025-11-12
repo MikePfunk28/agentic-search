@@ -22,9 +22,9 @@ export const uploadDocument = mutation({
 	},
 	handler: async (ctx, args) => {
 		const userIdentity = await ctx.auth.getUserIdentity();
-    	if (!userIdentity) {
-      		throw new Error("Authentication required");
-    }
+		if (!userIdentity) {
+			throw new Error("Authentication required");
+		}
 		const documentId = await ctx.db.insert("documents", {
 			userId: userIdentity.subject,
 			name: args.name,
@@ -57,12 +57,12 @@ export const processDocument = mutation({
 	handler: async (ctx, args) => {
 		const userIdentity = await ctx.auth.getUserIdentity();
 		if (!userIdentity) {
-		throw new Error("Authentication required");
+			throw new Error("Authentication required");
 		}
 
 		const document = await ctx.db.get(args.documentId);
 		if (!document || document.userId !== userIdentity.subject) {
-		throw new Error("Unauthorized: You do not own this document");
+			throw new Error("Unauthorized: You do not own this document");
 		}
 		await ctx.db.patch(args.documentId, {
 			chunks: args.chunks,
@@ -79,13 +79,19 @@ export const searchDocuments = query({
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+		if (!userIdentity) {
+			throw new Error("Authentication required");
+		}
+
 		const limit = args.limit || 10;
 
-		// Get all processed documents
+		// Get only user's processed documents (optimized with index)
 		const documents = await ctx.db
 			.query("documents")
+			.withIndex("by_user", (q) => q.eq("userId", userIdentity.subject))
 			.filter((q) => q.eq(q.field("status"), "processed"))
-			.take(100);
+			.take(limit * 2); // Take more for filtering, but limit to reasonable number
 
 		// Simple text search for now (can be upgraded to vector search)
 		const results = documents
@@ -109,7 +115,22 @@ export const searchDocuments = query({
 export const getDocument = query({
 	args: { id: v.id("documents") },
 	handler: async (ctx, args) => {
-		return await ctx.db.get(args.id);
+		const userIdentity = await ctx.auth.getUserIdentity();
+		if (!userIdentity) {
+			throw new Error("Authentication required");
+		}
+
+		const document = await ctx.db.get(args.id);
+		if (!document) {
+			return null;
+		}
+
+		// Verify ownership
+		if (document.userId !== userIdentity.subject) {
+			throw new Error("Unauthorized: You do not own this document");
+		}
+
+		return document;
 	},
 });
 
@@ -125,9 +146,17 @@ export const listDocuments = query({
 		)),
 	},
 	handler: async (ctx, args) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+		if (!userIdentity) {
+			throw new Error("Authentication required");
+		}
+
 		const limit = args.limit || 50;
 
-		let query = ctx.db.query("documents");
+		// Only return user's own documents
+		let query = ctx.db
+			.query("documents")
+			.withIndex("by_user", (q) => q.eq("userId", userIdentity.subject));
 
 		if (args.status) {
 			query = query.filter((q) => q.eq(q.field("status"), args.status));
@@ -171,6 +200,20 @@ export const updateDocumentMetadata = mutation({
 		}),
 	},
 	handler: async (ctx, args) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+		if (!userIdentity) {
+			throw new Error("Authentication required");
+		}
+
+		const document = await ctx.db.get(args.id);
+		if (!document) {
+			throw new Error("Document not found");
+		}
+
+		if (document.userId !== userIdentity.subject) {
+			throw new Error("Unauthorized: You do not own this document");
+		}
+
 		await ctx.db.patch(args.id, {
 			metadata: args.metadata,
 		});
@@ -184,12 +227,19 @@ export const getDocumentsByTag = query({
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
+		const userIdentity = await ctx.auth.getUserIdentity();
+		if (!userIdentity) {
+			throw new Error("Authentication required");
+		}
+
 		const limit = args.limit || 50;
 
+		// Only get user's documents (optimized with index)
 		const documents = await ctx.db
 			.query("documents")
+			.withIndex("by_user", (q) => q.eq("userId", userIdentity.subject))
 			.filter((q) => q.eq(q.field("status"), "processed"))
-			.take(100);
+			.take(limit * 2); // Take more for filtering
 
 		return documents
 			.filter((doc) => doc.metadata?.tags?.includes(args.tag))

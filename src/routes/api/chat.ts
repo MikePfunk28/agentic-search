@@ -5,8 +5,8 @@ import { createOpenAI } from "@ai-sdk/openai";
 import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection.ts";
-import { ModelConfigManager, ModelProvider } from "@/lib/model-config.ts";
+} from "@/lib/csrf-protection";
+import { ModelConfigManager, ModelProvider } from "@/lib/model-config";
 
 const SYSTEM_PROMPT = `You are an intelligent AI assistant with access to agentic search capabilities. You can help users with:
 

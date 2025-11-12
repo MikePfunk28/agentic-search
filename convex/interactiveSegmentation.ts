@@ -169,7 +169,7 @@ export const rejectSegment = mutation({
  */
 export const getPendingApprovals = query({
   args: {
-    searchHistoryId: v.id("searchHistory"),
+    searchHistoryId: v.optional(v.id("searchHistory")),
   },
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
@@ -182,7 +182,7 @@ export const getPendingApprovals = query({
       // Get approvals for specific search
       approvals = await ctx.db
         .query("segmentApprovals")
-        .withIndex("by_search", (q) => q.eq("searchHistoryId", args.searchHistoryId))
+        .withIndex("by_search", (q) => q.eq("searchHistoryId", args.searchHistoryId!))
         .collect();
     } else {
       // Get all pending approvals for user
@@ -291,7 +291,7 @@ export const approveReasoningStep = mutation({
  */
 export const getPendingReasoningSteps = query({
   args: {
-    searchHistoryId: v.id("searchHistory"),
+    searchHistoryId: v.optional(v.id("searchHistory")),
   },
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
@@ -299,11 +299,21 @@ export const getPendingReasoningSteps = query({
       throw new Error("Authentication required");
     }
 
-    const steps = await ctx.db
-      .query("reasoningStepApprovals")
-      .withIndex("by_search", (q) => q.eq("searchHistoryId", args.searchHistoryId))
-      .order("asc") // Order by step number
-      .collect();
+    let steps;
+    if (args.searchHistoryId) {
+      steps = await ctx.db
+        .query("reasoningStepApprovals")
+        .withIndex("by_search", (q) => q.eq("searchHistoryId", args.searchHistoryId!))
+        .order("asc")
+        .collect();
+    } else {
+      // Get all user's reasoning steps
+      steps = await ctx.db
+        .query("reasoningStepApprovals")
+        .withIndex("by_user", (q) => q.eq("userId", userIdentity.subject))
+        .order("asc")
+        .collect();
+    }
 
     // Filter to pending only
     return steps.filter((s) => !s.approved && !s.shouldRetry);

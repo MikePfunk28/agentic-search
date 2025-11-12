@@ -2,6 +2,10 @@
  * Model Configuration Storage
  * Handles localStorage persistence for model configurations
  * Uses encrypted storage for API keys
+ *
+ * ⚠️ DEPRECATED: This file uses browser localStorage.
+ * New code should use Convex secure storage (convex/secureApiKeys.ts)
+ * which stores API keys server-side with proper encryption.
  */
 
 import {
@@ -51,9 +55,11 @@ export async function saveModelConfig(
 		if (apiKey && isSecureStorageAvailable()) {
 			await secureSetItem(apiKeyRef!, apiKey);
 		} else if (apiKey) {
-			// Fallback: store unencrypted if crypto not available
-			console.warn("Secure storage not available, storing API key unencrypted");
-			localStorage.setItem(apiKeyRef!, apiKey);
+			// SECURITY: Do not store unencrypted API keys
+			throw new Error(
+				"Secure storage not available. API keys cannot be stored securely. " +
+				"Please use a modern browser with Web Crypto API support, or use Convex secure storage instead."
+			);
 		}
 
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
@@ -80,8 +86,9 @@ export async function loadModelConfig(id: string): Promise<ModelConfig | null> {
 			if (isSecureStorageAvailable()) {
 				apiKey = (await secureGetItem(storedConfig.apiKeyRef)) || undefined;
 			} else {
-				// Fallback: load unencrypted
-				apiKey = localStorage.getItem(storedConfig.apiKeyRef) || undefined;
+				// SECURITY: Refuse to load unencrypted keys
+				console.error("Secure storage not available. Cannot load API keys securely.");
+				throw new Error("Secure storage required to load API keys. Please use a modern browser.");
 			}
 		}
 

@@ -187,7 +187,7 @@ export class UnifiedSearchOrchestrator {
 
         reasoningSteps = reasoningResult.steps.map(step => ({
           step: step.step,
-          type: step.type as any,
+          type: step.type as "analysis" | "planning" | "execution" | "validation" | "synthesis",
           input: step.input,
           output: step.output,
           confidence: step.confidence,

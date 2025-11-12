@@ -7,8 +7,8 @@ import {
 	ensureCsrfToken,
 	requiresCsrfProtection,
 	validateCsrfRequest,
-} from "@/lib/csrf-protection.ts";
-import router from "@/orpc/router.ts";
+} from "@/lib/csrf-protection";
+import router from "@/orpc/router";
 
 const handler = new RPCHandler(router);
 
