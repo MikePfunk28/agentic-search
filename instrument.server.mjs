@@ -21,7 +21,7 @@ Sentry.init({
   replaysSessionSampleRate: 0.1,
   // If you want to set your own sample rate, use the benchmark helper:
   // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  replaysOnErrorSampleRate: 1.0
+  replaysOnErrorSampleRate: 1.0,
 
   // Add tracers for sentry
 })
