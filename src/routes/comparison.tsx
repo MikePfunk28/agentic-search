@@ -5,6 +5,11 @@ export const Route = createFileRoute("/comparison")({
 	component: ComparisonPage,
 });
 
+/**
+ * Renders the comparison page with a full-height gradient background and a centered SearchComparisonDashboard.
+ *
+ * @returns The rendered JSX element for the comparison page.
+ */
 function ComparisonPage() {
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">

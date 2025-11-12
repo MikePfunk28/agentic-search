@@ -33,6 +33,19 @@ interface AgenticChatProps {
 	onSearchResults?: (results: SearchResult[]) => void;
 }
 
+/**
+ * Interactive chat UI that detects search intent, performs agentic multi-model searches,
+ * and displays interleaved reasoning, search results, and comparison metrics.
+ *
+ * This component:
+ * - Automatically detects when a user message implies a search and runs an agentic search flow.
+ * - Renders chat messages, explicit reasoning steps, search results, and an advanced comparison dashboard.
+ * - Updates internal dashboard state with unified search results and may persist search history via a Convex mutation.
+ * - Gates interactions until a CSRF token is available.
+ *
+ * @param onSearchResults - Optional callback invoked with the array of `SearchResult` when an agentic search completes or falls back to fallback results.
+ * @returns The AgenticChat React element.
+ */
 export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 	const { token: csrfToken, error: csrfError } = useCsrfToken();
 	const saveSearch = useMutation(api.searchHistory.saveSearch);

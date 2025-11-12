@@ -13,6 +13,14 @@ import { useState } from "react";
 import WorkOSHeader from "./workos-user.tsx";
 import { SettingsModal } from "./SettingsModal";
 
+/**
+ * Renders the application header with controls and a slide-in left navigation menu.
+ *
+ * The header includes a menu button, title link, and a quick settings button that opens the settings modal.
+ * The left aside is a sliding navigation panel with links for Home, Search History, Compare Searches, Export Datasets, and Settings; selecting a link closes the menu.
+ *
+ * @returns The header and left-side navigation menu as JSX elements
+ */
 export default function Header() {
 	const [isOpen, setIsOpen] = useState(false);
 	const [showSettings, setShowSettings] = useState(false);
