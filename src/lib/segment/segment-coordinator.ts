@@ -290,8 +290,14 @@ export class SegmentCoordinator {
    * Assess quality of coordinated search
    */
   private assessQuality(state: CoordinationState, results: SearchResult[]): CoordinatedSearchResult['quality'] {
-    const completedRatio = state.completedSegments.size / (state.completedSegments.size + state.failedSegments.size);
-    const avgConfidence = Object.values(state.segments).reduce((sum, ctx) => sum + ctx.findings.confidence, 0) / Object.keys(state.segments).length;
+    const attempted = state.completedSegments.size + state.failedSegments.size;
+    const completedRatio = attempted > 0 ? state.completedSegments.size / attempted : 0;
+
+    const successfulContexts = Object.values(state.segments);
+    const avgConfidence =
+      successfulContexts.length > 0
+        ? successfulContexts.reduce((sum, ctx) => sum + ctx.findings.confidence, 0) / successfulContexts.length
+        : 0;
 
     return {
       accuracy: avgConfidence,
@@ -299,6 +305,7 @@ export class SegmentCoordinator {
       coherence: results.length > 0 ? 0.8 : 0.3, // Simplified
       overall: (avgConfidence + completedRatio + (results.length > 0 ? 0.8 : 0.3)) / 3,
     };
+  }
   }
 
   /**

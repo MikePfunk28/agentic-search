@@ -12,6 +12,14 @@ export interface ModelSettingsProps {
   onSave?: (config: ModelConfig) => void;
 }
 
+/**
+ * Renders a UI for selecting an AI provider and model, testing the connection, and saving the chosen model configuration.
+ *
+ * The component detects available providers on mount, loads models for the selected provider, allows optional base URL and API key input, provides a connection test flow for local and cloud providers, and persists the final configuration to localStorage.
+ *
+ * @param onSave - Optional callback invoked with the saved ModelConfig after the user saves the configuration
+ * @returns The settings UI for configuring provider, model, base URL, and API key, including test and save controls
+ */
 export function ModelSettings({ onSave }: ModelSettingsProps) {
   const [availableProviders, setAvailableProviders] = useState<ModelProvider[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<ModelProvider | null>(null);
@@ -25,6 +33,12 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 
   // Detect available providers on mount
   useEffect(() => {
+    /**
+     * Detects available AI model providers and updates component state accordingly.
+     *
+     * Sets the loading state while detection runs, populates `availableProviders`, and
+     * auto-selects the first provider when any are found. Logs an error if detection fails.
+     */
     async function detectProviders() {
       setIsLoading(true);
       try {
@@ -47,6 +61,11 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 
   // Load models when provider changes
   useEffect(() => {
+    /**
+     * Load models for the currently selected provider and update component state.
+     *
+     * Fetches the provider's model list (using `baseURL` when present) and updates `availableModels`. If the list is non-empty the first model is selected. If no provider is selected the function is a no-op; on failure it clears `availableModels` and logs an error.
+     */
     async function loadModels() {
       if (!selectedProvider) return;
 

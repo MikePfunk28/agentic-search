@@ -8,10 +8,22 @@ export const Route = createFileRoute("/settings")({
 	component: SettingsPage,
 });
 
+/**
+ * Renders the settings page by delegating to the page content component.
+ *
+ * @returns The React element that contains the settings page content.
+ */
 function SettingsPage() {
 	return <SettingsPageContent />;
 }
 
+/**
+ * Render the settings page UI with model configuration controls, status banners, informational content, and supported provider tiles.
+ *
+ * Displays a transient success banner for 3 seconds after a configuration is saved and shows an error banner when saving fails.
+ *
+ * @returns The JSX element for the full settings page.
+ */
 function SettingsPageContent() {
 	const [isSaved, setIsSaved] = useState(false);
 	const [error, setError] = useState<string | null>(null);

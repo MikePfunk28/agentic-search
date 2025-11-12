@@ -5,6 +5,14 @@ import { AgenticChat } from "../components/AgenticChat";
 
 export const Route = createFileRoute("/")({ component: Home });
 
+/**
+ * Render the Home route UI and open a full-screen AgenticChat view in response to user actions.
+ *
+ * Renders a multi-section landing page (hero, comparison, features, CTA, footer) and switches to a full-screen
+ * AgenticChat component when the user triggers the start action.
+ *
+ * @returns The React element for the home route: either the landing page or the full-screen AgenticChat view.
+ */
 function Home() {
 	const [showChat, setShowChat] = useState(false);
 

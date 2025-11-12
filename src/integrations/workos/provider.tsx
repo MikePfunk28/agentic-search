@@ -7,7 +7,7 @@ const VITE_WORKOS_API_HOSTNAME = import.meta.env.VITE_WORKOS_API_HOSTNAME;
 const DISABLE_AUTH = import.meta.env.VITE_DISABLE_AUTH === 'true';
 
 /**
- * WorkOS Authentication Provider
+ * Provides WorkOS authentication to its descendant components when WorkOS is configured.
  *
  * Authentication behavior:
  * - If VITE_DISABLE_AUTH=true is set explicitly, runs without authentication (for development/testing)
@@ -17,12 +17,7 @@ const DISABLE_AUTH = import.meta.env.VITE_DISABLE_AUTH === 'true';
  * ⚠️ SECURITY NOTE:
  * Protected routes/components MUST:
  *
- * 1. Use RequireAuth component (src/components/RequireAuth.tsx) to enforce
- *    authentication when WorkOS is configured
- * 2. Validate authentication server-side in API routes/server functions
- * 3. Never trust client-side auth state for sensitive operations
- *
- * See docs/authentication-guards.md for implementation guide.
+ * @returns The children wrapped with `AuthKitProvider` when WorkOS is configured; otherwise the children as rendered.
  */
 export default function AppWorkOSProvider({
 	children,

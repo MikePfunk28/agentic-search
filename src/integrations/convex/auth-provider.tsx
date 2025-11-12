@@ -15,6 +15,12 @@ if (!CONVEX_URL) {
 
 // Create a single shared Convex client instance
 const convexClient = new ConvexReactClient(CONVEX_URL);
+/**
+ * Provides Convex authentication context to descendant components using a shared client.
+ *
+ * @param children - Child nodes to render inside the Convex authentication provider.
+ * @returns An element that supplies Convex authentication context to its descendants.
+ */
 export default function ConvexAuthProvider({
 	children,
 }: {

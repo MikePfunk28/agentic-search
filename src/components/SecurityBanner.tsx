@@ -6,6 +6,14 @@
 import { Shield, Lock, Eye, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
+/**
+ * Render an expandable security banner that explains how Adversarial Differential
+ * Discrimination (ADD) improves safety compared to traditional RAG systems.
+ *
+ * @returns A React element containing the styled banner with a brief summary and
+ * an optional expanded section that outlines vulnerabilities, protections,
+ * transparent reasoning, and key differences.
+ */
 export function SecurityBanner() {
 	const [isExpanded, setIsExpanded] = useState(false);
 

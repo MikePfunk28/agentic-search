@@ -19,7 +19,6 @@ import { SecurityBanner } from "./SecurityBanner";
 import { ComparisonDashboard } from "./ComparisonDashboard";
 import type { SearchResult } from "../lib/types";
 import type { UnifiedSearchResult } from "../lib/unified-search-orchestrator";
-import { ModelProvider } from "../lib/model-config";
 
 interface ChatReasoningStep {
 	id: string;
@@ -32,6 +31,16 @@ interface AgenticChatProps {
 	onSearchResults?: (results: SearchResult[]) => void;
 }
 
+/**
+ * Renders the Agentic Search Chat interface that combines a conversational chat UI with
+ * interleaved reasoning steps, multi-model selection, integrated agentic search, and a results/metrics dashboard.
+ *
+ * The component manages security readiness (CSRF), detects user search intent, performs agentic searches, displays
+ * reasoning steps and search results, and exposes search dashboard metrics when available.
+ *
+ * @param onSearchResults - Optional callback invoked with the array of `SearchResult` items whenever a search completes (including fallbacks).
+ * @returns The rendered chat interface element.
+ */
 export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 	const { token: csrfToken, error: csrfError } = useCsrfToken();
 	const [input, setInput] = useState("");
@@ -356,6 +365,7 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 								totalTime: dashboardData.parallelResults.models.reduce((sum, m) => sum + m.processingTime, 0),
 							} : undefined}
 							reasoningResult={dashboardData.reasoningSteps ? {
+							reasoningResult={dashboardData.reasoningSteps && dashboardData.reasoningSteps.length > 0 ? {
 								steps: dashboardData.reasoningSteps.map((s, idx) => ({
 									id: `step-${idx}`,
 									type: s.type,

@@ -17,7 +17,16 @@ export interface UseReasoningStepsResult {
 }
 
 /**
- * Hook to manage reasoning steps in a search flow
+ * Manage interleaved reasoning steps for a search workflow and expose mutators and the current phase.
+ *
+ * @returns An object containing:
+ * - `steps` — the current array of ReasoningStepData objects.
+ * - `addStep(phase, title, description?, metadata?)` — adds a new step and returns its generated id.
+ * - `updateStep(id, updates)` — merges `updates` into the step with the given id.
+ * - `completeStep(id, metadata?)` — marks the step as complete, sets its end time, and merges optional metadata.
+ * - `errorStep(id, error)` — marks the step as errored, sets its end time, and stores the error in metadata.
+ * - `clearSteps()` — removes all steps.
+ * - `currentPhase` — the phase of the last step, or `null` if there are no steps.
  */
 export function useReasoningSteps(): UseReasoningStepsResult {
   const [steps, setSteps] = useState<ReasoningStepData[]>([]);
@@ -142,7 +151,10 @@ export const AGENTIC_SEARCH_PHASES: Array<{
 ];
 
 /**
- * Helper to create a standard agentic search flow
+ * Create helpers that start predefined agentic search phases using a reasoning-steps hook.
+ *
+ * @param hooks - The result of `useReasoningSteps` used to add and manage reasoning steps
+ * @returns An object with methods `startIntent`, `startStrategy`, `startSearch`, `startScoring`, `startSynthesis`, and `startLearning`; each method adds a new reasoning step and returns the created step's id
  */
 export function createAgenticSearchFlow(hooks: UseReasoningStepsResult) {
   return {

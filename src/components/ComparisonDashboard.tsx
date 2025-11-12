@@ -16,6 +16,19 @@ export interface DashboardProps {
 	isLoading?: boolean;
 }
 
+/**
+ * Render a dashboard showing parallel model outputs, reasoning steps, and ADD quality metrics.
+ *
+ * Renders an overall metrics row plus conditional panels for parallel model comparison, reasoning steps,
+ * and ADD (quality) metrics. Shows a loading panel when `isLoading` is true and returns `null` when no
+ * input data is provided.
+ *
+ * @param parallelResults - Results from parallel model runs, used to populate model outputs, consensus, and overall metrics
+ * @param reasoningResult - Structured reasoning steps and related metrics, used to populate the Reasoning Steps panel
+ * @param addMetrics - ADD (Relevance, Diversity, Freshness, Consistency) metrics and drift analysis data
+ * @param isLoading - When true, render a loading state instead of the dashboard
+ * @returns A React element representing the comparison dashboard, or `null` when no data is available
+ */
 export function ComparisonDashboard({
 	parallelResults,
 	reasoningResult,
@@ -242,7 +255,9 @@ export function ComparisonDashboard({
 }
 
 /**
- * Metric Card Component
+ * Render a compact metric card that displays an icon, a prominent value, and a label with color accents.
+ *
+ * @returns A JSX element containing the metric card styled with the selected color accents and displaying the provided icon, value, and label.
  */
 function MetricCard({
 	icon,
@@ -272,7 +287,10 @@ function MetricCard({
 }
 
 /**
- * Model Output Card Component
+ * Render a compact card that displays a single model's output, token count, confidence, and processing time.
+ *
+ * @param response - Model response containing `modelName`, `tokenCount`, `response` (preview text), `confidence` (0–1), and `processingTime` (ms)
+ * @returns A JSX element representing a styled model output card
  */
 function ModelOutputCard({ response }: { response: ModelResponse }) {
 	return (
@@ -314,7 +332,17 @@ function ModelOutputCard({ response }: { response: ModelResponse }) {
 }
 
 /**
- * Reasoning Step Card Component
+ * Render a styled card summarizing a single reasoning step including its type, validation status, token count, output, confidence, and any validation errors.
+ *
+ * @param step - The reasoning step data:
+ *   - `type`: step category (e.g., "analysis", "planning", "execution", "validation", "synthesis")
+ *   - `output`: textual output produced by the step
+ *   - `confidence`: numeric confidence in [0, 1]
+ *   - `validated`: whether the step passed validation
+ *   - `validationErrors`: list of validation error messages
+ *   - `tokenCount`: number of tokens consumed by the step
+ * @param index - Zero-based index of the step used for display (e.g., "Step 1")
+ * @returns A JSX element representing the reasoning step card.
  */
 function ReasoningStepCard({
 	step,
@@ -394,7 +422,11 @@ function ReasoningStepCard({
 }
 
 /**
- * Score Bar Component
+ * Renders a horizontal progress bar with a label and percentage for an ADD sub-score.
+ *
+ * @param label - Text label displayed above the bar.
+ * @param value - Score between 0 and 1 that determines the filled width and displayed percentage.
+ * @param color - Accent color for the filled portion; one of `"cyan" | "blue" | "purple" | "green"`.
  */
 function ScoreBar({
 	label,
