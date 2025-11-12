@@ -32,11 +32,13 @@ export interface UploadResult {
 }
 
 /**
- * Upload document to S3
- * @param file File buffer or string content
- * @param filename Original filename
- * @param contentType MIME type
- * @returns Upload result with S3 key and URL
+ * Upload a file to the configured S3 bucket and return its storage details.
+ *
+ * @param file - File contents as a `Buffer` or UTF-8 `string` to upload
+ * @param filename - Original filename used for metadata and to build a sanitized S3 object key
+ * @param contentType - MIME type to set on the uploaded S3 object
+ * @returns An object with `key` (S3 object key), `url` (public HTTPS URL assuming the bucket is public), and `size` (bytes)
+ * @throws If `AWS_ACCESS_KEY_ID` or `AWS_SECRET_ACCESS_KEY` environment variables are not set
  */
 export async function uploadDocument(
 	file: Buffer | string,
@@ -108,9 +110,11 @@ export async function getPresignedDownloadUrl(
 }
 
 /**
- * Download document from S3
- * @param key S3 object key
- * @returns Document content as Buffer
+ * Retrieve an object from S3 and return its raw contents as a Buffer.
+ *
+ * @param key - The S3 object key (path) to download
+ * @returns A Buffer containing the object's bytes
+ * @throws Error if the S3 object has no response body
  */
 export async function downloadDocument(key: string): Promise<Buffer> {
 	const command = new GetObjectCommand({

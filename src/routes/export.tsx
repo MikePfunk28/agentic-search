@@ -5,6 +5,11 @@ export const Route = createFileRoute("/export")({
 	component: DatasetExportPage,
 });
 
+/**
+ * Renders the dataset export page layout with a full-height gradient background and centered dashboard.
+ *
+ * @returns The JSX element containing a responsive container and the DatasetExportDashboard component.
+ */
 function DatasetExportPage() {
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">

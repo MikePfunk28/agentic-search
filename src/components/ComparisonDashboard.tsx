@@ -314,7 +314,11 @@ function ModelOutputCard({ response }: { response: ModelResponse }) {
 }
 
 /**
- * Reasoning Step Card Component
+ * Render a card summarizing a single reasoning step, including its type, validation status, token count, output preview, confidence, and any validation errors.
+ *
+ * @param step - The reasoning step to render. Should include `type`, `output`, `confidence`, `validated`, `validationErrors`, and `tokenCount`.
+ * @param index - Zero-based index of the step used for display (e.g., "Step 1").
+ * @returns A JSX element representing the rendered reasoning step card.
  */
 function ReasoningStepCard({
 	step,
