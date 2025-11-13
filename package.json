@@ -13,7 +13,11 @@
     "check": "biome check",
     "start": "node --import ./.output/server/instrument.server.mjs .output/server/index.mjs",
     "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy"
+    "convex:deploy": "convex deploy",
+    "deploy": "npm run build && wrangler deploy",
+    "preview": "npm run build && vite preview",
+    "cf-typegen": "wrangler types"
+
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.1",
