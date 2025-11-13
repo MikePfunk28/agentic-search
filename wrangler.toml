@@ -1,0 +1,30 @@
+name = "agentic-search"
+compatibility_date = "2024-11-12"
+
+# Cloudflare Pages configuration for TanStack Start
+pages_build_output_dir = ".output/public"
+
+[site]
+bucket = ".output/public"
+
+# Environment variables for Cloudflare Pages
+[env.production]
+# Add your environment variables here
+# VITE_CONVEX_URL = "your-convex-url"
+# VITE_WORKOS_CLIENT_ID = "your-workos-client-id"
+
+# Compatibility flags for modern Workers runtime
+compatibility_flags = [ "nodejs_compat" ]
+
+# Build configuration
+[build]
+command = "pnpm build:cloudflare"
+cwd = "./"
+
+# Deployment configuration for Cloudflare Pages
+[dev]
+port = 3000
+local_protocol = "http"
+
+# Node.js compatibility for TanStack Start SSR
+node_compat = true
