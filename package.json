@@ -13,7 +13,11 @@
     "check": "biome check",
     "start": "node --import ./.output/server/instrument.server.mjs .output/server/index.mjs",
     "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy"
+    "convex:deploy": "convex deploy",
+    "deploy": "pnpm run build && wrangler deploy",
+    "preview": "pnpm run build && vite preview",
+    "cf-typegen": "wrangler types"
+
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.1",
@@ -21,6 +25,7 @@
     "@ai-sdk/google": "^2.0.29",
     "@ai-sdk/openai": "^2.0.64",
     "@ai-sdk/react": "^2.0.8",
+    "@cloudflare/vite-plugin": "^1.14.1",
     "@convex-dev/auth": "^0.0.90",
     "@convex-dev/react-query": "0.0.0-alpha.11",
     "@modelcontextprotocol/sdk": "^1.8.0",
@@ -82,6 +87,6 @@
     "vite": "^7.1.7",
     "vitest": "^3.0.5",
     "web-vitals": "^5.1.0",
-    "wrangler": "^4.46.0"
+    "wrangler": "^4.47.0"
   }
 }

@@ -3,10 +3,8 @@
  * Minimal router for RPC endpoints
  */
 
-import { or } from "@orpc/server";
-
-// Create empty router for now
+// oRPC routers are plain objects, not created with a factory function
 // Add procedures as needed
-const router = or.router({});
+const router = {};
 
 export default router;
