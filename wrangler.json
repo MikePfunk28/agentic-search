@@ -1,6 +1,0 @@
-{
-  "name": "agentic-search",
-  "compatibility_date": "2025-11-09",
-  "compatibility_flags": ["nodejs_compat_v2"],
-  "pages_build_output_dir": "dist/client"
-}

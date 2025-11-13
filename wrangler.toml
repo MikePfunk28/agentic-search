@@ -1,6 +1,6 @@
 name = "agentic-search"
 compatibility_date = "2024-11-12"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat_v2"]
 main = "@tanstack/react-start/server-entry"
 
 [observability]
