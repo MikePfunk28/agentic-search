@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertCircle, Save, Settings as SettingsIcon } from "lucide-react";
-import { useState } from "react";
-import { ModelSettings } from "../components/model-config";
-import type { ModelConfig } from "../lib/model-config";
+import { AlertCircle, Settings as SettingsIcon } from "lucide-react";
+import { ModelConfigPanel } from "../components/ModelConfigPanel";
 
 export const Route = createFileRoute("/settings")({
 	component: SettingsPage,
@@ -13,21 +11,6 @@ function SettingsPage() {
 }
 
 function SettingsPageContent() {
-	const [isSaved, setIsSaved] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-
-	const handleSave = (config: ModelConfig) => {
-		try {
-			// Save logic will be handled by ModelSettings component
-			setIsSaved(true);
-			setError(null);
-
-			// Reset success message after 3 seconds
-			setTimeout(() => setIsSaved(false), 3000);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to save settings");
-		}
-	};
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
@@ -45,33 +28,11 @@ function SettingsPageContent() {
 				</div>
 			</section>
 
-			{/* Success/Error Messages */}
-			{isSaved && (
-				<div className="max-w-4xl mx-auto px-6 mb-4">
-					<div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 flex items-center gap-3">
-						<Save className="w-5 h-5 text-green-400" />
-						<span className="text-green-100">Settings saved successfully!</span>
-					</div>
-				</div>
-			)}
-
-			{error && (
-				<div className="max-w-4xl mx-auto px-6 mb-4">
-					<div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 flex items-center gap-3">
-						<AlertCircle className="w-5 h-5 text-red-400" />
-						<span className="text-red-100">{error}</span>
-					</div>
-				</div>
-			)}
 
 			{/* Settings Content */}
 			<section className="max-w-4xl mx-auto px-6 pb-12">
 				<div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-					<h2 className="text-2xl font-semibold text-white mb-6">
-						Model Configuration
-					</h2>
-
-					<ModelSettings onSave={handleSave} />
+					<ModelConfigPanel />
 				</div>
 
 				{/* Information Section */}

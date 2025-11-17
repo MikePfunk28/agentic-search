@@ -307,3 +307,5 @@ export const getConnectedServers = action({
 
 // Note: Queries and mutations are in mcp_mutations.ts
 // Access them via: api.mcp_mutations.getConnections, etc.
+
+
