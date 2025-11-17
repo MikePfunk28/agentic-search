@@ -58,19 +58,9 @@ export default function AppWorkOSProvider({
 			}
 		);
 
-		// In development, allow pass-through with warning
-		if (import.meta.env.DEV) {
-			console.warn(`[WorkOS] ${error}`);
-			return <>{children}</>;
-		}
-
-		// In production, show error
-		return (
-			<div style={{ padding: '2rem', color: 'red' }}>
-				<h1>Configuration Error</h1>
-				<p>{error}</p>
-			</div>
-		);
+		// Allow pass-through with warning - auth is disabled
+		console.warn(`[WorkOS] ${error}`);
+		return <>{children}</>;
 	}
 
 	// If WorkOS is configured, wrap with AuthKitProvider
