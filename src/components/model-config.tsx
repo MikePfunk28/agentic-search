@@ -210,19 +210,24 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
       </div>
 
       {/* API Key (for cloud providers) */}
-      {selectedProvider && !['ollama', 'lmstudio'].includes(selectedProvider) && (
+      {selectedProvider && !['ollama', 'lmstudio', 'vllm', 'gguf', 'onnx'].includes(selectedProvider) && (
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            API Key
+            API Key <span className="text-cyan-400">*</span>
           </label>
           <input
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder="sk-..."
+            placeholder="sk-... or your API key"
             className="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           />
           <p className="mt-2 text-xs text-gray-400">
+            {availableModels.length > 0
+              ? `✓ Loaded ${availableModels.length} models from API`
+              : 'Add API key to load available models dynamically'}
+          </p>
+          <p className="mt-1 text-xs text-gray-500">
             Your API key is stored locally in your browser and never sent to our servers
           </p>
         </div>
@@ -237,7 +242,14 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
           type="text"
           value={baseURL}
           onChange={(e) => setBaseURL(e.target.value)}
-          placeholder={selectedProvider === 'ollama' ? 'http://localhost:11434' : selectedProvider === 'lmstudio' ? 'http://localhost:1234' : ''}
+          placeholder={
+            selectedProvider === 'ollama' ? 'http://localhost:11434' :
+            selectedProvider === 'lmstudio' ? 'http://localhost:1234' :
+            selectedProvider === 'vllm' ? 'http://localhost:8000' :
+            selectedProvider === 'gguf' ? 'http://localhost:8080' :
+            selectedProvider === 'onnx' ? 'http://localhost:8081' :
+            ''
+          }
           className="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
         <p className="mt-2 text-xs text-gray-400">

@@ -421,3 +421,5 @@ export default defineSchema({
     .index("by_search", ["searchHistoryId"])
     .index("by_search_step", ["searchHistoryId", "stepNumber"]),
 })
+
+

@@ -18,8 +18,14 @@ export enum ModelProvider {
 	OPENAI = "openai",
 	ANTHROPIC = "anthropic",
 	GOOGLE = "google",
+	DEEPSEEK = "deepseek",
+	MOONSHOT = "moonshot",
+	KIMI = "kimi",
 	OLLAMA = "ollama",
 	LM_STUDIO = "lm_studio",
+	VLLM = "vllm",
+	GGUF = "gguf",
+	ONNX = "onnx",
 	AZURE_OPENAI = "azure_openai",
 }
 
@@ -38,12 +44,48 @@ export const ModelConfigSchema = z.object({
 
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 
-// Available models per provider (2024/2025 latest - Real model IDs)
+// Available models per provider - these are defaults, use fetchAvailableModels() for dynamic detection
 export const AVAILABLE_MODELS = {
-	OpenAI: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
-	Anthropic: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
-	Google: ["gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"],
-	Ollama: ["qwen3:1.7b", "qwen3:4b", "gemma3:270m", "gemma3:1b", "gemma3:4b"],
+	OpenAI: [
+		"gpt-4o",
+		"gpt-4o-mini",
+		"gpt-4-turbo",
+		"gpt-4",
+		"gpt-3.5-turbo"
+	],
+	Anthropic: [
+		"claude-sonnet-4-5-20250929",
+		"claude-haiku-4-5-20250929",
+		"claude-opus-4-1-20250805",
+		"claude-3-5-sonnet-20241022",
+		"claude-3-5-haiku-20241022"
+	],
+	Google: [
+		"gemini-2.5-pro",
+		"gemini-2.5-flash",
+		"gemini-2.0-flash-exp",
+		"gemini-1.5-pro",
+		"gemini-1.5-flash"
+	],
+	DeepSeek: [
+		"deepseek-chat",
+		"deepseek-coder",
+		"deepseek-reasoner"
+	],
+	Moonshot: [
+		"moonshot-v1-8k",
+		"moonshot-v1-32k",
+		"moonshot-v1-128k"
+	],
+	Kimi: [
+		"kimi-k2-chat",
+		"kimi-k2-long"
+	],
+	Ollama: ["qwen3:4b", "qwen3:1.7b", "gemma3:4b", "gemma3:1b", "gemma3:270m", "deepseek-r1:8b", "deepseek-r1:1.5b", "deepseek-coder:6.7b"],
+	LMStudio: [],
+	vLLM: [],
+	GGUF: [],
+	ONNX: [],
 } as const;
 
 // Export type for type-safe model selection
@@ -61,13 +103,31 @@ export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 	},
 	[ModelProvider.ANTHROPIC]: {
 		baseUrl: "https://api.anthropic.com",
-		model: "claude-3-5-sonnet-20241022",
+		model: "claude-sonnet-4-5-20250929",
 		temperature: 0.7,
 		maxTokens: 8192,
 	},
 	[ModelProvider.GOOGLE]: {
 		baseUrl: "https://generativelanguage.googleapis.com/v1",
-		model: "gemini-2.0-flash-exp",
+		model: "gemini-2.5-pro",
+		temperature: 0.7,
+		maxTokens: 8192,
+	},
+	[ModelProvider.DEEPSEEK]: {
+		baseUrl: "https://api.deepseek.com/v1",
+		model: "deepseek-chat",
+		temperature: 0.7,
+		maxTokens: 8192,
+	},
+	[ModelProvider.MOONSHOT]: {
+		baseUrl: "https://api.moonshot.cn/v1",
+		model: "moonshot-v1-8k",
+		temperature: 0.7,
+		maxTokens: 8000,
+	},
+	[ModelProvider.KIMI]: {
+		baseUrl: "https://api.moonshot.cn/v1",
+		model: "kimi-k2-chat",
 		temperature: 0.7,
 		maxTokens: 8192,
 	},
@@ -80,6 +140,24 @@ export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 	[ModelProvider.LM_STUDIO]: {
 		baseUrl: "http://localhost:1234/v1",
 		model: "qwen3:4b",
+		temperature: 0.7,
+		maxTokens: 32000,
+	},
+	[ModelProvider.VLLM]: {
+		baseUrl: "http://localhost:8000/v1",
+		model: "default",
+		temperature: 0.7,
+		maxTokens: 32000,
+	},
+	[ModelProvider.GGUF]: {
+		baseUrl: "http://localhost:8080/v1",
+		model: "default",
+		temperature: 0.7,
+		maxTokens: 32000,
+	},
+	[ModelProvider.ONNX]: {
+		baseUrl: "http://localhost:8081/v1",
+		model: "default",
 		temperature: 0.7,
 		maxTokens: 32000,
 	},
@@ -445,6 +523,96 @@ export class ModelConfigManager {
 			null,
 			2,
 		);
+	}
+
+	/**
+	 * Fetch available models dynamically from provider API
+	 * This replaces hardcoded model lists with real-time detection
+	 */
+	async fetchAvailableModels(provider: ModelProvider, config: Partial<ModelConfig>): Promise<string[]> {
+		try {
+			const baseUrl = config.baseUrl || ProviderDefaults[provider].baseUrl;
+			const apiKey = config.apiKey;
+
+			// Handle local providers with /models endpoint
+			if (provider === ModelProvider.OLLAMA || provider === ModelProvider.LM_STUDIO) {
+				const modelsUrl = baseUrl?.replace('/v1', '') + '/api/tags';
+				const response = await fetch(modelsUrl, {
+					method: 'GET',
+					signal: AbortSignal.timeout(5000),
+				});
+
+				if (response.ok) {
+					const data = await response.json() as { models: Array<{ name: string }> };
+					return data.models.map(m => m.name);
+				}
+			}
+
+			// Handle vLLM, GGUF, ONNX (OpenAI-compatible /v1/models)
+			if (provider === ModelProvider.VLLM || provider === ModelProvider.GGUF || provider === ModelProvider.ONNX) {
+				const modelsUrl = `${baseUrl}/models`;
+				const response = await fetch(modelsUrl, {
+					method: 'GET',
+					signal: AbortSignal.timeout(5000),
+				});
+
+				if (response.ok) {
+					const data = await response.json() as { data: Array<{ id: string }> };
+					return data.data.map(m => m.id);
+				}
+			}
+
+			// Handle cloud providers with /v1/models endpoint
+			if (provider === ModelProvider.OPENAI || provider === ModelProvider.DEEPSEEK ||
+				provider === ModelProvider.MOONSHOT || provider === ModelProvider.KIMI) {
+				const modelsUrl = `${baseUrl}/models`;
+				const headers: Record<string, string> = {
+					'Content-Type': 'application/json',
+				};
+
+				if (apiKey) {
+					headers['Authorization'] = `Bearer ${apiKey}`;
+				}
+
+				const response = await fetch(modelsUrl, {
+					method: 'GET',
+					headers,
+					signal: AbortSignal.timeout(5000),
+				});
+
+				if (response.ok) {
+					const data = await response.json() as { data: Array<{ id: string }> };
+					return data.data.map(m => m.id);
+				}
+			}
+
+			// Anthropic doesn't have a /models endpoint, return defaults
+			if (provider === ModelProvider.ANTHROPIC) {
+				return AVAILABLE_MODELS.Anthropic as unknown as string[];
+			}
+
+			// Google uses different API structure
+			if (provider === ModelProvider.GOOGLE) {
+				return AVAILABLE_MODELS.Google as unknown as string[];
+			}
+
+			// Fall back to static list if API call fails
+			console.warn(`[ModelConfig] Could not fetch models for ${provider}, using defaults`);
+			return [];
+
+		} catch (error) {
+			console.warn(`[ModelConfig] Error fetching models for ${provider}:`, error);
+			return [];
+		}
+	}
+
+	/**
+	 * Detect newly available local models
+	 * Returns models that weren't in the previous list
+	 */
+	async detectNewModels(provider: ModelProvider, config: Partial<ModelConfig>, previousModels: string[] = []): Promise<string[]> {
+		const currentModels = await this.fetchAvailableModels(provider, config);
+		return currentModels.filter(model => !previousModels.includes(model));
 	}
 }
 

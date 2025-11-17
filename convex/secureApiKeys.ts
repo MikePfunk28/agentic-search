@@ -28,7 +28,9 @@ export const saveApiKey = mutation({
     const userId = userIdentity.subject;
 
     // Verify user owns this configuration
-    const config = await ctx.db.get(args.configId);
+    const config = await ctx.db.query("modelConfigurations")
+      .filter(q => q.eq(q.field("_id"), args.configId))
+      .first();
     if (!config) {
       throw new Error("Configuration not found");
     }
@@ -79,7 +81,9 @@ export const getApiKey = query({
     const userId = userIdentity.subject;
 
     // Verify user owns this configuration
-    const config = await ctx.db.get(args.configId);
+    const config = await ctx.db.query("modelConfigurations")
+      .filter(q => q.eq(q.field("_id"), args.configId))
+      .first();
     if (!config) {
       return null;
     }
@@ -114,7 +118,9 @@ export const deleteApiKey = mutation({
     const userId = userIdentity.subject;
 
     // Verify user owns this configuration
-    const config = await ctx.db.get(args.configId);
+    const config = await ctx.db.query("modelConfigurations")
+      .filter(q => q.eq(q.field("_id"), args.configId))
+      .first();
     if (!config) {
       return;
     }
@@ -162,3 +168,5 @@ export const listApiKeys = query({
     }));
   },
 });
+
+

@@ -35,14 +35,17 @@ async function createModelForCompression(config: {
   const { createAnthropic } = await import('@ai-sdk/anthropic')
   const { createOpenAI } = await import('@ai-sdk/openai')
   const { createGoogleGenerativeAI } = await import('@ai-sdk/google')
+  const { createOpenAICompatible } = await import('@ai-sdk/openai-compatible')
+  const { createOllama } = await import('ollama-ai-provider')
 
   switch (config.provider) {
     case 'ollama':
-      const ollama = createOpenAI({
-        baseURL: config.baseURL || 'http://localhost:11434/v1',
-        apiKey: 'ollama' // Ollama doesn't need real API key
+      // Use native Ollama provider for proper endpoint support
+      const ollamaBaseUrl = (config.baseURL || 'http://localhost:11434/v1').replace('/v1', '')
+      const ollamaProvider = createOllama({
+        baseURL: ollamaBaseUrl
       })
-      return ollama(config.modelId)
+      return ollamaProvider(config.modelId)
 
     case 'lmstudio':
       const lmstudio = createOpenAI({
@@ -84,6 +87,57 @@ async function createModelForCompression(config: {
         }
       })
       return azure(config.modelId)
+
+    case 'deepseek':
+      if (!config.apiKey) throw new Error('DeepSeek API key required')
+      const deepseek = createOpenAICompatible({
+        name: 'deepseek',
+        apiKey: config.apiKey,
+        baseURL: config.baseURL || 'https://api.deepseek.com/v1'
+      })
+      return deepseek(config.modelId)
+
+    case 'moonshot':
+      if (!config.apiKey) throw new Error('Moonshot API key required')
+      const moonshot = createOpenAICompatible({
+        name: 'moonshot',
+        apiKey: config.apiKey,
+        baseURL: config.baseURL || 'https://api.moonshot.cn/v1'
+      })
+      return moonshot(config.modelId)
+
+    case 'kimi':
+      if (!config.apiKey) throw new Error('Kimi API key required')
+      const kimi = createOpenAICompatible({
+        name: 'kimi',
+        apiKey: config.apiKey,
+        baseURL: config.baseURL || 'https://api.moonshot.cn/v1'
+      })
+      return kimi(config.modelId)
+
+    case 'vllm':
+      const vllm = createOpenAICompatible({
+        name: 'vllm',
+        apiKey: 'vllm',
+        baseURL: config.baseURL || 'http://localhost:8000/v1'
+      })
+      return vllm(config.modelId)
+
+    case 'gguf':
+      const gguf = createOpenAICompatible({
+        name: 'gguf',
+        apiKey: 'gguf',
+        baseURL: config.baseURL || 'http://localhost:8080/v1'
+      })
+      return gguf(config.modelId)
+
+    case 'onnx':
+      const onnx = createOpenAICompatible({
+        name: 'onnx',
+        apiKey: 'onnx',
+        baseURL: config.baseURL || 'http://localhost:8081/v1'
+      })
+      return onnx(config.modelId)
 
     default:
       throw new Error(`Unknown provider: ${config.provider}`)
@@ -161,7 +215,7 @@ export const processDocument = action({
       const targetTokens = Math.floor(originalTokens / targetRatio)
 
       const { text: compressedMarkdown } = await generateText({
-        model,
+        model: model as any,
         prompt: `You are an expert document compressor. Compress this document to approximately ${targetTokens} tokens (${targetRatio}x compression) while preserving ALL key information.
 
 REQUIREMENTS:
@@ -281,3 +335,6 @@ export const storeError = internalMutation({
     })
   }
 })
+
+
+

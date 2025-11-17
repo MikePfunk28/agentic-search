@@ -181,3 +181,4 @@ export const deleteConfig = mutation({
     await ctx.db.delete(args.configId);
   }
 });
+
