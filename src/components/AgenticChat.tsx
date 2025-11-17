@@ -5,7 +5,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Bot, Brain, Search, Send, Sparkles, User, Zap } from "lucide-react";
+import { Bot, Brain, Search, Send, Sparkles, User, Zap, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
@@ -19,8 +19,12 @@ import { EnhancedModelSelector } from "./EnhancedModelSelector";
 import { ResultsList } from "./ResultsList";
 import { SecurityBanner } from "./SecurityBanner";
 import { ComparisonDashboard } from "./ComparisonDashboard";
+import { SearchProgressPanel } from "./SearchProgressPanel";
+import { SettingsModal } from "./SettingsModal";
+import { ADDQualityPanel } from "./ADDQualityPanel";
 import type { SearchResult } from "../lib/types";
 import type { UnifiedSearchResult } from "../lib/unified-search-orchestrator";
+import { useSearchProgress } from "../hooks/useSearchProgress";
 
 interface ChatReasoningStep {
 	id: string;
@@ -55,6 +59,14 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 	const [isSearching, setIsSearching] = useState(false);
 	const [selectedModels, setSelectedModels] = useState<string[]>(["ollama:qwen3:4b"]);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
+
+	// Human-in-the-loop search progress
+	const searchProgress = useSearchProgress((results) => {
+		setSearchResults(results);
+		onSearchResults?.(results);
+		setIsSearching(false);
+	});
+	const [showSettings, setShowSettings] = useState(false);
 
 	// Dashboard data from unified search
 	const [dashboardData, setDashboardData] = useState<{
@@ -199,6 +211,14 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 
 			setIsSearching(true);
 
+			// Start search with human-in-the-loop controls
+			searchProgress.startSearch(userMessage, searchProgress.scope);
+
+			// Note: Results will be handled by the useSearchProgress hook callback
+			// Skip the old performAgenticSearch call
+			return;
+
+			// OLD CODE BELOW (kept for fallback)
 			// Perform actual agentic search
 			try {
 				addReasoningStep("search", "Searching across web sources with Firecrawl");
@@ -273,12 +293,28 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 					<Bot className="w-6 h-6 text-primary-400" />
 					<h2 className="text-lg font-semibold text-white">Agentic Search Chat</h2>
 				</div>
-				<EnhancedModelSelector
-					selectedModels={selectedModels}
-					onChange={setSelectedModels}
-					allowMultiple={true}
-				/>
+				<div className="flex items-center gap-3">
+					<EnhancedModelSelector
+						selectedModels={selectedModels}
+						onChange={setSelectedModels}
+						allowMultiple={true}
+					/>
+					<button
+						onClick={() => setShowSettings(true)}
+						className="flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-700 rounded-lg transition-colors text-white font-medium"
+						title="Configure API Keys for OpenAI, Anthropic, etc."
+					>
+						<Settings className="w-5 h-5" />
+						<span>API Keys</span>
+					</button>
+				</div>
 			</div>
+
+			{/* Settings Modal */}
+			<SettingsModal
+				isOpen={showSettings}
+				onClose={() => setShowSettings(false)}
+			/>
 
 			{/* Chat Messages Area */}
 			<div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -286,9 +322,9 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 				{messages.length === 0 && (
 					<SecurityBanner />
 				)}
-				{messages.map((message) => (
+				{messages.map((message, msgIndex) => (
 					<div
-						key={message.id}
+						key={`${message.id}-${msgIndex}`}
 						className={`flex gap-3 ${
 							message.role === "assistant" ? "justify-start" : "justify-end"
 						}`}
@@ -335,9 +371,9 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 					</div>
 				))}
 
-				{/* Reasoning Steps */}
-				{reasoningSteps.map((step) => (
-					<div key={step.id} className="flex gap-3 justify-start">
+			{/* Reasoning Steps */}
+			{reasoningSteps.map((step, stepIndex) => (
+				<div key={`${step.id}-${stepIndex}`} className="flex gap-3 justify-start">
 						<div className="flex gap-3 max-w-4xl">
 							<div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
 								<ReasoningIcon type={step.type} />
@@ -354,6 +390,39 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 						</div>
 					</div>
 				))}
+
+				{/* ADD Quality Control Panel */}
+				{searchResults.length > 0 && dashboardData.addMetrics && (
+					<ADDQualityPanel
+						results={searchResults}
+						addMetrics={dashboardData.addMetrics}
+						onFilterResult={(resultId, reason) => {
+							console.log(`[ADD] Result ${resultId} flagged: ${reason}`);
+							setSearchResults(prev => prev.filter(r => r.id !== resultId));
+						}}
+						onAdjustThreshold={(threshold) => {
+							console.log(`[ADD] Quality threshold adjusted to ${threshold}`);
+							// Filter results based on new threshold
+							setSearchResults(prev => prev.filter(r => (r.addScore || 0) >= threshold));
+						}}
+					/>
+				)}
+
+				{/* Search Progress Panel - Human-in-the-Loop */}
+				{searchProgress.isSearching && (
+					<SearchProgressPanel
+						query={input || "Search in progress"}
+						steps={searchProgress.steps}
+						scope={searchProgress.scope}
+						isPaused={searchProgress.isPaused}
+						onPause={searchProgress.pauseSearch}
+						onResume={searchProgress.resumeSearch}
+						onStop={searchProgress.stopSearch}
+						onScopeChange={searchProgress.updateScope}
+						onApproveStep={searchProgress.approveStep}
+						onModifyStep={searchProgress.modifyStep}
+					/>
+				)}
 
 				{/* Search Results */}
 				{searchResults.length > 0 && (

@@ -21,6 +21,7 @@ export enum ModelProvider {
 	DEEPSEEK = "deepseek",
 	MOONSHOT = "moonshot",
 	KIMI = "kimi",
+	OPENROUTER = "openrouter",
 	OLLAMA = "ollama",
 	LM_STUDIO = "lm_studio",
 	VLLM = "vllm",
@@ -44,33 +45,47 @@ export const ModelConfigSchema = z.object({
 
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 
-// Available models per provider - these are defaults, use fetchAvailableModels() for dynamic detection
+// Available models per provider - NOVEMBER 2025 LATEST MODELS (OpenRouter compatible IDs)
 export const AVAILABLE_MODELS = {
 	OpenAI: [
-		"gpt-4o",
-		"gpt-4o-mini",
-		"gpt-4-turbo",
-		"gpt-4",
-		"gpt-3.5-turbo"
+		"gpt-5.1",
+		"gpt-5.1-mini",
+		"gpt-5.1-nano",
+		"gpt-5",
+		"gpt-5-mini",
+		"gpt-5-nano",
+		"o3-deep-research",
+		"o4-mini-deep-research",
+		"gpt-4o"
 	],
 	Anthropic: [
-		"claude-sonnet-4-5-20250929",
-		"claude-haiku-4-5-20250929",
-		"claude-opus-4-1-20250805",
-		"claude-3-5-sonnet-20241022",
-		"claude-3-5-haiku-20241022"
+		"claude-sonnet-4.5",
+		"claude-opus-4.1",
+		"claude-haiku-4.5",
+		"claude-opus-4",
+		"claude-sonnet-4",
+		"claude-3.7-sonnet",
+		"claude-3.7-sonnet:thinking",
+		"claude-3.5-sonnet",
+		"claude-3.5-haiku"
 	],
 	Google: [
 		"gemini-2.5-pro",
+		"gemini-2.5-pro-preview",
 		"gemini-2.5-flash",
-		"gemini-2.0-flash-exp",
-		"gemini-1.5-pro",
-		"gemini-1.5-flash"
+		"gemini-2.5-flash-lite",
+		"gemini-2.5-flash-image",
+		"gemma-3-4b-it"
 	],
 	DeepSeek: [
+		"deepseek-v3.2-exp",
+		"deepseek-chat-v3.1",
+		"deepseek-r1-0528",
+		"deepseek-r1-distill-qwen-32b",
+		"deepseek-r1-distill-qwen-14b",
+		"deepseek-prover-v2",
 		"deepseek-chat",
-		"deepseek-coder",
-		"deepseek-reasoner"
+		"deepseek-coder"
 	],
 	Moonshot: [
 		"moonshot-v1-8k",
@@ -81,6 +96,7 @@ export const AVAILABLE_MODELS = {
 		"kimi-k2-chat",
 		"kimi-k2-long"
 	],
+	OpenRouter: [],  // Dynamic - fetches from API
 	Ollama: ["qwen3:4b", "qwen3:1.7b", "gemma3:4b", "gemma3:1b", "gemma3:270m", "deepseek-r1:8b", "deepseek-r1:1.5b", "deepseek-coder:6.7b"],
 	LMStudio: [],
 	vLLM: [],
@@ -97,13 +113,13 @@ export type ModelForProvider<T extends ModelProviderName> = AvailableModels[T][n
 export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 	[ModelProvider.OPENAI]: {
 		baseUrl: "https://api.openai.com/v1",
-		model: "gpt-4o",
+		model: "gpt-5.1",
 		temperature: 0.7,
 		maxTokens: 16000,
 	},
 	[ModelProvider.ANTHROPIC]: {
 		baseUrl: "https://api.anthropic.com",
-		model: "claude-sonnet-4-5-20250929",
+		model: "claude-sonnet-4.5",
 		temperature: 0.7,
 		maxTokens: 8192,
 	},
@@ -115,7 +131,7 @@ export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 	},
 	[ModelProvider.DEEPSEEK]: {
 		baseUrl: "https://api.deepseek.com/v1",
-		model: "deepseek-chat",
+		model: "deepseek-v3.2-exp",
 		temperature: 0.7,
 		maxTokens: 8192,
 	},
@@ -162,7 +178,13 @@ export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 		maxTokens: 32000,
 	},
 	[ModelProvider.AZURE_OPENAI]: {
-		model: "gpt-4o",
+		model: "gpt-5.1",
+		temperature: 0.7,
+		maxTokens: 16000,
+	},
+	[ModelProvider.OPENROUTER]: {
+		baseUrl: "https://openrouter.ai/api/v1",
+		model: "openai/gpt-5.1",
 		temperature: 0.7,
 		maxTokens: 16000,
 	},

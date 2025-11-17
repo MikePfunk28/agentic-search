@@ -16,10 +16,14 @@ import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ExportRouteImport } from './routes/export'
 import { Route as ComparisonRouteImport } from './routes/comparison'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTestKeyRouteImport } from './routes/api/test-key'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiCsrfTokenRouteImport } from './routes/api/csrf-token'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as ApiSearchStreamRouteImport } from './routes/api/search/stream'
+import { Route as ApiSearchProgressRouteImport } from './routes/api/search/progress'
+import { Route as ApiSearchControlRouteImport } from './routes/api/search/control'
 import { Route as ApiRpcSplatRouteImport } from './routes/api.rpc.$'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -57,6 +61,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTestKeyRoute = ApiTestKeyRouteImport.update({
+  id: '/api/test-key',
+  path: '/api/test-key',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSearchRoute = ApiSearchRouteImport.update({
   id: '/api/search',
   path: '/api/search',
@@ -77,6 +86,21 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSearchStreamRoute = ApiSearchStreamRouteImport.update({
+  id: '/stream',
+  path: '/stream',
+  getParentRoute: () => ApiSearchRoute,
+} as any)
+const ApiSearchProgressRoute = ApiSearchProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => ApiSearchRoute,
+} as any)
+const ApiSearchControlRoute = ApiSearchControlRouteImport.update({
+  id: '/control',
+  path: '/control',
+  getParentRoute: () => ApiSearchRoute,
+} as any)
 const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
   id: '/api/rpc/$',
   path: '/api/rpc/$',
@@ -94,8 +118,12 @@ export interface FileRoutesByFullPath {
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
   '/api/csrf-token': typeof ApiCsrfTokenRoute
-  '/api/search': typeof ApiSearchRoute
+  '/api/search': typeof ApiSearchRouteWithChildren
+  '/api/test-key': typeof ApiTestKeyRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
+  '/api/search/control': typeof ApiSearchControlRoute
+  '/api/search/progress': typeof ApiSearchProgressRoute
+  '/api/search/stream': typeof ApiSearchStreamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -108,8 +136,12 @@ export interface FileRoutesByTo {
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
   '/api/csrf-token': typeof ApiCsrfTokenRoute
-  '/api/search': typeof ApiSearchRoute
+  '/api/search': typeof ApiSearchRouteWithChildren
+  '/api/test-key': typeof ApiTestKeyRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
+  '/api/search/control': typeof ApiSearchControlRoute
+  '/api/search/progress': typeof ApiSearchProgressRoute
+  '/api/search/stream': typeof ApiSearchStreamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,8 +155,12 @@ export interface FileRoutesById {
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
   '/api/csrf-token': typeof ApiCsrfTokenRoute
-  '/api/search': typeof ApiSearchRoute
+  '/api/search': typeof ApiSearchRouteWithChildren
+  '/api/test-key': typeof ApiTestKeyRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
+  '/api/search/control': typeof ApiSearchControlRoute
+  '/api/search/progress': typeof ApiSearchProgressRoute
+  '/api/search/stream': typeof ApiSearchStreamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,7 +176,11 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/csrf-token'
     | '/api/search'
+    | '/api/test-key'
     | '/api/rpc/$'
+    | '/api/search/control'
+    | '/api/search/progress'
+    | '/api/search/stream'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -154,7 +194,11 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/csrf-token'
     | '/api/search'
+    | '/api/test-key'
     | '/api/rpc/$'
+    | '/api/search/control'
+    | '/api/search/progress'
+    | '/api/search/stream'
   id:
     | '__root__'
     | '/'
@@ -168,7 +212,11 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/csrf-token'
     | '/api/search'
+    | '/api/test-key'
     | '/api/rpc/$'
+    | '/api/search/control'
+    | '/api/search/progress'
+    | '/api/search/stream'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -182,7 +230,8 @@ export interface RootRouteChildren {
   ApiSplatRoute: typeof ApiSplatRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiCsrfTokenRoute: typeof ApiCsrfTokenRoute
-  ApiSearchRoute: typeof ApiSearchRoute
+  ApiSearchRoute: typeof ApiSearchRouteWithChildren
+  ApiTestKeyRoute: typeof ApiTestKeyRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
 }
 
@@ -237,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/test-key': {
+      id: '/api/test-key'
+      path: '/api/test-key'
+      fullPath: '/api/test-key'
+      preLoaderRoute: typeof ApiTestKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/search': {
       id: '/api/search'
       path: '/api/search'
@@ -265,6 +321,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/search/stream': {
+      id: '/api/search/stream'
+      path: '/stream'
+      fullPath: '/api/search/stream'
+      preLoaderRoute: typeof ApiSearchStreamRouteImport
+      parentRoute: typeof ApiSearchRoute
+    }
+    '/api/search/progress': {
+      id: '/api/search/progress'
+      path: '/progress'
+      fullPath: '/api/search/progress'
+      preLoaderRoute: typeof ApiSearchProgressRouteImport
+      parentRoute: typeof ApiSearchRoute
+    }
+    '/api/search/control': {
+      id: '/api/search/control'
+      path: '/control'
+      fullPath: '/api/search/control'
+      preLoaderRoute: typeof ApiSearchControlRouteImport
+      parentRoute: typeof ApiSearchRoute
+    }
     '/api/rpc/$': {
       id: '/api/rpc/$'
       path: '/api/rpc/$'
@@ -274,6 +351,22 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface ApiSearchRouteChildren {
+  ApiSearchControlRoute: typeof ApiSearchControlRoute
+  ApiSearchProgressRoute: typeof ApiSearchProgressRoute
+  ApiSearchStreamRoute: typeof ApiSearchStreamRoute
+}
+
+const ApiSearchRouteChildren: ApiSearchRouteChildren = {
+  ApiSearchControlRoute: ApiSearchControlRoute,
+  ApiSearchProgressRoute: ApiSearchProgressRoute,
+  ApiSearchStreamRoute: ApiSearchStreamRoute,
+}
+
+const ApiSearchRouteWithChildren = ApiSearchRoute._addFileChildren(
+  ApiSearchRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -286,7 +379,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSplatRoute: ApiSplatRoute,
   ApiChatRoute: ApiChatRoute,
   ApiCsrfTokenRoute: ApiCsrfTokenRoute,
-  ApiSearchRoute: ApiSearchRoute,
+  ApiSearchRoute: ApiSearchRouteWithChildren,
+  ApiTestKeyRoute: ApiTestKeyRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,
 }
 export const routeTree = rootRouteImport

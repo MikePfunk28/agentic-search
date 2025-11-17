@@ -81,21 +81,20 @@ export function SecurityBanner() {
 							</div>
 
 							<div className="bg-green-900/30 border border-green-500/20 rounded-lg p-3 mt-3">
-								<p className="text-xs text-green-300">
-									<strong>Key Differences:</strong>
+								<p className="text-xs text-green-300 font-semibold mb-2">
+									👥 Human-in-the-Loop Protection:
 								</p>
-								<ul className="text-xs text-green-200 mt-2 space-y-1 ml-4">
-									<li>✓ Multi-source validation instead of single vector DB</li>
-									<li>
-										✓ Active quality scoring vs passive content embedding
-									</li>
-									<li>
-										✓ Adversarial testing for each result vs blind trust
-									</li>
-									<li>
-										✓ Reasoning transparency vs black-box retrieval
-									</li>
+								<ul className="text-xs text-green-200 space-y-1.5 ml-4">
+									<li>✓ View detailed ADD scores for every result</li>
+									<li>✓ Adjust quality thresholds in real-time</li>
+									<li>✓ Flag suspicious results for immediate removal</li>
+									<li>✓ Full reasoning transparency - see what AI sees</li>
 								</ul>
+								<div className="mt-3 p-2 bg-pink-500/20 border border-pink-400/30 rounded">
+									<p className="text-xs text-pink-200 font-medium">
+										📊 The ADD Quality Control panel appears after your first search, letting you inspect and filter results based on adversarial scoring.
+									</p>
+								</div>
 							</div>
 						</div>
 					)}

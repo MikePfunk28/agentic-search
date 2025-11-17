@@ -142,6 +142,17 @@ VITE_SENTRY_DSN=your_sentry_dsn
 
 ## Features
 
+### 👥 Human-in-the-Loop Control (NEW!)
+
+- 🔍 **Real-Time Visibility**: Watch every search step as it happens - see which sources are being queried, documents being pulled, and AI reasoning in real-time
+- ⏯️ **Full Control**: Pause, resume, or stop searches at any time. Adjust scope mid-execution to refine results
+- 🎛️ **Dynamic Scope Adjustment**: Enable/disable sources (Firecrawl, academic, news), change result limits, toggle reasoning features - all while searching
+- 📊 **Progress Tracking**: View tokens used, documents found, confidence scores, and execution time for each step
+- ✅ **Step Approval**: Review and approve individual steps for critical searches. Modify parameters based on intermediate results
+- 🔐 **Secure API Keys**: All API keys stored in Convex with server-side encryption, never exposed to browser
+
+> **Replaces RAG Black Box**: Unlike traditional RAG systems, you can see and control exactly what's being researched and pulled. Perfect for understanding AI decision-making and ensuring quality results.
+
 ### Advanced Document Retrieval
 - 🎯 **Multi-Modal OCR**: DeepSeek Vision processes images, tables, charts, diagrams
 - 📦 **Adaptive Compression**: Content-aware (legal: 3-5x, news: 10-15x, code: 2-3x)
