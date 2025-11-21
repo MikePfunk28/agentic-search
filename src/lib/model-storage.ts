@@ -14,6 +14,7 @@ import {
 	secureGetItem,
 	secureSetItem,
 	testEncryption,
+	secureRemoveItem,
 } from "./crypto-storage";
 import type { ModelConfig } from "./model-config";
 
@@ -178,7 +179,7 @@ export function deleteModelConfig(id: string): void {
 
 		// Remove encrypted API key if it exists
 		if (config?.apiKeyRef) {
-			localStorage.removeItem(config.apiKeyRef);
+			secureRemoveItem(config.apiKeyRef);
 		}
 
 		delete stored.configs[id];
@@ -210,7 +211,18 @@ export function setActiveConfig(id: string): boolean {
 
 		stored.activeConfigId = id;
 		stored.updatedAt = Date.now();
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+		// Ensure no API keys are included in persisted config
+		const sanitizedStored = {
+			...stored,
+			configs: Object.fromEntries(
+				Object.entries(stored.configs).map(([id, config]) => {
+					// Remove apiKey field if present; retain only apiKeyRef
+					const { apiKey, ...rest } = config;
+					return [id, rest];
+				}),
+			),
+		};
+		localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedStored));
 
 		return true;
 	} catch (error) {
