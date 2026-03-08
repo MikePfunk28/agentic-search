@@ -902,9 +902,115 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 	}
 
 	/**
+	 * Validate a base URL to prevent SSRF attacks.
+	 * Blocks internal/private IPs, cloud metadata endpoints, and non-http(s) schemes.
+	 * Allows localhost only for local providers (Ollama, LM Studio, vLLM, GGUF, ONNX).
+	 */
+	private validateBaseUrl(baseUrl: string, provider: string): void {
+		let parsed: URL;
+		try {
+			parsed = new URL(baseUrl);
+		} catch {
+			throw new Error(`Invalid base URL: ${baseUrl}`);
+		}
+
+		// Only allow http and https schemes
+		if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+			throw new Error(`Blocked URL scheme: ${parsed.protocol}`);
+		}
+
+		const hostname = parsed.hostname.toLowerCase();
+
+		// Block cloud metadata endpoints
+		const blockedHosts = [
+			"169.254.169.254",   // AWS/Azure/GCP metadata
+			"metadata.google.internal",
+			"metadata.google",
+			"100.100.100.200",   // Alibaba Cloud metadata
+		];
+		if (blockedHosts.includes(hostname)) {
+			throw new Error("Blocked: cloud metadata endpoint");
+		}
+
+		// Check if hostname is an IP address
+		const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+		if (ipv4Match) {
+			const octets = ipv4Match.slice(1).map(Number);
+			const isPrivate =
+				octets[0] === 10 ||                                      // 10.0.0.0/8
+				(octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) || // 172.16.0.0/12
+				(octets[0] === 192 && octets[1] === 168) ||              // 192.168.0.0/16
+				(octets[0] === 169 && octets[1] === 254) ||              // 169.254.0.0/16 link-local
+				octets[0] === 0 ||                                       // 0.0.0.0/8
+				(octets[0] === 100 && octets[1] >= 64 && octets[1] <= 127); // 100.64.0.0/10 CGNAT
+
+			// Allow localhost (127.x.x.x) only for local providers
+			const localProviders = [
+				ModelProvider.OLLAMA,
+				ModelProvider.LM_STUDIO,
+				ModelProvider.VLLM,
+				ModelProvider.GGUF,
+				ModelProvider.ONNX,
+			];
+			const isLocalProvider = localProviders.includes(provider as ModelProvider);
+
+			if (octets[0] === 127) {
+				if (!isLocalProvider) {
+					throw new Error("Blocked: localhost is only allowed for local model providers");
+				}
+				// localhost allowed for local providers — skip further checks
+				return;
+			}
+
+			if (isPrivate) {
+				throw new Error("Blocked: private/internal IP address");
+			}
+		}
+
+		// Block IPv6 loopback and private ranges
+		if (hostname === "[::1]" || hostname === "::1") {
+			const localProviders = [
+				ModelProvider.OLLAMA,
+				ModelProvider.LM_STUDIO,
+				ModelProvider.VLLM,
+				ModelProvider.GGUF,
+				ModelProvider.ONNX,
+			];
+			if (!localProviders.includes(provider as ModelProvider)) {
+				throw new Error("Blocked: IPv6 loopback is only allowed for local model providers");
+			}
+			return;
+		}
+
+		// Block IPv6 private ranges (fd00::/8, fe80::/10)
+		if (hostname.startsWith("[fd") || hostname.startsWith("[fe8") || hostname.startsWith("[fe9") || hostname.startsWith("[fea") || hostname.startsWith("[feb")) {
+			throw new Error("Blocked: private IPv6 address");
+		}
+
+		// Allow localhost hostnames only for local providers
+		if (hostname === "localhost") {
+			const localProviders = [
+				ModelProvider.OLLAMA,
+				ModelProvider.LM_STUDIO,
+				ModelProvider.VLLM,
+				ModelProvider.GGUF,
+				ModelProvider.ONNX,
+			];
+			if (!localProviders.includes(provider as ModelProvider)) {
+				throw new Error("Blocked: localhost is only allowed for local model providers");
+			}
+		}
+	}
+
+	/**
 	 * Call the configured AI model
 	 */
 	private async callModel(prompt: string, model: ModelConfig): Promise<string> {
+		// SSRF protection: validate the base URL before making any fetch call
+		if (model.baseUrl) {
+			this.validateBaseUrl(model.baseUrl, model.provider);
+		}
+
 		switch (model.provider) {
 			case ModelProvider.OLLAMA:
 				return this.callOllama(prompt, model);
