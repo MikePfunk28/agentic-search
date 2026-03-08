@@ -15,6 +15,8 @@ import {
 	secureSetItem,
 	testEncryption,
 	secureRemoveItem,
+	encryptText,
+	decryptText,
 } from "./crypto-storage";
 import type { ModelConfig } from "./model-config";
 
@@ -153,6 +155,18 @@ export function loadAllConfigs(): StoredConfig {
 
 		const parsed = JSON.parse(stored) as StoredConfig;
 
+		// Decrypt apiKeyRef for each config if present.
+		Object.keys(parsed.configs).forEach(id => {
+			const config = parsed.configs[id];
+			if (config.apiKeyRef) {
+				try {
+					config.apiKeyRef = decryptText(config.apiKeyRef);
+				} catch (e) {
+					console.warn("Failed to decrypt apiKeyRef for config", id, e);
+				}
+			}
+		});
+
 		// Check version - migration happens separately via initializeEncryptedStorage
 		if (parsed.version !== STORAGE_VERSION) {
 			console.warn(
@@ -216,9 +230,13 @@ export function setActiveConfig(id: string): boolean {
 			...stored,
 			configs: Object.fromEntries(
 				Object.entries(stored.configs).map(([id, config]) => {
-					// Remove apiKey field if present; retain only apiKeyRef
-					const { apiKey, ...rest } = config;
-					return [id, rest];
+					// Remove apiKey field if present; retain only encrypted apiKeyRef
+					const { apiKey, apiKeyRef, ...rest } = config;
+					const encryptedApiKeyRef = apiKeyRef ? encryptText(apiKeyRef) : undefined;
+					return [id, {
+						...rest,
+						apiKeyRef: encryptedApiKeyRef,
+					}];
 				}),
 			),
 		};
