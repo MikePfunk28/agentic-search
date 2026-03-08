@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { Check, Loader2, AlertCircle } from 'lucide-react';
 import type { ModelConfig } from '../lib/model-config';
 import { detectAvailableProviders, listModelsForProvider, getProviderDisplayName, type ModelProvider } from '../lib/ai/providers';
+import { secureSetItem } from "../lib/crypto-storage";
 
 export interface ModelSettingsProps {
   onSave?: (config: ModelConfig) => void;
@@ -107,21 +108,30 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedProvider || !selectedModel) return;
 
+    // Generate a unique key reference for the API key, e.g., based on provider/model combo
+    const apiKeyRef = `api-key-${selectedProvider}-${selectedModel}`;
+
+    // Store the API key in encrypted storage, not in localStorage
+    if (apiKey) {
+      await secureSetItem(apiKeyRef, apiKey);
+    }
+
+    // Store config with only the reference to the API key, NOT the key itself
     const config: ModelConfig = {
       provider: selectedProvider,
       model: selectedModel,
       baseUrl: baseURL || undefined,
-      apiKey: apiKey || undefined,
+      apiKeyRef,
       temperature: 0.7,
       maxTokens: 4096,
       timeout: 60000,
       enableStreaming: false,
     };
 
-    // Save to localStorage
+    // Save sanitized config to localStorage
     localStorage.setItem('agentic-search-model-config', JSON.stringify(config));
     onSave?.(config);
   };
