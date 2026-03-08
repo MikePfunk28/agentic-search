@@ -10,4 +10,3 @@ enabled = true
 VITE_CONVEX_URL = "https://astute-quail-141.convex.cloud"
 VITE_SITE_URL = "https://astute-quail-141.convex.site"
 VITE_DISABLE_AUTH = "true"
-CONVEX_DEPLOY_KEY = "prod:astute-quail-141|eyJ2MiI6ImIzM2NjYzhhYmUzNzQ3OWM4ZTRiZTY3NWNjNjliYzkwIn0="
