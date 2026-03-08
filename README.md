@@ -1,527 +1,199 @@
-Welcome to your new TanStack app!
+# Agentic Search
 
-# Getting Started
+**Intelligent web search with real-time streaming, multi-source retrieval, and adversarial quality validation.**
 
-To run this application:
+Built with TanStack Start on Cloudflare Workers, Convex backend, and BYOK (Bring Your Own Key) support for any OpenAI-compatible or Anthropic model provider — including local models via Ollama and LM Studio.
+
+## Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 20+
+- [pnpm](https://pnpm.io/) 9+
+- A search API key (Tavily, Exa, Brave, or Firecrawl)
+- Optional: [Ollama](https://ollama.com/) or [LM Studio](https://lmstudio.ai/) for local AI models
+
+### Install & Run
 
 ```bash
 pnpm install
-pnpm start
+pnpm dev
 ```
 
-# Building For Production
+Dev server starts at `http://localhost:3000`.
 
-To build this application for production:
+### Environment Variables
 
-```bash
-pnpm build
-```
-
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
-```bash
-pnpm test
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-pnpm lint
-pnpm format
-pnpm check
-```
-
-
-## Setting up WorkOS
-
-- Set the `VITE_WORKOS_CLIENT_ID` in your `.env.local`.
-
-
-## Setting up Convex
-
-- Set the `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` environment variables in your `.env.local`. (Or run `npx convex init` to set them automatically.)
-- Run `npx convex dev` to start the Convex server.
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
-
-```bash
-pnpx shadcn@latest add button
-```
-
-
-## T3Env
-
-- You can use T3Env to add type safety to your environment variables.
-- Add Environment variables to the `src/env.mjs` file.
-- Use the environment variables in your code.
-
-### Usage
-
-```ts
-import { env } from "@/env";
-
-console.log(env.VITE_APP_TITLE);
-```
-
-
-
-
-
-# Agentic Search Platform
-
-**Next-Generation Document Retrieval: 3-5x Faster & 60-70% Cheaper Than Traditional RAG**
-
-Production-ready intelligent search platform that goes beyond traditional RAG with **adaptive compression**, **multi-modal OCR**, **speculative execution**, **hybrid vector+graph storage**, and **real-time streaming**. Built with human-in-the-loop learning, multi-model orchestration, and continuous fine-tuning.
-
-## Why Better Than RAG?
-
-### Traditional RAG Problems
-- **Static Retrieval**: Single-pass embedding lookup, no reasoning
-- **Token Waste**: Retrieves full documents even when only snippets needed
-- **No Validation**: Blindly trusts retrieved information
-- **Fixed Context**: Limited by embedding window size
-- **Single-Modal**: Text only, struggles with images/tables/diagrams
-- **No Learning**: Cannot improve from user feedback
-- **Slow**: Sequential retrieve → rank → generate pipeline
-
-### Agentic Search Advantages
-- **Dynamic Reasoning**: Multi-step think→act→think cycles with query segmentation
-- **Adaptive Compression**: 10x OCR compression with DeepSeek Vision for multimodal understanding
-- **Adversarial Validation**: ADD discriminators ensure quality before serving results
-- **Hierarchical Context**: Multiple compression levels (paragraph, section, document)
-- **Multi-Modal**: Images, PDFs, tables, charts via DeepSeek Vision OCR
-- **Self-Improving**: Logs every interaction for continuous fine-tuning
-- **Parallel Execution**: Speculative prefetching + concurrent segment processing
-- **Hybrid Storage**: LanceDB vectors + knowledge graphs + BM25 keyword search
-- **Real-Time Streaming**: Progressive results while still processing
-
-### Performance Claims (To Be Tested)
-- **Speed**: 3-5x faster via parallel execution + speculative prefetching
-- **Cost**: 60-70% reduction through adaptive compression + smart model routing
-- **Accuracy**: Higher quality via adversarial validation + human feedback
-- **Context**: 10-15x more effective context through hierarchical compression
-
-## Status: Production Ready
-
-✅ **All Critical Bugs Fixed**:
-- TanStack devtools menu removed
-- CSRF 403 errors resolved with token endpoint
-- Infinite Ollama detection loop fixed with useRef guard
-- Hydration warnings suppression turned off.
-
-## .env Setup
+Create a `.dev.vars` file (read by Cloudflare Workers / miniflare in dev):
 
 ```env
-# Required for Convex backend
-VITE_CONVEX_URL=your_convex_deployment_url
-CONVEX_DEPLOYMENT=your_convex_deployment
-
-# Required for WorkOS authentication
-VITE_WORKOS_CLIENT_ID=your_workos_client_id
-
-# Optional: AI providers (or use UI to configure encrypted keys)
-ANTHROPIC_API_KEY=your_anthropic_api_key
-OPENAI_API_KEY=your_openai_api_key
-
-# Optional: Error tracking
-VITE_SENTRY_DSN=your_sentry_dsn
+TAVILY_API_KEY=your_tavily_key
+EXA_SEARCH_API_KEY=your_exa_key
+FIRECRAWL_API_KEY=your_firecrawl_key
+BRAVE_SEARCH_API_KEY=your_brave_key
+LMSTUDIO_API_KEY=your_lmstudio_key
 ```
+
+These are server-side fallback keys. Users can also enter their own keys in the browser UI (Settings → Search APIs tab), which take priority over server keys.
+
+For Convex, set these in `wrangler.toml` or your deployment environment:
+
+```env
+VITE_CONVEX_URL=your_convex_deployment_url
+```
+
+### Convex Backend
+
+```bash
+npx convex dev        # Start local Convex dev server
+npx convex deploy     # Deploy to production
+```
+
+## How It Works
+
+1. **User enters a query** in the chat interface
+2. **Intent analysis** — AI model (if configured) or deterministic fallback classifies the query type (news, research, factual, comparison, etc.)
+3. **Strategy planning** — determines which search providers to query, how many results to fetch, and quality thresholds
+4. **Multi-source search** — queries Tavily, Exa, Firecrawl, and/or Brave in parallel
+5. **ADD quality scoring** — Adversarial Differential Discrimination scores each result on relevance, freshness, diversity, and consistency
+6. **Results display** — ranked by ADD quality score with full transparency into scoring
+7. **Optional synthesis** — AI model summarizes and synthesizes results if configured
+
+All steps stream to the browser via SSE (Server-Sent Events) so users see real-time progress.
 
 ## Features
 
-### 👥 Human-in-the-Loop Control (NEW!)
-
-- 🔍 **Real-Time Visibility**: Watch every search step as it happens - see which sources are being queried, documents being pulled, and AI reasoning in real-time
-- ⏯️ **Full Control**: Pause, resume, or stop searches at any time. Adjust scope mid-execution to refine results
-- 🎛️ **Dynamic Scope Adjustment**: Enable/disable sources (Firecrawl, academic, news), change result limits, toggle reasoning features - all while searching
-- 📊 **Progress Tracking**: View tokens used, documents found, confidence scores, and execution time for each step
-- ✅ **Step Approval**: Review and approve individual steps for critical searches. Modify parameters based on intermediate results
-- 🔐 **Secure API Keys**: All API keys stored in Convex with server-side encryption, never exposed to browser
-
-> **Replaces RAG Black Box**: Unlike traditional RAG systems, you can see and control exactly what's being researched and pulled. Perfect for understanding AI decision-making and ensuring quality results.
-
-### Advanced Document Retrieval
-- 🎯 **Multi-Modal OCR**: DeepSeek Vision processes images, tables, charts, diagrams
-- 📦 **Adaptive Compression**: Content-aware (legal: 3-5x, news: 10-15x, code: 2-3x)
-- 🌳 **Hierarchical Storage**: Summaries at paragraph, section, and document levels
-- 🔍 **Hybrid Search**: LanceDB vectors + BM25 keywords + knowledge graphs
-- ⚡ **Speculative Execution**: Prefetch likely documents during reasoning
-- 📊 **Incremental Indexing**: Only re-index changed document sections
-- 🎭 **Layout-Aware Extraction**: Preserves tables, columns, annotations
-- 🔄 **Progressive Loading**: Stream OCR results as they process
-
-### Intelligent Query Processing
-- 🧠 **Query Segmentation**: Break complex queries into parallel sub-tasks
-- 🔗 **Interleaved Reasoning**: Think→Act→Think cycles with context compression
-- 🎯 **Intent Prediction**: Start processing before user finishes typing
-- 📝 **Query Rewriting**: Spelling correction, entity recognition, expansion
-- 🌍 **Multi-Language**: Translate queries for better coverage
-- 🎪 **Confidence Routing**: Escalate to stronger models only when needed
-- 🔄 **Ensemble Predictions**: Combine multiple models for critical queries
-
-### Human-in-the-Loop Learning
-- 🧠 **Interactive Segmentation**: AI proposes query segments, user approves/modifies before execution
-- 📊 **Search History Browsing**: View past searches, results, quality scores, re-run queries
-- 🎯 **Reasoning Step Control**: Validate AI reasoning at each step, provide corrections
-- 📈 **Training Data Collection**: All interactions stored for model fine-tuning
-- 🔄 **Comparison Dashboard**: Side-by-side results from different segment approaches
-- 🏷️ **Result Annotations**: Tag and comment on findings
-- 📋 **Search Templates**: Save and share successful patterns
+### Search & Retrieval
+- **Multi-source parallel search** across Tavily, Exa, Firecrawl, and Brave
+- **ADD quality validation** — every result scored before display (relevance, freshness, diversity, consistency)
+- **Adjustable quality threshold** slider — filter results from permissive (0.0) to strict (1.0)
+- **Real-time SSE streaming** — progress steps, intermediate results, and final results streamed live
+- **Deterministic fallback** — search works fully without any AI model configured; models enhance but aren't required
 
 ### AI Model Support
-- 🤖 **13 Providers**: OpenAI, Anthropic, Google, DeepSeek, Moonshot, Kimi, Ollama, LM Studio, vLLM, GGUF, ONNX, Azure
-- 🔍 **Auto-Detection**: Finds local Ollama models at localhost:11434
-- 🔐 **Encrypted Keys**: Web Crypto API + Convex encrypted storage (AES-256-GCM)
-- ⚡ **Smart Routing**: Dynamic model selection per segment type
-- 📝 **Rich Formatting**: Markdown with syntax highlighting, streaming responses
-- 🎯 **Model Escalation**: Automatically upgrade to stronger models on failure
+- **BYOK for any provider** — OpenAI, Anthropic, Google, DeepSeek, Moonshot, Kimi, OpenRouter, Azure OpenAI
+- **Local model support** — Ollama (`localhost:11434`) and LM Studio (`localhost:1234`) with auto-detection
+- **API keys for local providers** — both Ollama and LM Studio support optional API keys for authenticated setups
+- **Multi-model parallel execution** — select multiple models to run simultaneously across different providers
+- **Thinking model support** — handles models that output via `reasoning_content` instead of `content` (e.g., QwQ, DeepSeek-R1)
+- **Fast timeout handling** — internal strategy calls use 15s timeouts and 300 max tokens to prevent long waits
 
-### Advanced Caching & Storage
-- 💾 **Semantic Caching**: Match similar queries, not just exact duplicates
-- 🗄️ **Multi-Tier**: Memory → Redis → LanceDB → S3
-- 🔄 **Partial Results**: Cache segment results independently
-- ⏱️ **Smart Expiration**: Keep frequently accessed items longer
-- 📊 **LanceDB Vectors**: 100x faster than traditional vector databases
-- 🕸️ **Knowledge Graphs**: Entity relationships and semantic connections
-- 📈 **Temporal Indexing**: Track how information changes over time
+### Settings UI (3 tabs)
+- **Local Models** — auto-detect Ollama & LM Studio models, configure base URLs and optional API keys, toggle multiple models
+- **Cloud / Custom** — add any OpenAI-compatible or Anthropic API endpoint with quick presets (OpenAI, Anthropic, DeepSeek, OpenRouter)
+- **Search APIs** — enter Tavily, Exa, Firecrawl, and Brave API keys (stored in browser localStorage, sent encrypted per-request)
 
-### Real-Time Streaming
-- 🌊 **Progressive Enhancement**: Show results as they arrive
-- 🎭 **Stream-First**: Display incomplete but useful information immediately
-- 🛑 **User Interruption**: Stop/redirect mid-search
-- 📊 **Live Metrics**: Token usage, confidence scores, execution time
+### Security
+- **CSRF protection** — HttpOnly cookie + X-CSRF-Token header on all POST endpoints
+- **Input sanitization** — all user inputs escaped and validated with Zod schemas
+- **Keys stay local** — search API keys stored in browser localStorage, sent per-request, never persisted server-side
+- **Server-side merging** — `.dev.vars` keys used as fallback when user doesn't provide their own
 
-### Security & Quality
-- 🔒 **CSRF Protection**: HttpOnly cookies with X-CSRF-Token headers
-- 🔑 **Key Encryption**: Client-side Web Crypto API + server-side Convex backup
-- 📊 **Quality Metrics**: ADD discriminator scores, user approval rates
-- 🎭 **PII Detection**: Automatic anonymization of sensitive data
-- 🚨 **Sentry Monitoring**: Error tracking and performance monitoring
-- 📈 **LangSmith Integration**: Deep observability with LangSmith tracing
-- 🔭 **OpenTelemetry**: Distributed tracing across all services
+### Human-in-the-Loop
+- **Real-time progress panel** — see each search step as it executes (analysis, planning, per-source search, reasoning)
+- **Pause / resume / stop** — control search execution mid-flight
+- **Quality transparency** — full ADD score breakdown visible for every result
+- **Search history** — browse past searches, results, and quality scores
 
 ## Architecture
 
 ### Tech Stack
-- **Frontend**: TanStack Start, TanStack Router, TanStack Store
-- **Backend**: Convex (real-time database + functions)
-- **Vector Storage**: LanceDB (fast hybrid search with SQL)
-- **Caching**: Redis (multi-tier with semantic matching)
-- **Knowledge Graphs**: Neo4j or similar for relationships
-- **Object Storage**: AWS S3 for raw documents
-- **Auth**: WorkOS (enterprise SSO)
-- **Styling**: Tailwind CSS + Shadcn/ui
-- **AI Providers**: OpenAI, Anthropic, Google, DeepSeek, Moonshot, Kimi, Ollama, LM Studio, vLLM, GGUF, ONNX, Azure
-- **Observability**: Sentry + LangSmith + OpenTelemetry
-- **Deployment**: Cloudflare Pages at mikepfunk.com
+| Layer | Technology |
+|-------|-----------|
+| Frontend | TanStack Start, TanStack Router, React, Tailwind CSS, Shadcn/ui |
+| Backend | Convex (real-time database + serverless functions) |
+| Hosting | Cloudflare Workers (via `@cloudflare/vite-plugin`) |
+| Search Providers | Tavily, Exa, Firecrawl, Brave |
+| AI Models | Any OpenAI-compatible API, Anthropic, Ollama, LM Studio |
+| Validation | Zod schemas throughout |
+| Testing | Vitest |
+| Linting | Biome |
+| Observability | Sentry |
 
-### Key Components
-- **EnhancedModelSelector**: Multi-provider model selection with auto-detection
-- **AgenticChat**: Chat interface with CSRF protection and streaming
-- **SegmentApprovalModal**: Interactive UI for approving AI query segments (pending)
-- **SearchHistoryPage**: Browse past searches with results (pending)
-- **ComparisonDashboard**: Side-by-side segment results (pending)
+### Project Structure
 
+```
+src/
+├── components/          # React components
+│   ├── AgenticChat.tsx          # Main chat interface
+│   ├── EnhancedModelSelector.tsx # Multi-model selection with auto-detect
+│   ├── SettingsModal.tsx        # Unified settings (local, cloud, search keys)
+│   ├── ADDQualityPanel.tsx      # Quality score visualization
+│   ├── SearchProgressPanel.tsx  # Real-time search progress
+│   └── ResultsList.tsx          # Search results display
+├── lib/                 # Core logic
+│   ├── agentic-search.ts       # Search engine (intent, strategy, execution, scoring)
+│   ├── unified-search-orchestrator.ts # Orchestrates the full search pipeline
+│   ├── search-providers.ts     # Tavily, Exa, Firecrawl, Brave integrations
+│   ├── add-discriminator.ts    # Adversarial Differential Discrimination scoring
+│   ├── model-store.ts          # Unified model config (single source of truth)
+│   ├── model-config.ts         # Provider types, Zod schemas, BYOK support
+│   ├── csrf-protection.ts      # CSRF token validation
+│   └── ai/model-detection.ts   # Auto-detect Ollama & LM Studio models
+├── hooks/
+│   └── useSearchProgress.ts    # SSE streaming hook (fetch + ReadableStream)
+├── routes/
+│   ├── index.tsx               # Landing page
+│   ├── search.tsx              # Search page
+│   ├── settings.tsx            # Settings page
+│   ├── history.tsx             # Search history
+│   └── api/
+│       ├── search/stream.ts    # POST → SSE streaming search endpoint
+│       ├── csrf-token.ts       # CSRF token endpoint
+│       └── detect-models.ts    # Server-side model detection proxy
+└── convex/              # Convex backend
+    ├── schema.ts               # Database schema
+    ├── search.ts               # Search-related mutations/queries
+    ├── searchHistory.ts        # History storage
+    ├── secureApiKeys.ts        # Encrypted key storage
+    └── usageTracking.ts        # Usage metrics
+```
+
+### API Flow
+
+```
+Browser                          Cloudflare Worker
+  │                                    │
+  ├─ POST /api/search/stream ─────────►│
+  │   body: { query, modelConfig,      │
+  │           searchApiKeys }          │
+  │                                    ├─ mergeSearchApiKeys(client, .dev.vars)
+  │                                    ├─ analyzeIntent(query, model?)
+  │                                    ├─ planSearchStrategy(intent, model?)
+  │                                    ├─ executeMultiSourceSearch(strategy)
+  │◄─ SSE: step updates ──────────────┤   ├─ tavily (parallel)
+  │◄─ SSE: step updates ──────────────┤   ├─ exa (parallel)
+  │                                    │   └─ ... other providers
+  │                                    ├─ ADD quality scoring
+  │◄─ SSE: results + addMetrics ──────┤
+  │                                    ├─ synthesizeResults(model?) [optional]
+  │◄─ SSE: synthesis ─────────────────┤
+  │◄─ SSE: complete ──────────────────┤
+```
+
+## Scripts
+
+```bash
+pnpm dev              # Start dev server (port 3000)
+pnpm build            # Production build
+pnpm test             # Run tests (Vitest)
+pnpm lint             # Lint (Biome)
+pnpm format           # Format (Biome)
+pnpm check            # Lint + format check (Biome)
+pnpm deploy           # Build + deploy to Cloudflare
+pnpm convex:dev       # Start Convex dev server
+pnpm convex:deploy    # Deploy Convex to production
+```
 
 ## Documentation
 
-For complete system architecture, see [SYSTEM_ARCHITECTURE.md](./docs/SYSTEM_ARCHITECTURE.md)
-
-**Key Docs**:
-- [CHANGELOG](./CHANGELOG.md) - Recent bug fixes and system updates
-- [Project Plan](./docs/plan.md) - Full roadmap and current status
-- [System Architecture](./docs/SYSTEM_ARCHITECTURE.md) - Complete technical design
-- [Convex Schema](./convex/schema.ts) - Database tables for human-in-the-loop learning
-
-## Routing
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add another a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import { Link } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
-```
-
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/people",
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
-});
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
-
-```bash
-pnpm add @tanstack/react-query @tanstack/react-query-devtools
-```
-
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
-
-```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// ...
-
-const queryClient = new QueryClient();
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from "@tanstack/react-query";
-
-import "./App.css";
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ["people"],
-    queryFn: () =>
-      fetch("https://swapi.dev/api/people")
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
-```bash
-pnpm add @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store, Derived } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-## Recent Bug Fixes
-
-### Fixed: TanStack Devtools Menu (2024-01-XX)
-**Issue**: Unwanted settings panel appearing on page
-**Solution**: Removed TanStackDevtools component from `__root.tsx`, added `suppressHydrationWarning`
-
-### Fixed: CSRF 403 Forbidden (2024-01-XX)
-**Issue**: POST `/api/chat` failing with 403 due to missing CSRF token
-**Solution**:
-- Created `/api/csrf-token` GET endpoint to set HttpOnly cookie
-- Modified `useCsrfToken` hook to fetch token on mount
-- Added `isReady` state to `AgenticChat` to disable chat until token ready
-
-### Fixed: Infinite Ollama Detection Loop (2024-01-XX)
-**Issue**: `http://localhost:11434/api/tags` fetching repeatedly in infinite loop
-**Solution**:
-- Wrapped `modelOptions` in `useMemo` to prevent recreation
-- Added `useRef` guard (`hasDetected`) to ensure detection runs once
-- Updated `useEffect` dependency array correctly
-
-## Demo Files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-## Learn More
-
-- [TanStack Documentation](https://tanstack.com)
-- [Convex TanStack Start Guide](https://docs.convex.dev/quickstart/tanstack-start)
 - [System Architecture](./docs/SYSTEM_ARCHITECTURE.md)
 - [Project Plan](./docs/plan.md)
+- [Agentic Search Design](./docs/AGENTIC_SEARCH.md)
+- [Security Analysis](./docs/SECURITY_ANALYSIS_SUMMARY.md)
+- [CSRF Protection](./docs/CSRF-PROTECTION.md)
+- [CHANGELOG](./CHANGELOG.md)
+
+## License
+
+Private.
