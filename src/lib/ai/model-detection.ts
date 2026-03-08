@@ -42,9 +42,10 @@ export async function detectOllamaModels(baseURL = 'http://localhost:11434'): Pr
     console.log('[ModelDetection] Checking Ollama at', baseURL);
 
     // Use server-side API to avoid miniflare blocking localhost fetches
-    const apiUrl = `/api/detect-models?provider=ollama&baseUrl=${encodeURIComponent(baseURL)}`;
-    const response = await fetch(apiUrl, {
-      method: 'GET',
+    const response = await fetch("/api/detect-models", {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider: "ollama", baseUrl: baseURL }),
       signal: AbortSignal.timeout(10000),
     });
 
@@ -84,9 +85,10 @@ export async function detectLMStudioModels(baseURL = 'http://localhost:1234'): P
     console.log('[ModelDetection] Checking LM Studio at', baseURL);
 
     // Use server-side API to avoid miniflare blocking localhost fetches
-    const apiUrl = `/api/detect-models?provider=lmstudio&baseUrl=${encodeURIComponent(baseURL)}`;
-    const response = await fetch(apiUrl, {
-      method: 'GET',
+    const response = await fetch("/api/detect-models", {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider: "lmstudio", baseUrl: baseURL }),
       signal: AbortSignal.timeout(10000),
     });
 

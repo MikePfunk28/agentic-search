@@ -15,7 +15,22 @@
 import { ModelConfig, ModelConfigManager, ModelProvider } from "./model-config";
 import { executeWebSearch } from "./search-providers";
 import { calculateDomainAuthority } from "./search-providers";
+import { validateServerFetchUrl } from "./url-validation";
 import type { SearchResult } from "./types";
+
+/** Check if URL ends with a version segment like /v1, /v4, /v1beta — no regex */
+function hasVersionSegment(url: string): boolean {
+	const lastSlash = url.lastIndexOf("/");
+	if (lastSlash === -1) return false;
+	const segment = url.slice(lastSlash + 1);
+	return segment.length >= 2 && segment[0] === "v" && segment[1] >= "0" && segment[1] <= "9";
+}
+
+/** Strip trailing slashes from URL — no regex */
+function stripTrailingSlashes(url: string): string {
+	while (url.endsWith("/")) url = url.slice(0, -1);
+	return url;
+}
 
 export interface SearchIntent {
 	type: "factual" | "research" | "comparison" | "tutorial" | "news" | "analysis";
@@ -902,113 +917,12 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 	}
 
 	/**
-	 * Validate a base URL to prevent SSRF attacks.
-	 * Blocks internal/private IPs, cloud metadata endpoints, and non-http(s) schemes.
-	 * Allows localhost only for local providers (Ollama, LM Studio, vLLM, GGUF, ONNX).
-	 */
-	private validateBaseUrl(baseUrl: string, provider: string): void {
-		let parsed: URL;
-		try {
-			parsed = new URL(baseUrl);
-		} catch {
-			throw new Error(`Invalid base URL: ${baseUrl}`);
-		}
-
-		// Only allow http and https schemes
-		if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-			throw new Error(`Blocked URL scheme: ${parsed.protocol}`);
-		}
-
-		const hostname = parsed.hostname.toLowerCase();
-
-		// Block cloud metadata endpoints
-		const blockedHosts = [
-			"169.254.169.254",   // AWS/Azure/GCP metadata
-			"metadata.google.internal",
-			"metadata.google",
-			"100.100.100.200",   // Alibaba Cloud metadata
-		];
-		if (blockedHosts.includes(hostname)) {
-			throw new Error("Blocked: cloud metadata endpoint");
-		}
-
-		// Check if hostname is an IP address
-		const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-		if (ipv4Match) {
-			const octets = ipv4Match.slice(1).map(Number);
-			const isPrivate =
-				octets[0] === 10 ||                                      // 10.0.0.0/8
-				(octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) || // 172.16.0.0/12
-				(octets[0] === 192 && octets[1] === 168) ||              // 192.168.0.0/16
-				(octets[0] === 169 && octets[1] === 254) ||              // 169.254.0.0/16 link-local
-				octets[0] === 0 ||                                       // 0.0.0.0/8
-				(octets[0] === 100 && octets[1] >= 64 && octets[1] <= 127); // 100.64.0.0/10 CGNAT
-
-			// Allow localhost (127.x.x.x) only for local providers
-			const localProviders = [
-				ModelProvider.OLLAMA,
-				ModelProvider.LM_STUDIO,
-				ModelProvider.VLLM,
-				ModelProvider.GGUF,
-				ModelProvider.ONNX,
-			];
-			const isLocalProvider = localProviders.includes(provider as ModelProvider);
-
-			if (octets[0] === 127) {
-				if (!isLocalProvider) {
-					throw new Error("Blocked: localhost is only allowed for local model providers");
-				}
-				// localhost allowed for local providers — skip further checks
-				return;
-			}
-
-			if (isPrivate) {
-				throw new Error("Blocked: private/internal IP address");
-			}
-		}
-
-		// Block IPv6 loopback and private ranges
-		if (hostname === "[::1]" || hostname === "::1") {
-			const localProviders = [
-				ModelProvider.OLLAMA,
-				ModelProvider.LM_STUDIO,
-				ModelProvider.VLLM,
-				ModelProvider.GGUF,
-				ModelProvider.ONNX,
-			];
-			if (!localProviders.includes(provider as ModelProvider)) {
-				throw new Error("Blocked: IPv6 loopback is only allowed for local model providers");
-			}
-			return;
-		}
-
-		// Block IPv6 private ranges (fd00::/8, fe80::/10)
-		if (hostname.startsWith("[fd") || hostname.startsWith("[fe8") || hostname.startsWith("[fe9") || hostname.startsWith("[fea") || hostname.startsWith("[feb")) {
-			throw new Error("Blocked: private IPv6 address");
-		}
-
-		// Allow localhost hostnames only for local providers
-		if (hostname === "localhost") {
-			const localProviders = [
-				ModelProvider.OLLAMA,
-				ModelProvider.LM_STUDIO,
-				ModelProvider.VLLM,
-				ModelProvider.GGUF,
-				ModelProvider.ONNX,
-			];
-			if (!localProviders.includes(provider as ModelProvider)) {
-				throw new Error("Blocked: localhost is only allowed for local model providers");
-			}
-		}
-	}
-
-	/**
 	 * Call the configured AI model
 	 */
 	private async callModel(prompt: string, model: ModelConfig): Promise<string> {
 		// SSRF protection: validate the base URL before making any fetch call
 		if (model.baseUrl) {
-			this.validateBaseUrl(model.baseUrl, model.provider);
+			validateServerFetchUrl(model.baseUrl);
 		}
 
 		switch (model.provider) {
@@ -1038,10 +952,11 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 	 */
 	private async callOllama(prompt: string, model: ModelConfig): Promise<string> {
 		try {
-			// Strip /v1 suffix if present - Ollama uses /api/generate not /v1/...
-			const baseUrl = (model.baseUrl || "http://localhost:11434").replace(/\/v1\/?$/, "");
-			// Re-validate constructed URL to ensure SSRF protection at point-of-use
-			this.validateBaseUrl(baseUrl, model.provider);
+			if (!model.baseUrl) throw new Error("Ollama baseUrl is required in model config");
+			let baseUrl = stripTrailingSlashes(model.baseUrl);
+			// Ollama uses /api/generate, not /v1 — strip /v1 suffix if present
+			if (baseUrl.endsWith("/v1")) baseUrl = baseUrl.slice(0, -3);
+			validateServerFetchUrl(baseUrl);
 			const response = await fetch(`${baseUrl}/api/generate`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -1074,9 +989,11 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 	 */
 	private async callAnthropic(prompt: string, model: ModelConfig): Promise<string> {
 		try {
-			const baseUrl = (model.baseUrl || "https://api.anthropic.com").replace(/\/v1\/?$/, "");
-			// Re-validate constructed URL to ensure SSRF protection at point-of-use
-			this.validateBaseUrl(baseUrl, model.provider);
+			if (!model.baseUrl) throw new Error("Anthropic baseUrl is required in model config");
+			let baseUrl = stripTrailingSlashes(model.baseUrl);
+			// Anthropic endpoint is /v1/messages — strip /v1 if user included it so we don't double it
+			if (baseUrl.endsWith("/v1")) baseUrl = baseUrl.slice(0, -3);
+			validateServerFetchUrl(baseUrl);
 			const response = await fetch(`${baseUrl}/v1/messages`, {
 				method: "POST",
 				headers: {
@@ -1110,22 +1027,20 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 	 */
 	private async callOpenAI(prompt: string, model: ModelConfig): Promise<string> {
 		try {
-			// Build the chat completions URL correctly for any provider.
-			// If the baseUrl already ends with a versioned path like /v1, /v4, etc., use it as-is + /chat/completions.
-			// If it doesn't have a version segment, append /v1/chat/completions (OpenAI default).
-			let chatUrl: string;
-			const rawBase = (model.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
-			// Re-validate constructed URL to ensure SSRF protection at point-of-use
-			this.validateBaseUrl(rawBase, model.provider);
+			if (!model.baseUrl) throw new Error("OpenAI-compatible baseUrl is required in model config");
+			const rawBase = stripTrailingSlashes(model.baseUrl);
+			validateServerFetchUrl(rawBase);
 
-			if (/\/v\d+$/.test(rawBase)) {
-				// baseUrl ends with /v1, /v4, etc. → append /chat/completions directly
-				chatUrl = `${rawBase}/chat/completions`;
-			} else if (rawBase.includes("/chat/completions")) {
-				// Already a full endpoint URL
+			// Build the chat completions URL — no regex, plain string checks only
+			let chatUrl: string;
+			if (rawBase.includes("/chat/completions")) {
+				// Already a full endpoint URL — use as-is
 				chatUrl = rawBase;
+			} else if (hasVersionSegment(rawBase)) {
+				// Ends with /v1, /v4, /v1beta, etc. — append /chat/completions
+				chatUrl = `${rawBase}/chat/completions`;
 			} else {
-				// No version segment → default to /v1/chat/completions (standard OpenAI-compatible)
+				// No version segment — append /v1/chat/completions (standard OpenAI-compatible)
 				chatUrl = `${rawBase}/v1/chat/completions`;
 			}
 
@@ -1215,12 +1130,43 @@ function classifyRisk(text: string): 'SAFE' | 'SUSPICIOUS' | 'BLOCK' {
 	return 'SAFE';
 }
 
+/**
+ * Remove text between two literal markers (case-insensitive).
+ * No regex — uses indexOf for safe, linear-time matching.
+ */
+function removeBetween(text: string, start: string, end: string): string {
+	const lower = text.toLowerCase();
+	const startLower = start.toLowerCase();
+	const endLower = end.toLowerCase();
+	let idx = lower.indexOf(startLower);
+	while (idx !== -1) {
+		const endIdx = lower.indexOf(endLower, idx + startLower.length);
+		if (endIdx === -1) break;
+		text = text.slice(0, idx) + text.slice(endIdx + endLower.length);
+		idx = text.toLowerCase().indexOf(startLower);
+	}
+	return text;
+}
+
+/**
+ * Strip prompt-injection patterns from text.
+ * Uses only plain string operations — no regex — to avoid ReDoS.
+ */
 function stripInstructions(text: string): string {
-	return (text || '')
-		.replace(/ignore[\s\S]*?instructions/gi, '')
-		.replace(/system\s+prompt[\s\S]*?\n/gi, '')
-		.replace(/javascript:\s*/gi, '')
-		.replace(/data:\s*/gi, '')
-		.replace(/base64[^"]+/gi, '')
-		.slice(0, 400);
+	let result = (text || '').slice(0, 400);
+
+	// Remove dangerous URI scheme prefixes
+	const dangerousPatterns = ['javascript:', 'data:', 'base64'];
+	for (const pattern of dangerousPatterns) {
+		while (result.toLowerCase().includes(pattern)) {
+			const idx = result.toLowerCase().indexOf(pattern);
+			result = result.slice(0, idx) + result.slice(idx + pattern.length);
+		}
+	}
+
+	// Remove prompt injection phrases (everything between start..end markers)
+	result = removeBetween(result, 'ignore', 'instructions');
+	result = removeBetween(result, 'system prompt', '\n');
+
+	return result;
 }

@@ -1,0 +1,12 @@
+name = "agentic-search"
+compatibility_date = "2024-11-12"
+compatibility_flags = ["nodejs_compat_v2", "no_handle_cross_request_promise_resolution"]
+main = "@tanstack/react-start/server-entry"
+
+[observability]
+enabled = true
+
+# Secrets are managed in Cloudflare dashboard (Settings > Variables)
+# VITE_CONVEX_URL, CONVEX_SITE_URL, CONVEX_DEPLOY_KEY
+[vars]
+VITE_DISABLE_AUTH = "true"

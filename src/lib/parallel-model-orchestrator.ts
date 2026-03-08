@@ -11,6 +11,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { ModelConfig } from "./model-config";
+import { validateServerFetchUrl } from "./url-validation";
 
 export interface ParallelModelConfig {
 	name: string;
@@ -92,9 +93,10 @@ export class ParallelModelOrchestrator {
 			return !!(config.apiKey && config.baseUrl);
 		}
 
-		// Local providers: ping the endpoint
+		// Local providers: ping the endpoint (with SSRF validation)
 		try {
 			const baseUrl = (config.baseUrl || "").replace(/\/v1\/?$/, "");
+			validateServerFetchUrl(baseUrl);
 			const response = await fetch(`${baseUrl}/api/tags`, {
 				signal: AbortSignal.timeout(3000),
 			});
@@ -104,6 +106,7 @@ export class ParallelModelOrchestrator {
 				const v1Url = config.baseUrl?.endsWith("/v1")
 					? `${config.baseUrl}/models`
 					: `${config.baseUrl}/v1/models`;
+				validateServerFetchUrl(v1Url!);
 				const res = await fetch(v1Url!, { signal: AbortSignal.timeout(3000) });
 				return res.ok;
 			} catch {

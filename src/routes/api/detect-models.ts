@@ -2,23 +2,44 @@
  * Server-side model detection API
  * Detects local models (Ollama, LM Studio) from the server side
  * since browser fetches to localhost get blocked by miniflare/workerd
+ *
+ * Security: Uses POST to avoid leaking apiKey in query params/logs.
+ * Validates baseUrl via shared SSRF protection (src/lib/url-validation.ts).
  */
 
 import { createFileRoute } from "@tanstack/react-router";
+import { validateServerFetchUrl } from "@/lib/url-validation";
 
 export const Route = createFileRoute("/api/detect-models")({
 	server: {
 		handlers: {
-			GET: async ({ request }) => {
-				const url = new URL(request.url);
-				const provider = url.searchParams.get("provider");
-				const baseUrl = url.searchParams.get("baseUrl");
-				const apiKey = url.searchParams.get("apiKey");
+			POST: async ({ request }) => {
+				let body: { provider?: string; baseUrl?: string; apiKey?: string };
+				try {
+					body = await request.json();
+				} catch {
+					return new Response(
+						JSON.stringify({ error: "Invalid JSON body" }),
+						{ status: 400, headers: { "Content-Type": "application/json" } },
+					);
+				}
+
+				const { provider, baseUrl, apiKey } = body;
 
 				if (!provider || !baseUrl) {
 					return new Response(
 						JSON.stringify({ error: "provider and baseUrl are required" }),
 						{ status: 400, headers: { "Content-Type": "application/json" } },
+					);
+				}
+
+				// SSRF protection: block internal/metadata endpoints
+				try {
+					validateServerFetchUrl(baseUrl);
+				} catch (err) {
+					return new Response(
+						JSON.stringify({ error: err instanceof Error ? err.message : "Invalid baseUrl" }),
+						{ status: 403, headers: { "Content-Type": "application/json" } },
 					);
 				}
 

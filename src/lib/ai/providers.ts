@@ -39,10 +39,12 @@ export async function detectAvailableProviders(): Promise<ModelProvider[]> {
 	await Promise.allSettled(
 		localChecks.map(async ({ provider, providerName, baseUrl }) => {
 			try {
-				const res = await fetch(
-					`/api/detect-models?provider=${providerName}&baseUrl=${encodeURIComponent(baseUrl)}`,
-					{ signal: AbortSignal.timeout(3000) },
-				);
+				const res = await fetch("/api/detect-models", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ provider: providerName, baseUrl }),
+					signal: AbortSignal.timeout(3000),
+				});
 				if (res.ok) {
 					const data = await res.json();
 					if (data.models && data.models.length > 0) {
@@ -90,8 +92,12 @@ export async function listModelsForProvider(
 			const providerName = provider === "lm_studio" ? "lmstudio" : provider;
 			const url = baseURL || defaultUrls[provider];
 			try {
-				const apiUrl = `/api/detect-models?provider=${providerName}&baseUrl=${encodeURIComponent(url)}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ""}`;
-				const res = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
+				const res = await fetch("/api/detect-models", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ provider: providerName, baseUrl: url, ...(apiKey ? { apiKey } : {}) }),
+					signal: AbortSignal.timeout(8000),
+				});
 				if (!res.ok) return [];
 				const data = await res.json();
 				return data.models || [];

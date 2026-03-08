@@ -536,8 +536,12 @@ export async function detectCustomProviderModels(
 	try {
 		let response: Response;
 		if (isLocalhost) {
-			const apiUrl = `/api/detect-models?provider=custom&baseUrl=${encodeURIComponent(baseUrl)}${apiKey ? `&apiKey=${encodeURIComponent(apiKey)}` : ""}`;
-			response = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
+			response = await fetch("/api/detect-models", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ provider: "custom", baseUrl, ...(apiKey ? { apiKey } : {}) }),
+				signal: AbortSignal.timeout(8000),
+			});
 			if (response.ok) {
 				const data = await response.json();
 				return data.models || [];

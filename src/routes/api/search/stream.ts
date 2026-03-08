@@ -151,14 +151,19 @@ export const Route = createFileRoute("/api/search/stream")({
 						cfWaitUntil(searchPromise);
 					}
 
-					return new Response(stream, {
-						headers: {
-							"Content-Type": "text/event-stream",
-							"Cache-Control": "no-cache",
-							"Connection": "keep-alive",
-							"Access-Control-Allow-Origin": "*",
-						},
-					});
+					// Restrict CORS to requesting origin — never use "*" with user-specific data
+					const requestOrigin = request.headers.get("Origin") || "";
+					const sseHeaders: Record<string, string> = {
+						"Content-Type": "text/event-stream",
+						"Cache-Control": "no-cache",
+						"Connection": "keep-alive",
+					};
+					if (requestOrigin) {
+						sseHeaders["Access-Control-Allow-Origin"] = requestOrigin;
+						sseHeaders["Vary"] = "Origin";
+					}
+
+					return new Response(stream, { headers: sseHeaders });
 				} catch (error) {
 					console.error("Stream search API error:", error);
 					return new Response(

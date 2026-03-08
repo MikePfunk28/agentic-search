@@ -43,6 +43,13 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 	server: {
 		handlers: {
 			GET: async ({ request }) => {
+				// CSRF protection on GET — fine-tune status should not be leaked via cross-site requests
+				// TODO: Add WorkOS session validation when VITE_DISABLE_AUTH is removed
+				const csrfCheck = validateCsrfRequest(request);
+				if (!csrfCheck.valid) {
+					return createCsrfErrorResponse(csrfCheck.error!);
+				}
+
 				const url = new URL(request.url);
 				const jobId = url.searchParams.get("jobId");
 
