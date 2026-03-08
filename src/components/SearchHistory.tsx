@@ -35,7 +35,6 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 		try {
 			await approveSearch({
 				searchId,
-				userApproved: true,
 				userRating: rating,
 				feedback: "Approved from history browser",
 			});
@@ -71,11 +70,11 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Avg Quality</span>
-							<span className="stat-value">{stats.averageQuality.toFixed(2)}</span>
+							<span className="stat-value">{stats.avgQuality.toFixed(2)}</span>
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Avg Time</span>
-							<span className="stat-value">{(stats.averageExecutionTime / 1000).toFixed(1)}s</span>
+							<span className="stat-value">{(stats.avgExecutionTime / 1000).toFixed(1)}s</span>
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Total Tokens</span>
@@ -138,10 +137,10 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 								<h3 className="search-query">{search.query}</h3>
 								<div className="search-metadata">
 									<span className="search-date">
-										{new Date(search.timestamp).toLocaleDateString()}
+										{new Date(search.createdAt).toLocaleDateString()}
 									</span>
-									<span className={`quality-badge quality-${getQualityLevel(search.quality)}`}>
-										Quality: {search.quality.toFixed(2)}
+									<span className={`quality-badge quality-${getQualityLevel(search.quality ?? 0)}`}>
+										Quality: {(search.quality ?? 0).toFixed(2)}
 									</span>
 								</div>
 							</div>

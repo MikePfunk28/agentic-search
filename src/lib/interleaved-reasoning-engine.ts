@@ -1,7 +1,7 @@
 /**
  * Interleaved Reasoning Engine
  * 
- * Uses qwen3:4b as orchestrator to coordinate step-by-step reasoning.
+ * Uses the user's active model as orchestrator to coordinate step-by-step reasoning.
  * Each step is validated before proceeding to the next.
  * 
  * Security features:
@@ -38,6 +38,12 @@ export interface ReasoningResult {
 	processingTime: number;
 }
 
+export interface ReasoningHyperparameters {
+	temperature: number;
+	maxTokens: number;
+	topP?: number;
+}
+
 export interface ReasoningConfig {
 	orchestratorModel: string;
 	validatorModel: string;
@@ -45,15 +51,25 @@ export interface ReasoningConfig {
 	minConfidenceThreshold: number;
 	enableSecurityChecks: boolean;
 	timeoutMs: number;
+	stepTimeoutMs: number; // Per-step timeout, independent of total
+	hyperparameters: Record<ReasoningStep["type"], ReasoningHyperparameters>;
 }
 
 const DEFAULT_REASONING_CONFIG: ReasoningConfig = {
-	orchestratorModel: "qwen3:4b",
-	validatorModel: "qwen3:1.7b",
+	orchestratorModel: "", // Uses the active model from user config, never hardcoded
+	validatorModel: "", // Uses the active model from user config, never hardcoded
 	maxSteps: 10,
 	minConfidenceThreshold: 0.6,
 	enableSecurityChecks: true,
-	timeoutMs: 60000,
+	timeoutMs: 120000,
+	stepTimeoutMs: 30000, // 30s per step is generous for most models
+	hyperparameters: {
+		analysis: { temperature: 0.3, maxTokens: 800 },
+		planning: { temperature: 0.4, maxTokens: 600 },
+		execution: { temperature: 0.7, maxTokens: 1500 },
+		validation: { temperature: 0.2, maxTokens: 500 },
+		synthesis: { temperature: 0.5, maxTokens: 1200 },
+	},
 };
 
 /**
@@ -140,7 +156,9 @@ class RateLimiter {
 
 export class InterleavedReasoningEngine {
 	private config: ReasoningConfig;
-	private ollama: ReturnType<typeof createOpenAI>;
+	private client: ReturnType<typeof createOpenAI>;
+	private baseUrl: string;
+	private apiKey: string;
 	private securityValidator: SecurityValidator;
 	private rateLimiter: RateLimiter;
 	private discriminator: AdversarialDifferentialDiscriminator;
@@ -148,12 +166,32 @@ export class InterleavedReasoningEngine {
 	constructor(
 		config: Partial<ReasoningConfig> = {},
 		baseUrl: string = "http://localhost:11434",
+		apiKey: string = "ollama",
 	) {
-		this.config = { ...DEFAULT_REASONING_CONFIG, ...config };
-		// Use OpenAI-compatible API for Ollama
-		this.ollama = createOpenAI({
-			baseURL: `${baseUrl}/v1`,
-			apiKey: 'ollama', // Ollama doesn't require a real API key
+		this.config = {
+			...DEFAULT_REASONING_CONFIG,
+			...config,
+			hyperparameters: {
+				...DEFAULT_REASONING_CONFIG.hyperparameters,
+				...(config.hyperparameters || {}),
+			},
+		};
+		const normalizedBaseUrl = baseUrl
+			.replace(/\/chat\/completions\/?$/, "")
+			.replace(/\/models\/?$/, "")
+			.replace(/\/+$/, "");
+
+		// Detect if the URL already has a versioned API path (e.g., /v1, /v4)
+		const hasVersionPath = /\/v\d+$/.test(normalizedBaseUrl);
+		this.baseUrl = hasVersionPath
+			? normalizedBaseUrl.replace(/\/v\d+$/, "")
+			: normalizedBaseUrl.replace(/\/v1\/?$/, "");
+
+		const apiBaseUrl = hasVersionPath ? normalizedBaseUrl : `${this.baseUrl}/v1`;
+		this.apiKey = apiKey || "ollama";
+		this.client = createOpenAI({
+			baseURL: apiBaseUrl,
+			apiKey: this.apiKey,
 		});
 		this.securityValidator = new SecurityValidator();
 		this.rateLimiter = new RateLimiter();
@@ -285,20 +323,24 @@ export class InterleavedReasoningEngine {
 		const timestamp = Date.now();
 
 		try {
-			// Check timeout
+			// Per-step timeout — generous enough for slower models
 			const timeoutPromise = new Promise<never>((_, reject) =>
 				setTimeout(
-					() => reject(new Error("Step timeout")),
-					this.config.timeoutMs / this.config.maxSteps,
+					() => reject(new Error(`Step '${type}' timed out after ${this.config.stepTimeoutMs}ms`)),
+					this.config.stepTimeoutMs,
 				),
 			);
 
-			// Execute with orchestrator
+			// Get hyperparameters for this step type
+			const hyper = this.config.hyperparameters[type];
+
+			// Execute with orchestrator using step-specific hyperparameters
 			const resultPromise = generateText({
-				model: this.ollama(this.config.orchestratorModel),
+				model: this.client(this.config.orchestratorModel),
 				prompt: input,
-				temperature: 0.7,
-				maxTokens: 1000,
+				temperature: hyper.temperature,
+				maxOutputTokens: hyper.maxTokens,
+				...(hyper.topP !== undefined ? { topP: hyper.topP } : {}),
 			});
 
 			const result = await Promise.race([resultPromise, timeoutPromise]);
@@ -356,48 +398,67 @@ export class InterleavedReasoningEngine {
 			}
 		}
 
-		// Length validation
-		if (output.length < 10) {
-			errors.push("Output too short");
+		// Length validation — scale expectation by step type
+		const minLengths: Record<string, number> = {
+			analysis: 30,
+			planning: 30,
+			execution: 50,
+			validation: 20,
+			synthesis: 40,
+		};
+		const minLen = minLengths[type] || 10;
+		if (output.length < minLen) {
+			errors.push(`Output too short for ${type} step (${output.length} < ${minLen} chars)`);
 			confidence -= 0.3;
 		}
 
-		// Type-specific validation
-		switch (type) {
-			case "analysis":
-				if (!output.toLowerCase().includes("component") && !output.toLowerCase().includes("part")) {
-					confidence -= 0.1;
-				}
-				break;
-			case "planning":
-				if (!output.toLowerCase().includes("step") && !output.toLowerCase().includes("plan")) {
-					confidence -= 0.1;
-				}
-				break;
-			case "validation":
-				if (!output.toLowerCase().includes("valid") && !output.toLowerCase().includes("correct")) {
-					confidence -= 0.1;
-				}
-				break;
+		// Structural quality checks (not keyword-dependent)
+		const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 5);
+		if (sentences.length < 2 && type !== "validation") {
+			confidence -= 0.1; // Single-sentence output is usually low quality
 		}
 
-		// Use validator model for additional check
-		if (confidence >= this.config.minConfidenceThreshold) {
+		// Check for repetitive/degenerate output (model might be stuck)
+		const words = output.toLowerCase().split(/\s+/);
+		if (words.length > 10) {
+			const uniqueWords = new Set(words);
+			const uniqueRatio = uniqueWords.size / words.length;
+			if (uniqueRatio < 0.3) {
+				errors.push("Output appears repetitive or degenerate");
+				confidence -= 0.4;
+			}
+		}
+
+		// Query relevance — check if output relates to the search context
+		if (context?.searchResults && context.searchResults.length > 0 && type === "execution") {
+			// Execution step should reference actual search content
+			const outputLower = output.toLowerCase();
+			const hasRelevantContent = context.searchResults.some(r =>
+				r.title && outputLower.includes(r.title.toLowerCase().split(" ")[0])
+			);
+			if (!hasRelevantContent && output.length > 100) {
+				confidence -= 0.05; // Minor penalty, not a hard fail
+			}
+		}
+
+		// Validator model cross-check (only if we have a validator model configured and confidence is marginal)
+		if (this.config.validatorModel && confidence >= this.config.minConfidenceThreshold && confidence < 0.8) {
 			try {
 				const validatorCheck = await generateText({
-					model: this.ollama(this.config.validatorModel),
-					prompt: `Validate this output: "${output}". Respond with "VALID" or "INVALID" and briefly explain why.`,
-					temperature: 0.2,
-					maxTokens: 100,
+					model: this.client(this.config.validatorModel),
+					prompt: `Rate the quality of this ${type} output on a scale of 1-10. Just respond with the number.\n\nOutput: "${output.substring(0, 500)}"`,
+					temperature: 0.1,
+					maxOutputTokens: 20,
 				});
 
-				if (validatorCheck.text.toLowerCase().includes("invalid")) {
-					confidence -= 0.2;
-					errors.push("Validator flagged output as invalid");
+				const rating = parseInt(validatorCheck.text.trim(), 10);
+				if (!isNaN(rating) && rating >= 1 && rating <= 10) {
+					const validatorConfidence = rating / 10;
+					// Blend validator rating with existing confidence
+					confidence = confidence * 0.7 + validatorConfidence * 0.3;
 				}
-			} catch (error) {
+			} catch {
 				// Validator error doesn't fail the step
-				console.warn("Validator check failed:", error);
 			}
 		}
 
@@ -444,21 +505,39 @@ export class InterleavedReasoningEngine {
 		validatorAvailable: boolean;
 	}> {
 		try {
-			const response = await fetch(
-				`${this.ollama.baseURL ?? "http://localhost:11434"}/api/tags`,
-			);
+			let models: string[] = [];
 
-			// Validate HTTP response status (200-299 range)
-			if (!response.ok || response.status < 200 || response.status >= 300) {
-				return {
-					healthy: false,
-					orchestratorAvailable: false,
-					validatorAvailable: false,
-				};
+			try {
+				const response = await fetch(`${this.baseUrl}/api/tags`, {
+					signal: AbortSignal.timeout(3000),
+				});
+				if (response.ok) {
+					const data = await response.json();
+					models = data.models?.map((m: { name: string }) => m.name) ?? [];
+				}
+			} catch {
+				// Fall through to OpenAI-compatible model listing.
 			}
 
-			const data = await response.json();
-			const models = data.models?.map((m: { name: string }) => m.name) ?? [];
+			if (models.length === 0) {
+				const headers = new Headers();
+				if (this.apiKey) {
+					headers.set("Authorization", `Bearer ${this.apiKey}`);
+				}
+				const response = await fetch(`${this.baseUrl}/v1/models`, {
+					headers,
+					signal: AbortSignal.timeout(3000),
+				});
+				if (!response.ok || response.status < 200 || response.status >= 300) {
+					return {
+						healthy: false,
+						orchestratorAvailable: false,
+						validatorAvailable: false,
+					};
+				}
+				const data = await response.json();
+				models = data.data?.map((m: { id: string }) => m.id) ?? [];
+			}
 
 			return {
 				healthy: true,

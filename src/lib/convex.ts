@@ -5,13 +5,18 @@
 
 import { ConvexReactClient } from "convex/react";
 
-// Initialize Convex client with deployment URL from environment
-const CONVEX_URL = import.meta.env.VITE_CONVEX_URL || process.env.CONVEX_URL;
-
+// Initialize Convex client with deployment URL from environment, with safe fallback
+// Wrap in try/catch because Cloudflare's Vite module runner throws on import.meta.env access in SSR
+let CONVEX_URL: string;
+try {
+	CONVEX_URL = import.meta.env.VITE_CONVEX_URL || "";
+} catch {
+	CONVEX_URL = "";
+}
 if (!CONVEX_URL) {
-	throw new Error(
-		"Missing CONVEX_URL environment variable. Please run 'npx convex dev' to set up Convex.",
-	);
+	CONVEX_URL =
+		(typeof process !== "undefined" ? process.env?.CONVEX_URL : undefined) ||
+		"https://astute-quail-141.convex.cloud";
 }
 
 export const convexClient = new ConvexReactClient(CONVEX_URL);

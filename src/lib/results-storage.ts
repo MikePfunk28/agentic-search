@@ -2,7 +2,7 @@
  * Researcher-Style Search Results Storage
  * 
  * Provides annotated, indexed, packaged results for use with other models/agents
- * Replaces traditional RAG with intelligent segmentation and structured storage
+ * Uses intelligent segmentation and structured storage for quality results
  */
 
 import type { SearchResult } from './types';
@@ -316,6 +316,76 @@ export class ResearchStorage {
 		}
 		
 		return results;
+	}
+
+	/**
+	 * Return best-effort fallback results from prior successful searches.
+	 * This keeps search useful when live providers or keys are unavailable.
+	 */
+	findRelevantResults(query: string, limit = 10): SearchResult[] {
+		const normalizedQuery = query.toLowerCase().trim();
+		if (!normalizedQuery) {
+			return [];
+		}
+
+		const queryTerms = normalizedQuery
+			.split(/\s+/)
+			.filter((term) => term.length > 2);
+
+		const candidates = this.getAllResults()
+			.map((entry) => {
+				const haystack = [
+					entry.query,
+					...entry.results.map((result) => `${result.title} ${result.snippet}`),
+				]
+					.join(" ")
+					.toLowerCase();
+
+				const exactQueryMatch = entry.query.toLowerCase().includes(normalizedQuery)
+					? 3
+					: 0;
+				const termMatches = queryTerms.reduce(
+					(score, term) => score + (haystack.includes(term) ? 1 : 0),
+					0,
+				);
+				const ageInDays = Math.max(
+					1,
+					(Date.now() - entry.timestamp) / (1000 * 60 * 60 * 24),
+				);
+				const recencyBoost = 1 / ageInDays;
+
+				return {
+					entry,
+					score: exactQueryMatch + termMatches + recencyBoost,
+				};
+			})
+			.filter((candidate) => candidate.score > 0)
+			.sort((a, b) => b.score - a.score)
+			.slice(0, 5);
+
+		const deduped = new Map<string, SearchResult>();
+
+		for (const { entry } of candidates) {
+			for (const result of entry.results) {
+				const key = result.url.toLowerCase();
+				if (deduped.has(key)) {
+					continue;
+				}
+
+				deduped.set(key, {
+					...result,
+					id: `cache-${result.id}`,
+					source: "web",
+					provider: "cache",
+				});
+
+				if (deduped.size >= limit) {
+					return Array.from(deduped.values());
+				}
+			}
+		}
+
+		return Array.from(deduped.values());
 	}
 	
 	/**

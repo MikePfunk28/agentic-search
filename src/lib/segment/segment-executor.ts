@@ -21,11 +21,13 @@ interface VerificationCache {
 
 export class SegmentExecutor {
   private modelConfig: ModelConfig;
+  private searchApiKeys: { firecrawl?: string; tavily?: string; exa?: string; brave?: string };
   private verifiedModels = new Map<string, VerificationCache>();
   private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-  constructor(modelConfig: ModelConfig) {
+  constructor(modelConfig: ModelConfig, searchApiKeys: { firecrawl?: string; tavily?: string; exa?: string; brave?: string } = {}) {
     this.modelConfig = modelConfig;
+    this.searchApiKeys = searchApiKeys;
   }
 
   /**
@@ -42,15 +44,22 @@ export class SegmentExecutor {
     console.log(`[Executor] Recommended model: ${segment.recommendedModel} (user can override)`);
 
     try {
-      // IMPORTANT: Verify model connection BEFORE using it
-      const modelToUse = await this.verifyAndSelectModel(segment);
-
-      console.log(`✓ [Executor] Model verified: ${modelToUse.model}`);
+      // Verify model connection (non-blocking — web search runs regardless)
+      let modelToUse = this.modelConfig;
+      let modelVerified = false;
+      try {
+        modelToUse = await this.verifyAndSelectModel(segment);
+        modelVerified = true;
+        console.log(`✓ [Executor] Model verified: ${modelToUse.model}`);
+      } catch (verifyError) {
+        console.warn(`⚠ [Executor] Model verification failed: ${verifyError instanceof Error ? verifyError.message : verifyError}`);
+        console.warn(`⚠ [Executor] Proceeding with web search only`);
+      }
 
       // Build enhanced query with context from dependencies
       const enhancedQuery = this.buildEnhancedQuery(segment, dependencyContext);
 
-      // Execute search with the ACTUAL model
+      // Execute search (web search works even without model)
       const searchResults = await this.executeSearch(enhancedQuery, modelToUse);
 
       // Extract findings from results
@@ -199,10 +208,17 @@ export class SegmentExecutor {
    * Execute search using agentic search engine
    */
   private async executeSearch(query: string, modelConfig: ModelConfig): Promise<SearchResult[]> {
+    const keyStatus = {
+      tavily: !!this.searchApiKeys.tavily,
+      exa: !!this.searchApiKeys.exa,
+      firecrawl: !!this.searchApiKeys.firecrawl,
+      brave: !!this.searchApiKeys.brave,
+    };
     console.log(`[Executor] Executing search with model ${modelConfig.provider}:${modelConfig.model}`);
+    console.log(`[Executor] Search API keys available:`, keyStatus);
 
     try {
-      const result = await agenticSearch.search(query, modelConfig);
+      const result = await agenticSearch.search(query, modelConfig, { searchApiKeys: this.searchApiKeys });
       return result.results || [];
     } catch (error) {
       console.error('[Executor] Search execution failed:', error);
@@ -241,8 +257,8 @@ export class SegmentExecutor {
     }
 
     // Calculate confidence based on result quality
-    const avgScore = results.reduce((sum, r) => sum + (r.addScore || 0.5), 0) / (results.length || 1);
-    const confidence = Math.min(0.95, avgScore * 1.2); // Boost slightly, cap at 0.95
+    const avgScore = results.reduce((sum, r) => sum + (r.addScore || 0), 0) / (results.length || 1);
+    const confidence = results.length > 0 ? Math.min(1.0, avgScore) : 0;
 
     return {
       entities,
@@ -353,25 +369,58 @@ export class SegmentExecutor {
 
     switch (provider) {
       case 'ollama':
-      case 'lm_studio':
         return this.callOllama(prompt, config);
 
       case 'anthropic':
         return this.callAnthropic(prompt, config);
 
+      case 'lm_studio':
       case 'openai':
+      case 'deepseek':
+      case 'moonshot':
+      case 'kimi':
+      case 'openrouter':
+      case 'azure_openai':
+      case 'vllm':
+      case 'gguf':
+      case 'onnx':
         return this.callOpenAI(prompt, config);
 
+      case 'google':
       default:
-        throw new Error(`Unsupported provider: ${provider}`);
+        // All unknown providers treated as OpenAI-compatible (most common format)
+        return this.callOpenAI(prompt, config);
     }
+  }
+
+  private normalizeOllamaBaseUrl(baseUrl?: string): string {
+    return (baseUrl || 'http://localhost:11434')
+      .replace(/\/api\/generate\/?$/, '')
+      .replace(/\/v1\/?$/, '')
+      .replace(/\/+$/, '');
+  }
+
+  private normalizeAnthropicBaseUrl(baseUrl?: string): string {
+    return (baseUrl || 'https://api.anthropic.com')
+      .replace(/\/v1\/messages\/?$/, '')
+      .replace(/\/v1\/?$/, '')
+      .replace(/\/+$/, '');
+  }
+
+  private buildOpenAICompatibleUrl(baseUrl?: string): string {
+    const normalized = (baseUrl || 'https://api.openai.com/v1')
+      .replace(/\/chat\/completions\/?$/, '')
+      .replace(/\/models\/?$/, '')
+      .replace(/\/+$/, '');
+    const v1Base = normalized.endsWith('/v1') ? normalized : `${normalized}/v1`;
+    return `${v1Base}/chat/completions`;
   }
 
   /**
    * Call Ollama model (ACTUAL API)
    */
   private async callOllama(prompt: string, config: ModelConfig): Promise<string> {
-    const url = `${config.baseUrl}/api/generate`;
+    const url = `${this.normalizeOllamaBaseUrl(config.baseUrl)}/api/generate`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -399,7 +448,7 @@ export class SegmentExecutor {
    * Call Anthropic model (ACTUAL API)
    */
   private async callAnthropic(prompt: string, config: ModelConfig): Promise<string> {
-    const url = `${config.baseUrl}/v1/messages`;
+    const url = `${this.normalizeAnthropicBaseUrl(config.baseUrl)}/v1/messages`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -428,13 +477,13 @@ export class SegmentExecutor {
    * Call OpenAI model (ACTUAL API)
    */
   private async callOpenAI(prompt: string, config: ModelConfig): Promise<string> {
-    const url = `${config.baseUrl}/chat/completions`;
+    const url = this.buildOpenAICompatibleUrl(config.baseUrl);
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
+        'Authorization': `Bearer ${config.apiKey || 'local'}`,
       },
       body: JSON.stringify({
         model: config.model,

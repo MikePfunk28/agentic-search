@@ -1,0 +1,2 @@
+[   69456ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://api.z.ai/api/coding/paas/v4/v1/models:0
+[   69456ms] [WARNING] [ModelStore] Custom provider returned 404 @ http://localhost:3000/src/lib/model-store.ts?t=1772942996206:364

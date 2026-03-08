@@ -41,24 +41,29 @@ export async function detectOllamaModels(baseURL = 'http://localhost:11434'): Pr
   try {
     console.log('[ModelDetection] Checking Ollama at', baseURL);
 
-    const response = await fetch(`${baseURL}/api/tags`, {
+    // Use server-side API to avoid miniflare blocking localhost fetches
+    const apiUrl = `/api/detect-models?provider=ollama&baseUrl=${encodeURIComponent(baseURL)}`;
+    const response = await fetch(apiUrl, {
       method: 'GET',
-      signal: AbortSignal.timeout(2000),
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!response.ok) {
-      console.log('[ModelDetection] Ollama not available:', response.status);
+      console.log('[ModelDetection] Ollama detection API failed:', response.status);
       return [];
     }
 
-    const data: OllamaTagsResponse = await response.json();
+    const data = await response.json();
 
-    const models: DetectedModel[] = data.models.map((model) => ({
+    if (data.error) {
+      console.log('[ModelDetection] Ollama not available:', data.error);
+    }
+
+    const modelNames: string[] = data.models || [];
+    const models: DetectedModel[] = modelNames.map((name) => ({
       provider: 'ollama' as ModelProvider,
-      modelId: model.name,
-      displayName: model.name,
-      size: model.size,
-      family: model.details?.family || model.details?.families?.[0],
+      modelId: name,
+      displayName: name,
       recommended: false,
     }));
 
@@ -78,24 +83,31 @@ export async function detectLMStudioModels(baseURL = 'http://localhost:1234'): P
   try {
     console.log('[ModelDetection] Checking LM Studio at', baseURL);
 
-    const response = await fetch(`${baseURL}/v1/models`, {
+    // Use server-side API to avoid miniflare blocking localhost fetches
+    const apiUrl = `/api/detect-models?provider=lmstudio&baseUrl=${encodeURIComponent(baseURL)}`;
+    const response = await fetch(apiUrl, {
       method: 'GET',
-      signal: AbortSignal.timeout(2000),
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!response.ok) {
-      console.log('[ModelDetection] LM Studio not available:', response.status);
+      console.log('[ModelDetection] LM Studio detection API failed:', response.status);
       return [];
     }
 
     const data = await response.json();
 
-    const models: DetectedModel[] = data.data?.map((model: any) => ({
+    if (data.error) {
+      console.log('[ModelDetection] LM Studio not available:', data.error);
+    }
+
+    const modelNames: string[] = data.models || [];
+    const models: DetectedModel[] = modelNames.map((name) => ({
       provider: 'lm_studio' as ModelProvider,
-      modelId: model.id,
-      displayName: model.id,
+      modelId: name,
+      displayName: name,
       recommended: false,
-    })) || [];
+    }));
 
     console.log('[ModelDetection] Found', models.length, 'LM Studio models:', models.map(m => m.modelId));
 
@@ -107,63 +119,12 @@ export async function detectLMStudioModels(baseURL = 'http://localhost:1234'): P
 }
 
 /**
- * Get the best available Ollama model
- * Prioritizes recommended models: qwen3:4b, qwen3:1.7b, gemma3:270m, gemma3:1b, gemma3:4b
+ * Get the first available model from a detected list.
+ * Returns whatever the user is actually running - no hardcoded priorities.
  */
-export function getBestOllamaModel(models: DetectedModel[]): DetectedModel | null {
+export function getFirstAvailableModel(models: DetectedModel[]): DetectedModel | null {
   if (models.length === 0) return null;
-
-  // Priority order of recommended models
-  const recommendedModels = [
-    'qwen3:4b',
-    'qwen3:1.7b',
-    'gemma3:4b',
-    'gemma3:1b',
-    'gemma3:270m',
-  ];
-
-  // Find first recommended model that's installed
-  for (const modelId of recommendedModels) {
-    const model = models.find((m) => m.modelId === modelId);
-    if (model) {
-      console.log('[ModelDetection] Recommended Ollama model found:', model.modelId);
-      return { ...model, recommended: true };
-    }
-  }
-
-  // If no recommended models found, return first available
-  console.log('[ModelDetection] No recommended models found. Available:', models.map(m => m.modelId).join(', '));
-  return { ...models[0], recommended: false };
-}
-
-/**
- * Get the best available LM Studio model
- * Same priority as Ollama: qwen3:4b, qwen3:1.7b, gemma3:270m, gemma3:1b, gemma3:4b
- */
-export function getBestLMStudioModel(models: DetectedModel[]): DetectedModel | null {
-  if (models.length === 0) return null;
-
-  // Priority order of recommended models
-  const recommendedModels = [
-    'qwen3:4b',
-    'qwen3:1.7b',
-    'gemma3:4b',
-    'gemma3:1b',
-    'gemma3:270m',
-  ];
-
-  // Find first recommended model that's installed
-  for (const modelId of recommendedModels) {
-    const model = models.find((m) => m.modelId.includes(modelId) || m.modelId === modelId);
-    if (model) {
-      console.log('[ModelDetection] Recommended LM Studio model found:', model.modelId);
-      return { ...model, recommended: true };
-    }
-  }
-
-  // If no recommended models found, return first available
-  console.log('[ModelDetection] No recommended LM Studio models found. Available:', models.map(m => m.modelId).join(', '));
-  return { ...models[0], recommended: false };
+  return models[0];
 }
 
 /**
@@ -171,7 +132,7 @@ export function getBestLMStudioModel(models: DetectedModel[]): DetectedModel | n
  * Updated with real 2024/2025 model IDs
  */
 export function getCloudProviderModels(provider: ModelProvider): DetectedModel[] {
-  const cloudModels: Record<Exclude<ModelProvider, ModelProvider.OLLAMA | ModelProvider.LM_STUDIO>, DetectedModel[]> = {
+  const cloudModels: Partial<Record<ModelProvider, DetectedModel[]>> = {
     [ModelProvider.OPENAI]: [
       { provider: ModelProvider.OPENAI, modelId: 'gpt-4o', displayName: 'GPT-4o', recommended: true },
       { provider: ModelProvider.OPENAI, modelId: 'gpt-4o-mini', displayName: 'GPT-4o Mini' },
@@ -188,6 +149,22 @@ export function getCloudProviderModels(provider: ModelProvider): DetectedModel[]
       { provider: ModelProvider.GOOGLE, modelId: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro' },
       { provider: ModelProvider.GOOGLE, modelId: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash' },
     ],
+    [ModelProvider.DEEPSEEK]: [
+      { provider: ModelProvider.DEEPSEEK, modelId: 'deepseek-chat', displayName: 'DeepSeek Chat', recommended: true },
+      { provider: ModelProvider.DEEPSEEK, modelId: 'deepseek-coder', displayName: 'DeepSeek Coder' },
+    ],
+    [ModelProvider.MOONSHOT]: [
+      { provider: ModelProvider.MOONSHOT, modelId: 'moonshot-v1-8k', displayName: 'Moonshot V1 8K', recommended: true },
+    ],
+    [ModelProvider.KIMI]: [
+      { provider: ModelProvider.KIMI, modelId: 'kimi', displayName: 'Kimi', recommended: true },
+    ],
+    [ModelProvider.OPENROUTER]: [
+      { provider: ModelProvider.OPENROUTER, modelId: 'auto', displayName: 'Auto (Best Available)', recommended: true },
+    ],
+    [ModelProvider.VLLM]: [],
+    [ModelProvider.GGUF]: [],
+    [ModelProvider.ONNX]: [],
     [ModelProvider.AZURE_OPENAI]: [
       { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-4o', displayName: 'GPT-4o (Azure)', recommended: true },
       { provider: ModelProvider.AZURE_OPENAI, modelId: 'gpt-4o-mini', displayName: 'GPT-4o Mini (Azure)' },
@@ -213,14 +190,12 @@ export async function detectAllAvailableModels(): Promise<{
   // Detect LM Studio models
   const lmstudioModels = await detectLMStudioModels();
 
-  // Get best Ollama model
-  const ollamaRecommended = getBestOllamaModel(ollamaModels);
+  // Get first available model (whatever the user is running)
+  const ollamaFirst = getFirstAvailableModel(ollamaModels);
+  const lmstudioFirst = getFirstAvailableModel(lmstudioModels);
 
-  // Get best LM Studio model
-  const lmstudioRecommended = getBestLMStudioModel(lmstudioModels);
-
-  // Prefer Ollama recommendation, fallback to LM Studio
-  const recommended = ollamaRecommended || lmstudioRecommended;
+  // Return whichever local model the user is actually running — no provider preference
+  const recommended = ollamaFirst || lmstudioFirst;
 
   // Check for cloud provider API keys (client-side only)
   const cloudModels: Record<string, DetectedModel[]> = {};
@@ -309,28 +284,13 @@ export async function isProviderAvailable(provider: ModelProvider, modelId?: str
 }
 
 /**
- * Get recommended model based on task type
+ * Get recommended model based on task type.
+ * Returns the first available model - no hardcoded priorities.
+ * The user's running model is always the best choice.
  */
 export function getRecommendedModelForTask(
-  task: 'chat' | 'search' | 'reasoning' | 'coding',
+  _task: 'chat' | 'search' | 'reasoning' | 'coding',
   availableModels: DetectedModel[]
 ): DetectedModel | null {
-  if (availableModels.length === 0) return null;
-
-  // Task-specific priorities
-  const taskPriorities: Record<string, string[]> = {
-    chat: ['Qwen3:4b', 'llama3', 'mistral', 'gpt-4o-mini', 'claude-3-5-haiku'],
-    search: ['Qwen3:4b', 'gpt-4o', 'claude-3-5-sonnet', 'gemini-1.5-pro'],
-    reasoning: ['claude-3-opus', 'gpt-4', 'claude-3-5-sonnet', 'llama3'],
-    coding: ['gpt-4', 'claude-3-5-sonnet', 'llama3', 'gpt-4o'],
-  };
-
-  const priorities = taskPriorities[task] || taskPriorities.chat;
-
-  for (const priority of priorities) {
-    const match = availableModels.find((m) => m.modelId.includes(priority));
-    if (match) return match;
-  }
-
-  return availableModels[0];
+  return getFirstAvailableModel(availableModels);
 }

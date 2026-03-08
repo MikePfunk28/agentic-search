@@ -1,0 +1,47 @@
+// vite.config.ts
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import viteTsConfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
+import path from "node:path";
+import { cloudflare } from "@cloudflare/vite-plugin";
+var config = defineConfig({
+  plugins: [
+    viteTsConfigPaths({
+      projects: ["./tsconfig.json"]
+    }),
+    cloudflare({ viteEnvironment: { name: "ssr" } }),
+    tailwindcss(),
+    tanstackStart(),
+    viteReact(),
+    // Sentry plugin for source maps and release tracking
+    sentryVitePlugin({
+      org: process.env.VITE_SENTRY_ORG,
+      project: process.env.VITE_SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      sourcemaps: {
+        assets: "./.output/**"
+      },
+      telemetry: false
+    })
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src")
+    }
+  },
+  ssr: {
+    target: "webworker",
+    noExternal: []
+  },
+  build: {
+    sourcemap: true
+    // Enable source maps for Sentry
+  }
+});
+var vite_config_default = config;
+export {
+  vite_config_default as default
+};

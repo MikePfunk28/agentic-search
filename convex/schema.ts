@@ -330,6 +330,7 @@ export default defineSchema({
     userId: v.string(),
     name: v.string(),
     description: v.optional(v.string()),
+    provider: v.optional(v.union(v.literal("openai"))),
     format: v.union(
       v.literal("openai_jsonl"),
       v.literal("anthropic_jsonl"),
@@ -337,11 +338,24 @@ export default defineSchema({
     ),
     eventCount: v.number(),
     exportedAt: v.number(),
+    launchedAt: v.optional(v.number()),
+    baseModel: v.optional(v.string()),
+    suffix: v.optional(v.string()),
+    jobId: v.optional(v.string()),
+    trainingFileId: v.optional(v.string()),
+    validationFileId: v.optional(v.string()),
+    status: v.optional(v.string()),
+    fineTunedModel: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+    lastCheckedAt: v.optional(v.number()),
     s3Url: v.optional(v.string()), // S3 URL for exported dataset
     metadata: v.optional(v.object({
       avgQuality: v.optional(v.number()),
       totalTokens: v.optional(v.number()),
       modelDistribution: v.optional(v.any()),
+      sourceBreakdown: v.optional(v.any()),
+      approvedSearchCount: v.optional(v.number()),
+      usageEventCount: v.optional(v.number()),
     })),
   })
     .index("by_user", ["userId"])
@@ -365,6 +379,8 @@ export default defineSchema({
     tokensUsed: v.number(),
     quality: v.optional(v.number()), // ADD discriminator score
     userApproved: v.optional(v.boolean()), // Did user approve results?
+    userRating: v.optional(v.number()), // Optional 1-5 rating for reinforcement data
+    feedback: v.optional(v.string()), // Free-form user feedback for training
     userModifications: v.optional(v.any()), // What did user change?
     createdAt: v.number(),
   })

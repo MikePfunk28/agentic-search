@@ -20,8 +20,8 @@ import type { SearchResult } from "../types";
 export class SegmentCoordinator {
   private executor: SegmentExecutor;
 
-  constructor(modelConfig: ModelConfig) {
-    this.executor = new SegmentExecutor(modelConfig);
+  constructor(modelConfig: ModelConfig, searchApiKeys: { firecrawl?: string; tavily?: string; exa?: string; brave?: string } = {}) {
+    this.executor = new SegmentExecutor(modelConfig, searchApiKeys);
   }
 
   /**
@@ -198,6 +198,10 @@ export class SegmentCoordinator {
     state.segments[segment.id] = result.context;
     state.completedSegments.add(segment.id);
 
+    // Store execution result for breakdown tracking
+    if (!state.executionResults) state.executionResults = new Map();
+    state.executionResults.set(segment.id, result);
+
     // Update global context
     this.updateGlobalContext(segment, result.context, state);
 
@@ -293,11 +297,13 @@ export class SegmentCoordinator {
     const completedRatio = state.completedSegments.size / (state.completedSegments.size + state.failedSegments.size);
     const avgConfidence = Object.values(state.segments).reduce((sum, ctx) => sum + ctx.findings.confidence, 0) / Object.keys(state.segments).length;
 
+    const coherence = this.calculateCoherence(results);
+
     return {
       accuracy: avgConfidence,
       completeness: completedRatio,
-      coherence: results.length > 0 ? 0.8 : 0.3, // Simplified
-      overall: (avgConfidence + completedRatio + (results.length > 0 ? 0.8 : 0.3)) / 3,
+      coherence,
+      overall: (avgConfidence + completedRatio + coherence) / 3,
     };
   }
 
@@ -308,10 +314,11 @@ export class SegmentCoordinator {
     const breakdown: CoordinatedSearchResult['segmentBreakdown'] = [];
 
     for (const [segmentId, context] of Object.entries(state.segments)) {
+      const execResult = state.executionResults?.get(segmentId);
       breakdown.push({
         segmentId,
-        type: 'entity', // Would need to track this in context
-        modelUsed: 'unknown', // Would need to track this
+        type: execResult?.segment.type || 'entity',
+        modelUsed: execResult?.modelUsed || 'unknown',
         tokensUsed: context.tokensUsed,
         timeMs: context.executionTimeMs,
         success: true,
@@ -319,10 +326,11 @@ export class SegmentCoordinator {
     }
 
     for (const [segmentId, error] of state.failedSegments.entries()) {
+      const execResult = state.executionResults?.get(segmentId);
       breakdown.push({
         segmentId,
-        type: 'entity',
-        modelUsed: 'unknown',
+        type: execResult?.segment.type || 'entity',
+        modelUsed: execResult?.modelUsed || 'unknown',
         tokensUsed: 0,
         timeMs: 0,
         success: false,
@@ -330,6 +338,30 @@ export class SegmentCoordinator {
     }
 
     return breakdown;
+  }
+
+  /**
+   * Calculate coherence from inter-result text overlap (Jaccard similarity)
+   */
+  private calculateCoherence(results: SearchResult[]): number {
+    if (results.length < 2) return results.length === 1 ? 0.5 : 0;
+
+    let totalSimilarity = 0;
+    let comparisons = 0;
+    const limit = Math.min(results.length, 5);
+
+    for (let i = 0; i < limit - 1; i++) {
+      for (let j = i + 1; j < limit; j++) {
+        const words1 = new Set((results[i].snippet || '').toLowerCase().split(/\s+/).filter(w => w.length > 3));
+        const words2 = new Set((results[j].snippet || '').toLowerCase().split(/\s+/).filter(w => w.length > 3));
+        const intersection = [...words1].filter(w => words2.has(w)).length;
+        const union = new Set([...words1, ...words2]).size;
+        totalSimilarity += union > 0 ? intersection / union : 0;
+        comparisons++;
+      }
+    }
+
+    return comparisons > 0 ? totalSimilarity / comparisons : 0;
   }
 
   /**

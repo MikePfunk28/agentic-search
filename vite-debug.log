@@ -1,0 +1,813 @@
+Default inspector port 9229 not available, using 9234 instead
+
+Using vars defined in .dev.vars
+
+  [32m[1mVITE[22m v7.2.1[39m  [2mready in [0m[1m22687[22m[2m[0m ms[22m
+
+  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+  [32mΓ₧£[39m  [1mDebug[22m:   [2m[33mhttp://localhost:[1m3000[22m[2m/__debug[39m[22m
+[2m[32m  Γ₧£[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+AssertionError [ERR_ASSERTION]: Unexpected error: no match for module: node:http.
+    at Object.unsafeModuleFallbackService (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:15492:5)
+    at #handleLoopback (C:\Users\mikep\ts-hackathon\agentic-search\node_modules\.pnpm\miniflare@4.20251109.0\node_modules\miniflare\dist\src\index.js:61547:48)
+    at Server.emit (node:events:530:35)
+    at Server.emit (node:domain:489:12)
+    at parserOnIncoming (node:_http_server:1155:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:117:17)
+Fallback service failed to fetch module; payload = AssertionError [ERR_ASSERTION]: Unexpected error: no match for module: node:http.
+    at Object.unsafeModuleFallbackService (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:15492:5)
+    at #handleLoopback (C:\Users\mikep\ts-hackathon\agentic-search\node_modules\.pnpm\miniflare@4.20251109.0\node_modules\miniflare\dist\src\index.js:61547:48)
+    at Server.emit (node:events:530:35)
+    at Server.emit (node:domain:489:12)
+    at parserOnIncoming (node:_http_server:1155:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:117:17); spec = /?specifier=node%3Ahttp&referrer=&rawSpecifier=node%3Ahttp
+[DetectModels] Failed to detect ollama models: internal error; reference = tovamlrpmt9vojse7tv6neve
+[StreamSearch] Starting search for searchId=test-123, query="test search"
+[SSE] Buffered event for searchId=test-123 (1 total)
+[StreamSearch] No client model config ΓÇö running web search + ADD scoring only (no model calls)
+[StreamSearch] Search API keys received: { tavily: false, exa: false, firecrawl: false, brave: false }
+[StreamSearch] Available providers: NONE
+[SSE] Buffered event for searchId=test-123 (2 total)
+[SSE] Buffered event for searchId=test-123 (3 total)
+[SSE] Buffered event for searchId=test-123 (4 total)
+[SSE] Buffered event for searchId=test-123 (5 total)
+[UnifiedSearch] Starting search for: "test search"
+[UnifiedSearch] Options: parallel=false, reasoning=false, validation=true, segmentation=false
+[UnifiedSearch] Phase 1: Executing base agentic search...
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+Learning update: {
+  query: 'test search',
+  intent: { type: 'factual', complexity: 'simple', sources: [ 'web' ] },
+  strategy: {
+    primaryQuery: 'test search',
+    followUpQueries: [
+      '"test search"',
+      'test search overview',
+      'test search official documentation'
+    ],
+    sources: [ 'web' ],
+    searchDepth: 4,
+    qualityThreshold: 0.6
+  },
+  resultCount: 0,
+  avgScore: 0,
+  timestamp: 1772922780637
+}
+[UnifiedSearch] Phase 4: Calculating ADD quality metrics...
+[UnifiedSearch] Phase 5: Validating components...
+[UnifiedSearch] Validation complete. Retrieval: false, Reasoning: false, Response: true
+[UnifiedSearch] Search completed in 2ms
+[UnifiedSearch] Quality: 0.50, Tokens: 0
+[SSE] Buffered event for searchId=test-123 (6 total)
+[SSE] Buffered event for searchId=test-123 (7 total)
+[StreamSearch] Starting search for searchId=test-123, query="test search"
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[SSE] Buffered event for searchId=test-123 (8 total)
+[StreamSearch] No client model config ΓÇö running web search + ADD scoring only (no model calls)
+[StreamSearch] Search API keys received: { tavily: false, exa: false, firecrawl: false, brave: false }
+[StreamSearch] Available providers: NONE
+[SSE] Buffered event for searchId=test-123 (9 total)
+[SSE] Buffered event for searchId=test-123 (10 total)
+[SSE] Buffered event for searchId=test-123 (11 total)
+[SSE] Buffered event for searchId=test-123 (12 total)
+[UnifiedSearch] Starting search for: "test search"
+[UnifiedSearch] Options: parallel=false, reasoning=false, validation=true, segmentation=false
+[UnifiedSearch] Phase 1: Executing base agentic search...
+Learning update: {
+  query: 'test search',
+  intent: { type: 'factual', complexity: 'simple', sources: [ 'web' ] },
+  strategy: {
+    primaryQuery: 'test search',
+    followUpQueries: [
+      '"test search"',
+      'test search overview',
+      'test search official documentation'
+    ],
+    sources: [ 'web' ],
+    searchDepth: 4,
+    qualityThreshold: 0.6
+  },
+  resultCount: 0,
+  avgScore: 0,
+  timestamp: 1772922836696
+}
+[UnifiedSearch] Phase 4: Calculating ADD quality metrics...
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[UnifiedSearch] Phase 5: Validating components...
+[UnifiedSearch] Validation complete. Retrieval: false, Reasoning: false, Response: true
+[UnifiedSearch] Search completed in 1ms
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[UnifiedSearch] Quality: 0.50, Tokens: 0
+[SSE] Buffered event for searchId=test-123 (13 total)
+[SSE] Buffered event for searchId=test-123 (14 total)
+[2m5:35:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles.css?direct[22m
+[2m5:35:54 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mhmr update [39m[2m/@id/virtual:cloudflare/worker-entry[22m
+[vite] hot updated: virtual:cloudflare/worker-entry
+[2m5:36:07 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles.css?direct[22m
+[2m5:36:07 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mhmr update [39m[2m/@id/virtual:cloudflare/worker-entry[22m
+[vite] hot updated: virtual:cloudflare/worker-entry
+[StreamSearch] Starting search for searchId=test-keys-001, query="what is artificial intelligence"
+[SSE] Buffered event for searchId=test-keys-001 (1 total)
+[StreamSearch] No client model config ΓÇö running web search + ADD scoring only (no model calls)
+[StreamSearch] Search API keys received: { tavily: true, exa: true, firecrawl: true, brave: false }
+[StreamSearch] Available providers: tavily, exa, firecrawl
+[SSE] Buffered event for searchId=test-keys-001 (2 total)
+[SSE] Buffered event for searchId=test-keys-001 (3 total)
+[SSE] Buffered event for searchId=test-keys-001 (4 total)
+[UnifiedSearch] Starting search for: "what is artificial intelligence"
+[UnifiedSearch] Options: parallel=false, reasoning=false, validation=true, segmentation=false
+[UnifiedSearch] Phase 1: Executing base agentic search...
+[SearchProviders] Firecrawl failed: Firecrawl API error (400): {"success":false,"error":"Invalid request body","details":[{"code":"unrecognized_keys","keys":["includeScreenshot"],"path":["scrapeOptions"],"message":"Unrecognized key: \"includeScreenshot\""}]}
+[SearchProviders] Firecrawl failed: Firecrawl API error (400): {"success":false,"error":"Invalid request body","details":[{"code":"unrecognized_keys","keys":["includeScreenshot"],"path":["scrapeOptions"],"message":"Unrecognized key: \"includeScreenshot\""}]}
+[SearchProviders] Firecrawl failed: Firecrawl API error (400): {"success":false,"error":"Invalid request body","details":[{"code":"unrecognized_keys","keys":["includeScreenshot"],"path":["scrapeOptions"],"message":"Unrecognized key: \"includeScreenshot\""}]}
+[SearchProviders] Firecrawl failed: Firecrawl API error (400): {"success":false,"error":"Invalid request body","details":[{"code":"unrecognized_keys","keys":["includeScreenshot"],"path":["scrapeOptions"],"message":"Unrecognized key: \"includeScreenshot\""}]}
+[Tavily] Response validation failed: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      0,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      1,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      2,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      3,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      4,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "answer"
+    ],
+    "message": "Invalid input: expected string, received null"
+  }
+]
+[Tavily] Response validation failed: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      0,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      1,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      2,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      3,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      4,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+[SearchProviders] tavily returned 5 results
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "answer"
+    ],
+    "message": "Invalid input: expected string, received null"
+  }
+]
+[SearchProviders] exa returned 5 results
+[SearchProviders] Fused 10 unique results from 2 provider(s)
+[Tavily] Response validation failed: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      0,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      1,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      2,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      3,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      4,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "answer"
+    ],
+    "message": "Invalid input: expected string, received null"
+  }
+]
+[Tavily] Response validation failed: [
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      0,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      1,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      2,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      3,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      4,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      5,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      6,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      7,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      8,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "results",
+      9,
+      "raw_content"
+    ],
+    "message": "Invalid input: expected string, received null"
+  },
+  {
+    "expected": "string",
+    "code": "invalid_type",
+    "path": [
+      "answer"
+    ],
+    "message": "Invalid input: expected string, received null"
+  }
+]
+[SearchProviders] tavily returned 5 results
+[SearchProviders] exa returned 5 results
+[SearchProviders] Fused 8 unique results from 2 provider(s), 2 cross-cited
+[SearchProviders] tavily returned 10 results
+[SearchProviders] exa returned 10 results
+[SearchProviders] Fused 15 unique results from 2 provider(s), 4 cross-cited
+[SearchProviders] tavily returned 5 results
+[SearchProviders] exa returned 5 results
+[SearchProviders] Fused 7 unique results from 2 provider(s), 3 cross-cited
+Learning update: {
+  query: 'what is artificial intelligence',
+  intent: { type: 'factual', complexity: 'simple', sources: [ 'web' ] },
+  strategy: {
+    primaryQuery: 'what is artificial intelligence',
+    followUpQueries: [
+      '"what is artificial intelligence"',
+      'what is artificial intelligence overview',
+      'what is artificial intelligence official documentation'
+    ],
+    sources: [ 'web' ],
+    searchDepth: 4,
+    qualityThreshold: 0.6
+  },
+  resultCount: 10,
+  avgScore: 0.7978992748935226,
+  timestamp: 1772923005563
+}
+[UnifiedSearch] Phase 4: Calculating ADD quality metrics...
+[UnifiedSearch] Phase 5: Validating components...
+[UnifiedSearch] Validation complete. Retrieval: true, Reasoning: false, Response: true
+[UnifiedSearch] Search completed in 2234ms
+[UnifiedSearch] Quality: 0.85, Tokens: 0
+[SSE] Buffered event for searchId=test-keys-001 (5 total)
+[SSE] Buffered event for searchId=test-keys-001 (6 total)
+[SSE] Buffered event for searchId=test-keys-001 (7 total)
+[SSE] Buffered event for searchId=test-keys-001 (8 total)
+[SSE] Buffered event for searchId=test-keys-001 (9 total)
+[DetectModels] Failed to detect ollama models: internal error; reference = 2qr8n5v1dtdiaj8aqfchu8ur
+[StreamSearch] Starting search for searchId=search-1772923088559, query="ai research articles"
+[StreamSearch] Using client-provided model: custom-1772910472827:nanbeige4.1-3b-heretic
+[StreamSearch] Search API keys received: { tavily: true, exa: true, firecrawl: true, brave: false }
+[StreamSearch] Available providers: tavily, exa, firecrawl
+[StreamSearch] Parallel execution enabled with 3 models
+[UnifiedSearch] Starting search for: "ai research articles"
+[UnifiedSearch] Options: parallel=true, reasoning=true, validation=true, segmentation=true
+[UnifiedSearch] Routing to segmented search...
+[SegmentedSearch] Starting segmented search for: "ai research articles"
+[SegmentedSearch] This will work equally well with tiny or powerful models!
+[SegmentedSearch] Phase 1: Segmenting query...
+[Segmenter] Analyzing query: "ai research articles"
+[Segmenter] Simple query - single segment
+[Segmenter] Execution graph: 1 stages, 0 parallel groups
+[Segmenter] Created 1 segments (400 tokens estimated)
+[SegmentedSearch] Created 1 segments:
+  - entity: "ai research articles" (priority: 10, complexity: simple)
+    Recommended model: openai:nanbeige4.1-3b-heretic (SUGGESTION ONLY - user controls actual model)
+[SegmentedSearch] Phase 2: Executing 1 segments with coordination...
+[Coordinator] Starting execution of 1 segments
+[Coordinator] Executing 1 segments sequentially
+[Coordinator] Executing segment simple: "ai research articles"
+[Coordinator] Context from 0 dependencies
+[Executor] Starting segment: simple
+[Executor] Text: "ai research articles"
+[Executor] Recommended model: openai:nanbeige4.1-3b-heretic (user can override)
+[Executor] Verifying model connection: openai:nanbeige4.1-3b-heretic...
+[Executor] Calling openai:nanbeige4.1-3b-heretic at http://localhost:1234/v1/models
+Γ£ô [Executor] Model openai:nanbeige4.1-3b-heretic verified successfully!
+Γ£ô [Executor] Test response: "
+
+Hello! ≡ƒæï
+
+This is a friendly greeting ΓÇö perfect..."
+Γ£ô [Executor] Model verified: nanbeige4.1-3b-heretic
+[Executor] Executing search with model openai:nanbeige4.1-3b-heretic
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+[SearchProviders] No search API keys configured. Add Tavily, Exa, Firecrawl, or Brave API key in Settings.
+Learning update: {
+  query: 'ai research articles',
+  intent: {
+    type: 'research',
+    complexity: 'simple',
+    sources: [ 'web', 'academic' ]
+  },
+  strategy: {
+    primaryQuery: 'ai research articles',
+    followUpQueries: [
+      '"ai research articles"',
+      'ai research articles evidence',
+      'ai research articles overview'
+    ],
+    sources: [ 'web', 'academic' ],
+    searchDepth: 4,
+    qualityThreshold: 0.6
+  },
+  resultCount: 0,
+  avgScore: 0,
+  timestamp: 1772923116783
+}
+[Executor] Low confidence (0.00) - escalation recommended
+[Executor] Segment simple completed in 28159ms
+[Executor] Found 0 results, confidence: 0.00
+[Coordinator] Segment simple spawned 1 new segments
+[Coordinator] Segment simple flagged for escalation
+[Coordinator] Execution complete: 28159ms, 0 tokens
+[Coordinator] Success: 1/1
+[SegmentedSearch] Coordination complete!
+  - Completed segments: 1
+  - Failed segments: 0
+  - Total coordination events: 5
+[SegmentedSearch] Phase 3: Calculating ADD quality metrics...
+[SegmentedSearch] Phase 4: Validating components...
+[SegmentedSearch] Validation complete. Retrieval: false, Response: true
+[SegmentedSearch] Search completed in 28162ms
+[SegmentedSearch] Quality: 0.43, Tokens: 0
+[SegmentedSearch] Segmentation completed with intelligent coordination!
+[2m5:46:41 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+Using vars defined in .dev.vars
+[2m5:46:42 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m5:46:43 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+Using vars defined in .dev.vars
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+5:46:44 PM [vite] Internal server error: fetch failed
+      at Object.fetch (C:\Users\mikep\ts-hackathon\agentic-search\node_modules\.pnpm\undici@7.14.0\node_modules\undici\index.js:124:13)
+      at async fetch4 (C:\Users\mikep\ts-hackathon\agentic-search\node_modules\.pnpm\miniflare@4.20251109.0\node_modules\miniflare\dist\src\index.js:39719:20)
+      at async _Miniflare.dispatchFetch (C:\Users\mikep\ts-hackathon\agentic-search\node_modules\.pnpm\miniflare@4.20251109.0\node_modules\miniflare\dist\src\index.js:62421:22)
+      at async file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:87:19
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m5:46:44 PM[22m [36m[1m[vite][22m[39m server restarted.
+Using vars defined in .dev.vars
+[2m5:46:45 PM[22m [36m[1m[vite][22m[39m server restarted.
+
+  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+  [32mΓ₧£[39m  [1mDebug[22m:   [2m[33mhttp://localhost:[1m3000[22m[2m/__debug[39m[22m
+
+  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+  [32mΓ₧£[39m  [1mDebug[22m:   [2m[33mhttp://localhost:[1m3000[22m[2m/__debug[39m[22m
+
+  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+  [32mΓ₧£[39m  [1mDebug[22m:   [2m[33mhttp://localhost:[1m3000[22m[2m/__debug[39m[22m
+
+  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+  [32mΓ₧£[39m  [1mDebug[22m:   [2m[33mhttp://localhost:[1m3000[22m[2m/__debug[39m[22m
+
+  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+  [32mΓ₧£[39m  [1mDebug[22m:   [2m[33mhttp://localhost:[1m3000[22m[2m/__debug[39m[22m
+
+  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+  [32mΓ₧£[39m  [1mDebug[22m:   [2m[33mhttp://localhost:[1m3000[22m[2m/__debug[39m[22m
+
+  [32mΓ₧£[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[2m  [32mΓ₧£[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+  [32mΓ₧£[39m  [1mDebug[22m:   [2m[33mhttp://localhost:[1m3000[22m[2m/__debug[39m[22m
+5:46:47 PM [vite] Internal server error: Expected `miniflare` to be defined
+      at get miniflare (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:143:3)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:15736:18
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:87:25
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:22972:28
+      at viteServeStaticMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23058:4)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServeRawFsMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23091:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25214:3)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServePublicMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23026:157)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteHMRPingMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:26221:8)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at viteCachedTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25088:3)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at hostValidationMiddleware$1$1 (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:20936:3)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at cors (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11536:5)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11559:9
+      at originCallback (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11553:8)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11555:27
+      at optionsCallback (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11543:5)
+      at corsMiddleware$2 (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11546:5)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteRejectInvalidRequestMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25953:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at Function.handle (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11188:3)
+      at Server.app (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11095:8)
+      at Server.emit (node:events:518:28)
+      at Server.emit (node:domain:489:12)
+      at parserOnIncoming (node:_http_server:1155:12)
+      at HTTPParser.parserOnHeadersComplete (node:_http_common:117:17)
+6:49:13 PM [vite] Internal server error: Expected `miniflare` to be defined
+      at get miniflare (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:143:3)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:15736:18
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:87:25
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServeStaticMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23038:143)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServeRawFsMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23091:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25097:129)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServePublicMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23026:157)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteHMRPingMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:26221:8)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at viteCachedTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25075:11)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at hostValidationMiddleware$1$1 (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:20936:3)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at cors (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11536:5)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11559:9
+      at originCallback (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11553:8)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11555:27
+      at optionsCallback (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11543:5)
+      at corsMiddleware$2 (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11546:5)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteRejectInvalidRequestMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25953:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at Function.handle (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11188:3)
+      at Server.app (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11095:8)
+      at Server.emit (node:events:518:28)
+      at Server.emit (node:domain:489:12)
+      at parserOnIncoming (node:_http_server:1155:12)
+      at HTTPParser.parserOnHeadersComplete (node:_http_common:117:17)
+6:49:13 PM [vite] Internal server error: Expected `miniflare` to be defined
+      at get miniflare (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:143:3)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:15736:18
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:87:25
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:22972:28
+      at viteServeStaticMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23058:4)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServeRawFsMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23091:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25214:3)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServePublicMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23026:157)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteHMRPingMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:26221:8)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at viteCachedTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25088:3)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at hostValidationMiddleware$1$1 (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:20936:3)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at cors (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11536:5)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11559:9
+      at originCallback (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11553:8)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11555:27
+      at optionsCallback (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11543:5)
+      at corsMiddleware$2 (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11546:5)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteRejectInvalidRequestMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25953:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at Function.handle (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11188:3)
+      at Server.app (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11095:8)
+      at Server.emit (node:events:518:28)
+      at Server.emit (node:domain:489:12)
+      at parserOnIncoming (node:_http_server:1155:12)
+      at HTTPParser.parserOnHeadersComplete (node:_http_common:117:17)
+6:49:36 PM [vite] Internal server error: Expected `miniflare` to be defined
+      at get miniflare (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:143:3)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:15736:18
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:87:25
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:22972:28
+      at viteServeStaticMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23058:4)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServeRawFsMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23091:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25198:43)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+6:49:54 PM [vite] Internal server error: Expected `miniflare` to be defined
+      at get miniflare (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:143:3)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:15736:18
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:87:25
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServeStaticMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23038:143)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServeRawFsMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23091:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25097:129)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServePublicMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23026:157)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteHMRPingMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:26221:8)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at viteCachedTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25088:3)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11175:86)
+      at hostValidationMiddleware$1$1 (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:20936:3)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at cors (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11536:5)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11559:9
+      at originCallback (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11553:8)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11555:27
+      at optionsCallback (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11543:5)
+      at corsMiddleware$2 (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11546:5)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteRejectInvalidRequestMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25953:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at Function.handle (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11188:3)
+      at Server.app (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11095:8)
+      at Server.emit (node:events:518:28)
+      at Server.emit (node:domain:489:12)
+      at parserOnIncoming (node:_http_server:1155:12)
+      at HTTPParser.parserOnHeadersComplete (node:_http_common:117:17)
+6:49:57 PM [vite] Internal server error: Expected `miniflare` to be defined
+      at get miniflare (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:143:3)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:15736:18
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/@cloudflare+vite-plugin@1.1_a0e3d722f79f404dbb0cf4cc890fb895/node_modules/@cloudflare/vite-plugin/dist/index.js:87:25
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:22972:28
+      at viteServeStaticMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23058:4)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteServeRawFsMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:23091:10)
+      at call (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11233:5)
+      at next (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:11186:4)
+      at viteTransformMiddleware (file:///C:/Users/mikep/ts-hackathon/agentic-search/node_modules/.pnpm/vite@7.2.1_@types+node@22.1_027c71a3b5a2f1c8a91d997f7aad7901/node_modules/vite/dist/node/chunks/config.js:25198:43)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)

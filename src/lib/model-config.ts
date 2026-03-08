@@ -45,6 +45,49 @@ export const ModelConfigSchema = z.object({
 
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 
+/**
+ * Build a ModelConfig from client-provided model store data.
+ * Used by server-side API endpoints to accept config from the browser's unified model store.
+ */
+export function buildModelConfigFromClient(
+	clientConfig: { provider: string; model: string; baseUrl: string; apiKey?: string; protocol: string }
+): ModelConfig {
+	// Map known provider strings to enum values
+	const providerMap: Record<string, ModelProvider> = {
+		ollama: ModelProvider.OLLAMA,
+		lmstudio: ModelProvider.LM_STUDIO,
+		lm_studio: ModelProvider.LM_STUDIO,
+		openai: ModelProvider.OPENAI,
+		anthropic: ModelProvider.ANTHROPIC,
+		google: ModelProvider.GOOGLE,
+		deepseek: ModelProvider.DEEPSEEK,
+		moonshot: ModelProvider.MOONSHOT,
+		kimi: ModelProvider.KIMI,
+		openrouter: ModelProvider.OPENROUTER,
+		vllm: ModelProvider.VLLM,
+		azure_openai: ModelProvider.AZURE_OPENAI,
+	};
+
+	// For custom providers, determine by protocol
+	let provider = providerMap[clientConfig.provider.toLowerCase()];
+	if (!provider) {
+		provider = clientConfig.protocol === "anthropic"
+			? ModelProvider.ANTHROPIC
+			: ModelProvider.OPENAI;
+	}
+
+	return {
+		provider,
+		model: clientConfig.model,
+		baseUrl: clientConfig.baseUrl,
+		apiKey: clientConfig.apiKey,
+		temperature: 0.7,
+		maxTokens: 4096,
+		timeout: 60000,
+		enableStreaming: false,
+	};
+}
+
 // Available models per provider - NOVEMBER 2025 LATEST MODELS (OpenRouter compatible IDs)
 export const AVAILABLE_MODELS = {
 	OpenAI: [
@@ -97,7 +140,7 @@ export const AVAILABLE_MODELS = {
 		"kimi-k2-long"
 	],
 	OpenRouter: [],  // Dynamic - fetches from API
-	Ollama: ["qwen3:4b", "qwen3:1.7b", "gemma3:4b", "gemma3:1b", "gemma3:270m", "deepseek-r1:8b", "deepseek-r1:1.5b", "deepseek-coder:6.7b"],
+	Ollama: [],  // Auto-detected from running instance, never hardcoded
 	LMStudio: [],
 	vLLM: [],
 	GGUF: [],
@@ -149,13 +192,13 @@ export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 	},
 	[ModelProvider.OLLAMA]: {
 		baseUrl: "http://localhost:11434/v1",
-		model: "qwen3:4b",
+		model: "", // Auto-detected from running instance, never hardcoded
 		temperature: 0.7,
 		maxTokens: 32000,
 	},
 	[ModelProvider.LM_STUDIO]: {
 		baseUrl: "http://localhost:1234/v1",
-		model: "qwen3:4b",
+		model: "", // Auto-detected from running instance, never hardcoded
 		temperature: 0.7,
 		maxTokens: 32000,
 	},
@@ -200,11 +243,9 @@ export class ModelConfigManager {
 
 	constructor() {
 		this.loadFromEnvironment();
-		
-		// If no configurations loaded, initialize with default Ollama
-		if (this.configs.size === 0) {
-			this.initializeDefaults();
-		}
+		// No default provider — model is optional.
+		// If the user hasn't configured a provider via env vars,
+		// the search runs in web-only mode (deterministic intent + web APIs).
 	}
 	
 	/**
@@ -216,7 +257,7 @@ export class ModelConfigManager {
 			const config: ModelConfig = {
 				provider: ModelProvider.OLLAMA,
 				baseUrl: defaults.baseUrl || "http://localhost:11434/v1",
-				model: defaults.model || "qwen3:4b",
+				model: defaults.model || "", // Will be overridden by client-sent config
 				temperature: defaults.temperature || 0.7,
 				maxTokens: defaults.maxTokens || 32000,
 				timeout: 60000,
@@ -224,7 +265,7 @@ export class ModelConfigManager {
 			};
 			this.addConfig("ollama", config);
 			this.setActiveConfig("ollama");
-			console.log("[ModelConfig] Initialized with default Ollama configuration");
+			console.log("[ModelConfig] Initialized with default Ollama configuration (model auto-detected from client)");
 		} catch (error) {
 			console.error("Failed to initialize default configuration:", error);
 		}

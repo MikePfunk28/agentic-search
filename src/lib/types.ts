@@ -3,15 +3,18 @@
  * Defines interfaces for search results, configurations, and agent communications
  */
 
-// Search Result from agents (Autumn/Firecrawl)
+// Search Result from search providers
 export interface SearchResult {
 	id: string;
 	title: string;
 	snippet: string;
 	url: string;
 	publishedDate?: string;
-	source: "autumn" | "firecrawl";
+	source: "web" | "firecrawl" | "brave" | "academic" | "news";
+	provider?: "brave" | "firecrawl" | "tavily" | "exa" | "cache"; // Which API returned this
 	addScore?: number; // ADD (Adversarial Differential Discrimination) score
+	domainAuthority?: number; // 0-1 domain reputation score
+	citationCount?: number; // How many providers returned this URL
 	ocrData?: OCRResult;
 }
 
@@ -75,8 +78,8 @@ export interface UserConfig {
 		anthropic?: string;
 		openai?: string;
 		deepseek?: string;
-		autumn?: string;
 		firecrawl?: string;
+		brave?: string;
 	};
 	preferences: {
 		enableOCR: boolean;

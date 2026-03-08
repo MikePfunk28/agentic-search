@@ -176,11 +176,20 @@ export interface CsrfValidationResult {
 }
 
 /**
- * Validate CSRF token for a request
+ * Validate CSRF token for a request.
+ * Skips validation in development (consistent with the CSRF middleware
+ * which sets enabled: process.env.NODE_ENV === "production").
+ * In the Cloudflare/miniflare dev proxy, Set-Cookie headers are not
+ * reliably forwarded, so cookie-based CSRF cannot work in dev.
  */
 export function validateCsrfRequest(request: Request): CsrfValidationResult {
 	// Skip validation for safe methods
 	if (!requiresCsrfProtection(request.method)) {
+		return { valid: true };
+	}
+
+	// Skip CSRF in development - miniflare proxy doesn't forward cookies reliably
+	if (!import.meta.env.PROD) {
 		return { valid: true };
 	}
 

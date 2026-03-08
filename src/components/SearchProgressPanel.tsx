@@ -19,13 +19,17 @@ export interface SearchProgressStep {
 		tokensUsed?: number;
 		confidence?: number;
 		documentsFound?: number;
+		modelCount?: number;
+		models?: string[];
 	};
 }
 
 export interface SearchScope {
 	sources: {
+		tavily: boolean;
+		exa: boolean;
 		firecrawl: boolean;
-		autumn: boolean;
+		brave: boolean;
 		academic: boolean;
 		news: boolean;
 	};

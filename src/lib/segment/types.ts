@@ -32,10 +32,10 @@ export type SegmentSearchStrategy =
  * Segment complexity levels (determines model assignment)
  */
 export type SegmentComplexity =
-  | 'tiny'   // qwen3:1.7b, gemma3:270m - Simple lookups
-  | 'small'  // qwen3:4b, gemma3:1b - Basic reasoning
-  | 'medium' // llama3:8b - Complex analysis
-  | 'large'; // Claude/GPT-4 - Creative synthesis
+  | 'tiny'   // Simple lookups - uses active model
+  | 'small'  // Basic reasoning - uses active model
+  | 'medium' // Complex analysis - uses active model
+  | 'large'; // Creative synthesis - uses active model
 
 /**
  * Individual query segment with metadata
@@ -48,7 +48,7 @@ export interface QuerySegment {
   dependencies: string[]; // IDs of segments that must complete first
   searchStrategy: SegmentSearchStrategy;
   estimatedComplexity: SegmentComplexity;
-  recommendedModel: string; // Model identifier (e.g., "ollama:qwen3:1.7b")
+  recommendedModel: string; // Model identifier (e.g., "ollama:model-name")
   estimatedTokens: number;
   metadata?: Record<string, unknown>;
 }
@@ -116,6 +116,7 @@ export interface CoordinationState {
   startTime: number;
   completedSegments: Set<string>;
   failedSegments: Map<string, string>; // segmentId -> error message
+  executionResults?: Map<string, SegmentExecutionResult>; // segmentId -> full execution result
 }
 
 /**

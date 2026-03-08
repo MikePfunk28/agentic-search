@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, Brain, CheckCircle2, Database, Search, Shield, Sparkles, Zap } from "lucide-react";
+import { Brain, CheckCircle2, Database, Search, Shield, Sparkles, Zap } from "lucide-react";
 import { useState } from "react";
 import { AgenticChat } from "../components/AgenticChat";
 
@@ -22,9 +22,9 @@ function Home() {
 			<section className="relative py-20 px-6 text-center overflow-hidden">
 				<div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-blue-500/10 animate-pulse"></div>
 				<div className="relative max-w-6xl mx-auto">
-					<div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-full text-red-300 text-sm mb-6">
-						<AlertTriangle className="w-4 h-4" />
-						<span>RAG is fundamentally unsafe and limited</span>
+					<div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-full text-green-300 text-sm mb-6">
+						<CheckCircle2 className="w-4 h-4" />
+						<span>Free with your own model or API key</span>
 					</div>
 
 					<h1 className="text-6xl md:text-7xl font-black text-white mb-6 [letter-spacing:-0.05em]">
@@ -34,17 +34,17 @@ function Home() {
 					</h1>
 
 					<p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-						The Future of Intelligent Search
+						A Smarter Way to Search
 					</p>
 
 					<p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed">
-						<strong className="text-cyan-400">3-5x faster</strong> and
-						<strong className="text-blue-400"> 60-70% cheaper</strong> than traditional RAG.
-						Our platform uses
-						<strong className="text-purple-400"> adaptive compression</strong>,
-						<strong className="text-green-400"> speculative prefetching</strong>, and
-						<strong className="text-orange-400"> hybrid vector+graph storage</strong> for
-						sunmatched document retrieval performance.
+						Bring your own model &mdash; <strong className="text-cyan-400">Ollama</strong>,{" "}
+						<strong className="text-blue-400">LM Studio</strong>,{" "}
+						<strong className="text-purple-400">OpenAI</strong>,{" "}
+						<strong className="text-green-400">Anthropic</strong>,{" "}
+						<strong className="text-orange-400">DeepSeek</strong>, or any OpenAI-compatible API.
+						Agentic search breaks your query into intelligent segments, searches multiple sources
+						in parallel, and validates every result before showing it to you.
 					</p>
 
 					<button
@@ -53,86 +53,51 @@ function Home() {
 					>
 						<span className="flex items-center gap-2">
 							<Search className="w-5 h-5" />
-							Start Agentic Search
+							Start Searching
 						</span>
 					</button>
 				</div>
 			</section>
 
-			{/* RAG vs Agentic Search Comparison */}
+			{/* How It Works */}
 			<section className="py-16 px-6 max-w-7xl mx-auto">
 				<div className="text-center mb-12">
-					<h2 className="text-4xl font-bold text-white mb-4">Why RAG Falls Short for Document Retrieval</h2>
-					<p className="text-gray-400 text-lg">Agentic search eliminates the bottlenecks that make traditional RAG slow, expensive, and inaccurate</p>
+					<h2 className="text-4xl font-bold text-white mb-4">How It Works</h2>
+					<p className="text-gray-400 text-lg">Your model, your keys, your search &mdash; we just make it smarter</p>
 				</div>
 
-				<div className="grid md:grid-cols-2 gap-6 mb-12">
-					{/* RAG Problems */}
-					<div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6">
-						<div className="flex items-center gap-2 mb-4">
-							<AlertTriangle className="w-6 h-6 text-red-400" />
-							<h3 className="text-2xl font-bold text-red-300">Traditional RAG</h3>
+				<div className="grid md:grid-cols-3 gap-6 mb-12">
+					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
+						<div className="w-12 h-12 bg-cyan-500/20 border border-cyan-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+							<span className="text-2xl font-bold text-cyan-400">1</span>
 						</div>
-						<ul className="space-y-3">
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-red-400 mt-1">✗</span>
-								<span><strong>Sequential Pipeline:</strong> Slow retrieve→rank→generate</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-red-400 mt-1">✗</span>
-								<span><strong>Token Waste:</strong> Retrieves full docs when snippets suffice</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-red-400 mt-1">✗</span>
-								<span><strong>Single-Modal:</strong> Text only, fails on images/tables</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-red-400 mt-1">✗</span>
-								<span><strong>Fixed Context Window:</strong> Limited by embedding size</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-red-400 mt-1">✗</span>
-								<span><strong>No Validation:</strong> Blindly trusts retrieved information</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-red-400 mt-1">✗</span>
-								<span><strong>Static Learning:</strong> Cannot improve from feedback</span>
-							</li>
-						</ul>
+						<h3 className="text-xl font-semibold text-white mb-3">Connect Your Model</h3>
+						<p className="text-gray-400">
+							Point to a local Ollama or LM Studio instance, or add any cloud API key.
+							No account required for the free tier.
+						</p>
 					</div>
 
-					{/* Agentic Search Benefits */}
-					<div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl p-6">
-						<div className="flex items-center gap-2 mb-4">
-							<CheckCircle2 className="w-6 h-6 text-cyan-400" />
-							<h3 className="text-2xl font-bold text-cyan-300">Agentic Search</h3>
+					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
+						<div className="w-12 h-12 bg-blue-500/20 border border-blue-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+							<span className="text-2xl font-bold text-blue-400">2</span>
 						</div>
-						<ul className="space-y-3">
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-cyan-400 mt-1">✓</span>
-								<span><strong>Parallel Execution:</strong> 3-5x faster via concurrent segments</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-cyan-400 mt-1">✓</span>
-								<span><strong>Adaptive Compression:</strong> 10x OCR with DeepSeek Vision</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-cyan-400 mt-1">✓</span>
-								<span><strong>Multi-Modal:</strong> Images, tables, charts, diagrams</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-cyan-400 mt-1">✓</span>
-								<span><strong>Hybrid Storage:</strong> LanceDB + graphs + BM25 keywords</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-cyan-400 mt-1">✓</span>
-								<span><strong>Speculative Prefetch:</strong> Start processing before query ends</span>
-							</li>
-							<li className="flex items-start gap-2 text-gray-300">
-								<span className="text-cyan-400 mt-1">✓</span>
-								<span><strong>Validated Results:</strong> ADD discriminators ensure quality</span>
-							</li>
-						</ul>
+						<h3 className="text-xl font-semibold text-white mb-3">Ask Anything</h3>
+						<p className="text-gray-400">
+							Type your query. The system breaks it into focused sub-queries,
+							searches the web, and gathers results from multiple sources.
+						</p>
+					</div>
+
+					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
+						<div className="w-12 h-12 bg-purple-500/20 border border-purple-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+							<span className="text-2xl font-bold text-purple-400">3</span>
+						</div>
+						<h3 className="text-xl font-semibold text-white mb-3">Get Validated Results</h3>
+						<p className="text-gray-400">
+							Every result is quality-scored and validated before you see it.
+							Full transparency into reasoning and sources.
+						</p>
 					</div>
 				</div>
 			</section>
@@ -140,109 +105,107 @@ function Home() {
 			{/* Key Features */}
 			<section className="py-16 px-6 max-w-7xl mx-auto">
 				<div className="text-center mb-12">
-					<h2 className="text-4xl font-bold text-white mb-4">Advanced Document Retrieval Technology</h2>
-					<p className="text-gray-400 text-lg">Eight cutting-edge systems that make us faster and cheaper than RAG</p>
+					<h2 className="text-4xl font-bold text-white mb-4">What Makes It Better</h2>
+					<p className="text-gray-400 text-lg">Intelligent search powered by your choice of AI model</p>
 				</div>
 
 				<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
 					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all">
 						<Zap className="w-12 h-12 text-cyan-400 mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-3">Multi-Modal OCR</h3>
+						<h3 className="text-xl font-semibold text-white mb-3">Parallel Execution</h3>
 						<p className="text-gray-400 leading-relaxed">
-							DeepSeek Vision processes images, tables, charts, and diagrams with layout-aware extraction.
-							RAG can only handle plain text.
+							Query segments run concurrently with dependency-aware scheduling.
+							Get results faster by searching multiple sources at once.
 						</p>
 					</div>
 
 					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-blue-500/50 transition-all">
-						<Database className="w-12 h-12 text-blue-400 mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-3">Adaptive Compression</h3>
+						<Brain className="w-12 h-12 text-blue-400 mb-4" />
+						<h3 className="text-xl font-semibold text-white mb-3">Query Segmentation</h3>
 						<p className="text-gray-400 leading-relaxed">
-							Content-aware compression: legal docs 3-5x, news 10-15x, code 2-3x.
-							RAG retrieves full documents wasting tokens.
+							Complex questions are broken into focused sub-queries that each
+							get the best possible answer, then synthesized together.
 						</p>
 					</div>
 
 					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-purple-500/50 transition-all">
-						<Brain className="w-12 h-12 text-purple-400 mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-3">Hybrid Storage</h3>
+						<Shield className="w-12 h-12 text-purple-400 mb-4" />
+						<h3 className="text-xl font-semibold text-white mb-3">Quality Validation</h3>
 						<p className="text-gray-400 leading-relaxed">
-							LanceDB vectors + knowledge graphs + BM25 keywords.
-							RAG relies only on vector similarity.
+							ADD (Adversarial Differential Discrimination) scores every result for
+							relevance, diversity, freshness, and consistency.
 						</p>
 					</div>
 
 					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-green-500/50 transition-all">
 						<Sparkles className="w-12 h-12 text-green-400 mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-3">Speculative Prefetch</h3>
+						<h3 className="text-xl font-semibold text-white mb-3">Real-Time Streaming</h3>
 						<p className="text-gray-400 leading-relaxed">
-							Starts processing before query completes. Predicts follow-ups and preloads documents.
-							RAG waits for full query.
+							Watch your search progress step-by-step with full transparency.
+							Pause, resume, or adjust scope mid-search.
 						</p>
 					</div>
 
 					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-orange-500/50 transition-all">
 						<Zap className="w-12 h-12 text-orange-400 mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-3">Parallel Execution</h3>
+						<h3 className="text-xl font-semibold text-white mb-3">BYOK / BYOM</h3>
 						<p className="text-gray-400 leading-relaxed">
-							Query segments run concurrently with dependency-aware scheduling.
-							RAG is strictly sequential.
+							Bring Your Own Key or Bring Your Own Model. Works with Ollama,
+							LM Studio, OpenAI, Anthropic, DeepSeek, and more.
 						</p>
 					</div>
 
 					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-pink-500/50 transition-all">
-						<Shield className="w-12 h-12 text-pink-400 mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-3">Real-Time Streaming</h3>
+						<Database className="w-12 h-12 text-pink-400 mb-4" />
+						<h3 className="text-xl font-semibold text-white mb-3">Multi-Source Search</h3>
 						<p className="text-gray-400 leading-relaxed">
-							Progressive enhancement shows results as they arrive.
-							RAG waits for complete retrieval.
+							Searches across Firecrawl, Brave Search, and more.
+							Add your own search API keys to unlock additional sources.
 						</p>
 					</div>
 
 					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-yellow-500/50 transition-all">
 						<Database className="w-12 h-12 text-yellow-400 mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-3">Semantic Caching</h3>
+						<h3 className="text-xl font-semibold text-white mb-3">Interleaved Reasoning</h3>
 						<p className="text-gray-400 leading-relaxed">
-							Matches similar queries via vector similarity, not exact strings.
-							RAG only caches exact duplicates.
+							The AI reasons through results step-by-step, cross-referencing
+							sources to build a coherent, accurate answer.
 						</p>
 					</div>
 
 					<div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-red-500/50 transition-all">
 						<Shield className="w-12 h-12 text-red-400 mb-4" />
-						<h3 className="text-xl font-semibold text-white mb-3">Adversarial Validation</h3>
+						<h3 className="text-xl font-semibold text-white mb-3">Human-in-the-Loop</h3>
 						<p className="text-gray-400 leading-relaxed">
-							ADD discriminators ensure quality before serving results.
-							RAG blindly trusts retrieval.
+							Pause, adjust, approve, or modify search steps as they happen.
+							You stay in control of the entire process.
 						</p>
 					</div>
 				</div>
 			</section>
 
-			{/* Performance Metrics Section */}
+			{/* Free Tier Callout */}
 			<section className="py-16 px-6 max-w-5xl mx-auto">
 				<div className="bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-blue-500/10 border border-cyan-500/30 rounded-2xl p-8">
-					<h2 className="text-3xl font-bold text-white text-center mb-8">Performance Claims (To Be Tested)</h2>
-					<div className="grid md:grid-cols-4 gap-6">
+					<h2 className="text-3xl font-bold text-white text-center mb-4">Free to Use</h2>
+					<p className="text-gray-300 text-center text-lg mb-8">
+						Run it locally with your own model &mdash; no API costs, no accounts, no limits.
+					</p>
+					<div className="grid md:grid-cols-3 gap-6">
 						<div className="text-center">
-							<div className="text-5xl font-black text-cyan-400 mb-2">3-5x</div>
-							<div className="text-gray-300">Faster Retrieval</div>
-							<div className="text-sm text-gray-500 mt-2">via parallel execution</div>
+							<div className="text-4xl font-black text-cyan-400 mb-2">Local</div>
+							<div className="text-gray-300 font-medium">Ollama &amp; LM Studio</div>
+							<div className="text-sm text-gray-500 mt-2">Auto-detected, zero config</div>
 						</div>
 						<div className="text-center">
-							<div className="text-5xl font-black text-blue-400 mb-2">60-70%</div>
-							<div className="text-gray-300">Cost Reduction</div>
-							<div className="text-sm text-gray-500 mt-2">via compression</div>
+							<div className="text-4xl font-black text-blue-400 mb-2">Cloud</div>
+							<div className="text-gray-300 font-medium">Any OpenAI-compatible API</div>
+							<div className="text-sm text-gray-500 mt-2">Bring your own key</div>
 						</div>
 						<div className="text-center">
-							<div className="text-5xl font-black text-purple-400 mb-2">10-15x</div>
-							<div className="text-gray-300">Context Efficiency</div>
-							<div className="text-sm text-gray-500 mt-2">hierarchical compression</div>
-						</div>
-						<div className="text-center">
-							<div className="text-5xl font-black text-green-400 mb-2">100x</div>
-							<div className="text-gray-300">Vector Search</div>
-							<div className="text-sm text-gray-500 mt-2">LanceDB vs traditional</div>
+							<div className="text-4xl font-black text-purple-400 mb-2">Open</div>
+							<div className="text-gray-300 font-medium">Fully transparent</div>
+							<div className="text-sm text-gray-500 mt-2">See every step and source</div>
 						</div>
 					</div>
 				</div>
@@ -251,10 +214,10 @@ function Home() {
 			{/* CTA Section */}
 			<section className="py-20 px-6 text-center">
 				<div className="max-w-3xl mx-auto">
-					<h2 className="text-4xl font-bold text-white mb-6">Experience Next-Generation Document Retrieval</h2>
+					<h2 className="text-4xl font-bold text-white mb-6">Ready to Search Smarter?</h2>
 					<p className="text-gray-300 text-lg mb-8">
-						Stop wasting time and money on slow, inaccurate RAG systems. Get validated results,
-						multi-modal understanding, and intelligent compression in real-time.
+						Connect your model, type a question, and see the difference.
+						No sign-up required for the free tier.
 					</p>
 					<button
 						onClick={() => setShowChat(true)}

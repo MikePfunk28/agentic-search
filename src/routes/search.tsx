@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, Send } from "lucide-react";
 import { useState, useEffect } from "react";
+import { getClientSearchConfig } from "../lib/model-store";
 
 export const Route = createFileRoute("/search")({ component: SearchPage });
 
@@ -44,7 +45,10 @@ function SearchPage() {
 					"Content-Type": "application/json",
 					"X-CSRF-Token": csrfToken,
 				},
-				body: JSON.stringify({ query }),
+				body: JSON.stringify({
+					query,
+					...getClientSearchConfig(),
+				}),
 				signal: abortController.signal,
 			});
 

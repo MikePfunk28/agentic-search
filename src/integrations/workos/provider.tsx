@@ -47,7 +47,7 @@ export default function AppWorkOSProvider({
 	// If WorkOS is not configured and auth not explicitly disabled, throw error in production
 	if (!VITE_WORKOS_CLIENT_ID || !VITE_WORKOS_API_HOSTNAME) {
 		const error = "WorkOS not configured. Set VITE_WORKOS_CLIENT_ID and VITE_WORKOS_API_HOSTNAME, or set VITE_DISABLE_AUTH=true for development.";
-		
+
 		addBreadcrumb(
 			"WorkOS configuration missing",
 			"auth",

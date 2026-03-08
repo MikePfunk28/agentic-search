@@ -1,9 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
-import { createOllama } from "ollama-ai-provider";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createFileRoute } from "@tanstack/react-router";
+import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
@@ -28,11 +27,17 @@ export const Route = createFileRoute("/api/chat")({
 				const validation = validateCsrfRequest(request);
 				if (!validation.valid) {
 					console.error("[CSRF] Validation failed:", validation.error);
-					return createCsrfErrorResponse(validation.error || "CSRF validation failed");
+					return createCsrfErrorResponse(
+						validation.error || "CSRF validation failed",
+					);
 				}
 
 				try {
-					const { messages, modelProvider = "ollama" } = await request.json();
+					const {
+						messages,
+						modelProvider = "ollama",
+						model: requestedModel,
+					} = await request.json();
 
 					if (!messages || !Array.isArray(messages)) {
 						return new Response(
@@ -46,11 +51,24 @@ export const Route = createFileRoute("/api/chat")({
 
 					// Get model configuration
 					const modelManager = new ModelConfigManager();
-					let modelConfig = modelManager.getConfig(modelProvider as ModelProvider) || modelManager.getActiveConfig();
+					let modelConfig =
+						modelManager.getConfig(modelProvider as ModelProvider) ||
+						modelManager.getActiveConfig();
+
+					if (
+						modelConfig &&
+						typeof requestedModel === "string" &&
+						requestedModel.length > 0
+					) {
+						modelConfig = { ...modelConfig, model: requestedModel };
+					}
 
 					if (!modelConfig) {
 						return new Response(
-							JSON.stringify({ error: "No valid model configuration found. Please configure a model in Settings." }),
+							JSON.stringify({
+								error:
+									"No valid model configuration found. Please configure a model in Settings.",
+							}),
 							{
 								status: 500,
 								headers: { "Content-Type": "application/json" },
@@ -59,8 +77,14 @@ export const Route = createFileRoute("/api/chat")({
 					}
 
 					// API keys should be configured in model config or environment
-					if (!modelConfig.apiKey && modelConfig.provider !== ModelProvider.OLLAMA && modelConfig.provider !== ModelProvider.LM_STUDIO) {
-						console.warn(`[ChatAPI] No API key found for ${modelProvider}. Configure in Settings or environment variables.`);
+					if (
+						!modelConfig.apiKey &&
+						modelConfig.provider !== ModelProvider.OLLAMA &&
+						modelConfig.provider !== ModelProvider.LM_STUDIO
+					) {
+						console.warn(
+							`[ChatAPI] No API key found for ${modelProvider}. Configure in Settings or environment variables.`,
+						);
 					}
 
 					// Create dynamic model instance based on provider
@@ -69,7 +93,7 @@ export const Route = createFileRoute("/api/chat")({
 						case ModelProvider.ANTHROPIC:
 							model = anthropic(modelConfig.model);
 							break;
-						case ModelProvider.OPENAI:
+						case ModelProvider.OPENAI: {
 							// Use createOpenAI for proper configuration
 							const openaiProvider = createOpenAI({
 								apiKey: modelConfig.apiKey || process.env.OPENAI_API_KEY,
@@ -77,25 +101,33 @@ export const Route = createFileRoute("/api/chat")({
 							});
 							model = openaiProvider(modelConfig.model);
 							break;
-						case ModelProvider.OLLAMA:
-							// Use native Ollama provider for proper endpoint support
-							const ollamaBaseUrl = (modelConfig.baseUrl || "http://localhost:11434/v1").replace('/v1', '');
-							const ollamaProvider = createOllama({
-								baseURL: ollamaBaseUrl,
+						}
+						case ModelProvider.OLLAMA: {
+							// Use OpenAI-compatible endpoint for AI SDK v2 model spec compatibility
+							const ollamaProvider = createOpenAICompatible({
+								name: "ollama",
+								apiKey: "ollama", // ignored by Ollama, required by some clients
+								baseURL: modelConfig.baseUrl || "http://localhost:11434/v1",
 							});
 							model = ollamaProvider(modelConfig.model);
-							console.log(`[ChatAPI] Using Ollama at ${ollamaBaseUrl} with model ${modelConfig.model}`);
+							console.log(
+								`[ChatAPI] Using Ollama at ${modelConfig.baseUrl || "http://localhost:11434/v1"} with model ${modelConfig.model}`,
+							);
 							break;
-						case ModelProvider.LM_STUDIO:
+						}
+						case ModelProvider.LM_STUDIO: {
 							// LM Studio uses OpenAI-compatible API
 							const lmStudioProvider = createOpenAI({
 								apiKey: "lm-studio", // LM Studio doesn't require a real key
 								baseURL: modelConfig.baseUrl || "http://localhost:1234/v1",
 							});
 							model = lmStudioProvider(modelConfig.model);
-							console.log(`[ChatAPI] Using LM Studio at ${modelConfig.baseUrl || "http://localhost:1234/v1"}`);
+							console.log(
+								`[ChatAPI] Using LM Studio at ${modelConfig.baseUrl || "http://localhost:1234/v1"}`,
+							);
 							break;
-						case ModelProvider.DEEPSEEK:
+						}
+						case ModelProvider.DEEPSEEK: {
 							// DeepSeek API - OpenAI-compatible
 							const deepseekProvider = createOpenAICompatible({
 								name: "deepseek",
@@ -103,9 +135,12 @@ export const Route = createFileRoute("/api/chat")({
 								baseURL: modelConfig.baseUrl || "https://api.deepseek.com/v1",
 							});
 							model = deepseekProvider(modelConfig.model);
-							console.log(`[ChatAPI] Using DeepSeek API with model ${modelConfig.model}`);
+							console.log(
+								`[ChatAPI] Using DeepSeek API with model ${modelConfig.model}`,
+							);
 							break;
-						case ModelProvider.MOONSHOT:
+						}
+						case ModelProvider.MOONSHOT: {
 							// Moonshot AI - OpenAI-compatible
 							const moonshotProvider = createOpenAICompatible({
 								name: "moonshot",
@@ -113,9 +148,12 @@ export const Route = createFileRoute("/api/chat")({
 								baseURL: modelConfig.baseUrl || "https://api.moonshot.cn/v1",
 							});
 							model = moonshotProvider(modelConfig.model);
-							console.log(`[ChatAPI] Using Moonshot AI with model ${modelConfig.model}`);
+							console.log(
+								`[ChatAPI] Using Moonshot AI with model ${modelConfig.model}`,
+							);
 							break;
-						case ModelProvider.KIMI:
+						}
+						case ModelProvider.KIMI: {
 							// Kimi K2 - OpenAI-compatible (uses Moonshot infrastructure)
 							const kimiProvider = createOpenAICompatible({
 								name: "kimi",
@@ -123,9 +161,12 @@ export const Route = createFileRoute("/api/chat")({
 								baseURL: modelConfig.baseUrl || "https://api.moonshot.cn/v1",
 							});
 							model = kimiProvider(modelConfig.model);
-							console.log(`[ChatAPI] Using Kimi K2 with model ${modelConfig.model}`);
+							console.log(
+								`[ChatAPI] Using Kimi K2 with model ${modelConfig.model}`,
+							);
 							break;
-						case ModelProvider.VLLM:
+						}
+						case ModelProvider.VLLM: {
 							// vLLM - OpenAI-compatible local server
 							const vllmProvider = createOpenAICompatible({
 								name: "vllm",
@@ -133,9 +174,12 @@ export const Route = createFileRoute("/api/chat")({
 								baseURL: modelConfig.baseUrl || "http://localhost:8000/v1",
 							});
 							model = vllmProvider(modelConfig.model);
-							console.log(`[ChatAPI] Using vLLM at ${modelConfig.baseUrl || "http://localhost:8000/v1"}`);
+							console.log(
+								`[ChatAPI] Using vLLM at ${modelConfig.baseUrl || "http://localhost:8000/v1"}`,
+							);
 							break;
-						case ModelProvider.GGUF:
+						}
+						case ModelProvider.GGUF: {
 							// GGUF loader - OpenAI-compatible local server
 							const ggufProvider = createOpenAICompatible({
 								name: "gguf",
@@ -143,9 +187,12 @@ export const Route = createFileRoute("/api/chat")({
 								baseURL: modelConfig.baseUrl || "http://localhost:8080/v1",
 							});
 							model = ggufProvider(modelConfig.model);
-							console.log(`[ChatAPI] Using GGUF loader at ${modelConfig.baseUrl || "http://localhost:8080/v1"}`);
+							console.log(
+								`[ChatAPI] Using GGUF loader at ${modelConfig.baseUrl || "http://localhost:8080/v1"}`,
+							);
 							break;
-						case ModelProvider.ONNX:
+						}
+						case ModelProvider.ONNX: {
 							// ONNX runtime - OpenAI-compatible local server
 							const onnxProvider = createOpenAICompatible({
 								name: "onnx",
@@ -153,14 +200,18 @@ export const Route = createFileRoute("/api/chat")({
 								baseURL: modelConfig.baseUrl || "http://localhost:8081/v1",
 							});
 							model = onnxProvider(modelConfig.model);
-							console.log(`[ChatAPI] Using ONNX runtime at ${modelConfig.baseUrl || "http://localhost:8081/v1"}`);
+							console.log(
+								`[ChatAPI] Using ONNX runtime at ${modelConfig.baseUrl || "http://localhost:8081/v1"}`,
+							);
 							break;
+						}
 						default:
 							console.error(`Unsupported provider: ${modelConfig.provider}`);
 							return new Response(
 								JSON.stringify({
 									error: `Unsupported model provider: ${modelConfig.provider}`,
-									details: "Please configure a valid model provider (OpenAI, Anthropic, Google, DeepSeek, Moonshot, Kimi, Ollama, LM Studio, vLLM, GGUF, ONNX)"
+									details:
+										"Please configure a valid model provider (OpenAI, Anthropic, Google, DeepSeek, Moonshot, Kimi, Ollama, LM Studio, vLLM, GGUF, ONNX)",
 								}),
 								{
 									status: 400,
@@ -169,7 +220,9 @@ export const Route = createFileRoute("/api/chat")({
 							);
 					}
 
-					console.log(`[ChatAPI] Using model: ${modelConfig.provider}:${modelConfig.model}`);
+					console.log(
+						`[ChatAPI] Using model: ${modelConfig.provider}:${modelConfig.model}`,
+					);
 
 					const result = await streamText({
 						model,
@@ -180,7 +233,6 @@ export const Route = createFileRoute("/api/chat")({
 					});
 
 					return result.toUIMessageStreamResponse();
-
 				} catch (error) {
 					console.error("Chat API error:", error);
 					return new Response(

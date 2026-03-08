@@ -14,8 +14,8 @@ import type {
   SegmentSearchStrategy,
   SegmentComplexity,
   SegmentationConfig,
-  DEFAULT_SEGMENTATION_CONFIG,
 } from "./types";
+import { DEFAULT_SEGMENTATION_CONFIG } from "./types";
 
 export class QuerySegmenter {
   private config: SegmentationConfig;
@@ -261,15 +261,9 @@ export class QuerySegmenter {
    * Suggest a model based on complexity (USER CAN OVERRIDE)
    */
   private suggestModel(complexity: SegmentComplexity): string {
-    // These are SUGGESTIONS - user controls actual model selection
-    const suggestions: Record<SegmentComplexity, string> = {
-      'tiny': `${this.modelConfig.provider}:qwen3:1.7b`,
-      'small': `${this.modelConfig.provider}:qwen3:4b`,
-      'medium': `${this.modelConfig.provider}:llama3:8b`,
-      'large': `${this.modelConfig.provider}:${this.modelConfig.model}`,
-    };
-
-    return suggestions[complexity] || suggestions['small'];
+    // Always use the user's configured model - never hardcode model names
+    const activeModel = `${this.modelConfig.provider}:${this.modelConfig.model}`;
+    return activeModel;
   }
 
   /**

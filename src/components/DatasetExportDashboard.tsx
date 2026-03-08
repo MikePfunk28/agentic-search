@@ -1,21 +1,125 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 
 type ExportFormat = "openai_jsonl" | "anthropic_jsonl" | "generic_json";
+type UsageEventType =
+	| "search"
+	| "segment_execution"
+	| "model_call"
+	| "user_feedback";
+
+type FineTuneJobStatus =
+	| "validating_files"
+	| "queued"
+	| "running"
+	| "succeeded"
+	| "failed"
+	| "cancelled"
+	| string;
+
+const EVENT_TYPE_OPTIONS: UsageEventType[] = [
+	"search",
+	"user_feedback",
+	"segment_execution",
+	"model_call",
+];
+
+const OPENAI_TERMINAL_STATUSES = new Set<FineTuneJobStatus>([
+	"succeeded",
+	"failed",
+	"cancelled",
+]);
+
+const DEFAULT_OPENAI_BASE_MODEL = "gpt-4.1-mini-2025-04-14";
+
+interface OpenAIJobResponse {
+	job: {
+		id: string;
+		status: FineTuneJobStatus;
+		model: string;
+		training_file: string;
+		fine_tuned_model?: string | null;
+		error?: {
+			message?: string;
+		} | null;
+	};
+	trainingFile?: {
+		id: string;
+		filename: string;
+	};
+	error?: string;
+}
+
+async function fetchCsrfToken(): Promise<string> {
+	const response = await fetch("/api/csrf-token", {
+		credentials: "same-origin",
+	});
+	if (!response.ok) {
+		throw new Error("Failed to fetch CSRF token.");
+	}
+	const data = await response.json();
+	if (typeof data?.token !== "string") {
+		throw new Error("CSRF token response was invalid.");
+	}
+	return data.token;
+}
+
+function getStatusTone(status?: string): string {
+	switch (status) {
+		case "succeeded":
+			return "success";
+		case "failed":
+		case "cancelled":
+			return "danger";
+		case "running":
+			return "info";
+		default:
+			return "neutral";
+	}
+}
+
+function parseHyperparameterValue(
+	value: string,
+): number | "auto" | undefined {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return undefined;
+	}
+	if (trimmed === "auto") {
+		return "auto";
+	}
+	const numeric = Number(trimmed);
+	return Number.isFinite(numeric) ? numeric : undefined;
+}
 
 export default function DatasetExportDashboard() {
 	const [format, setFormat] = useState<ExportFormat>("openai_jsonl");
 	const [minQuality, setMinQuality] = useState<number>(0.7);
-	const [eventTypes, setEventTypes] = useState<string[]>(["user_feedback", "segment_execution"]);
+	const [eventTypes, setEventTypes] = useState<UsageEventType[]>([
+		"search",
+		"user_feedback",
+	]);
 	const [limit, setLimit] = useState<number>(1000);
-	const [datasetName, setDatasetName] = useState<string>("");
+	const [datasetName, setDatasetName] = useState<string>("reward-dataset-v1");
+	const [datasetDescription, setDatasetDescription] = useState<string>("");
 	const [isExporting, setIsExporting] = useState(false);
 
-	// Query usage statistics
-	const stats = useQuery(api.usageTracking.getUsageStats, {});
+	const [openAIBaseModel, setOpenAIBaseModel] = useState<string>(
+		DEFAULT_OPENAI_BASE_MODEL,
+	);
+	const [openAISuffix, setOpenAISuffix] = useState<string>("agentic-search");
+	const [openAINEpochs, setOpenAINEpochs] = useState<string>("auto");
+	const [openAIBatchSize, setOpenAIBatchSize] = useState<string>("auto");
+	const [openAILearningRateMultiplier, setOpenAILearningRateMultiplier] =
+		useState<string>("auto");
+	const [launchingFineTune, setLaunchingFineTune] = useState(false);
+	const [launchError, setLaunchError] = useState<string | null>(null);
+	const [fineTuneMessage, setFineTuneMessage] = useState<string | null>(null);
+	const [cancellingJobId, setCancellingJobId] = useState<string | null>(null);
 
-	// Query export data
+	const stats = useQuery(api.usageTracking.getUsageStats, {});
 	const exportData = useQuery(
 		api.usageTracking.exportForFineTuning,
 		isExporting
@@ -27,61 +131,262 @@ export default function DatasetExportDashboard() {
 			  }
 			: "skip",
 	);
-
-	// Query existing datasets
-	const datasets = useQuery(api.usageTracking.listDatasets, { limit: 10 });
-
-	// Create dataset mutation
+	const datasets = useQuery(api.usageTracking.listDatasets, {});
 	const createDataset = useMutation(api.usageTracking.createDatasetExport);
+	const linkFineTuningJob = useMutation(api.usageTracking.linkFineTuningJob);
+	const syncFineTuningJob = useMutation(api.usageTracking.syncFineTuningJob);
+
+	const toggleEventType = (type: UsageEventType) => {
+		setEventTypes((prev) =>
+			prev.includes(type) ? prev.filter((item) => item !== type) : [...prev, type],
+		);
+	};
+
+	const previewText = exportData
+		? format === "generic_json"
+			? JSON.stringify(exportData.data.slice(0, 3), null, 2)
+			: exportData.data
+					.slice(0, 3)
+					.map((row) => JSON.stringify(row))
+					.join("\n")
+		: "";
+
+	const openAIJobs =
+		datasets?.filter((dataset) => dataset.provider === "openai" && dataset.jobId) ??
+		[];
+
+	useEffect(() => {
+		if (!openAIJobs.length) {
+			return;
+		}
+
+		const activeJobs = openAIJobs.filter(
+			(dataset) =>
+				dataset.jobId &&
+				!OPENAI_TERMINAL_STATUSES.has(dataset.status || "queued"),
+		);
+
+		if (!activeJobs.length) {
+			return;
+		}
+
+		let cancelled = false;
+
+		const poll = async () => {
+			for (const dataset of activeJobs) {
+				if (cancelled || !dataset.jobId) {
+					return;
+				}
+
+				try {
+					const response = await fetch(
+						`/api/fine-tune/openai?jobId=${encodeURIComponent(dataset.jobId)}`,
+						{
+							credentials: "same-origin",
+						},
+					);
+					const payload = (await response.json()) as OpenAIJobResponse;
+					if (!response.ok || !payload.job) {
+						throw new Error(payload.error || "Failed to fetch OpenAI job status.");
+					}
+
+					await syncFineTuningJob({
+						datasetId: dataset._id,
+						status: payload.job.status,
+						fineTunedModel: payload.job.fine_tuned_model || undefined,
+						errorMessage: payload.job.error?.message,
+						lastCheckedAt: Date.now(),
+					});
+				} catch (error) {
+					console.error("Failed to synchronize OpenAI fine-tune status:", error);
+				}
+			}
+		};
+
+		void poll();
+		const interval = setInterval(() => {
+			void poll();
+		}, 15000);
+
+		return () => {
+			cancelled = true;
+			clearInterval(interval);
+		};
+	}, [openAIJobs, syncFineTuningJob]);
 
 	const handleExport = () => {
 		setIsExporting(true);
+		setFineTuneMessage(null);
 	};
 
 	const handleDownload = () => {
 		if (!exportData) return;
 
-		const filename = `training-data-${format}-${Date.now()}.${format.includes("jsonl") ? "jsonl" : "json"}`;
-		const blob = new Blob([JSON.stringify(exportData.data, null, format.includes("jsonl") ? 0 : 2)], {
-			type: "application/json",
+		const isJsonl = format !== "generic_json";
+		const serialized = isJsonl
+			? exportData.data.map((row) => JSON.stringify(row)).join("\n")
+			: JSON.stringify(exportData.data, null, 2);
+		const filename = `training-data-${format}-${Date.now()}.${isJsonl ? "jsonl" : "json"}`;
+		const blob = new Blob([serialized], {
+			type: isJsonl ? "application/x-ndjson" : "application/json",
 		});
 		const url = URL.createObjectURL(blob);
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = filename;
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
+		const anchor = document.createElement("a");
+		anchor.href = url;
+		anchor.download = filename;
+		document.body.appendChild(anchor);
+		anchor.click();
+		document.body.removeChild(anchor);
 		URL.revokeObjectURL(url);
 	};
 
 	const handleSaveDataset = async () => {
-		if (!datasetName || !exportData) {
-			alert("Please provide a dataset name");
+		if (!datasetName.trim()) {
+			alert("Please provide a dataset name.");
 			return;
 		}
 
 		try {
 			await createDataset({
-				name: datasetName,
+				name: datasetName.trim(),
+				description: datasetDescription.trim() || undefined,
 				format,
 				minQuality,
 				eventTypes,
-				totalExamples: exportData.metadata.total_examples,
+				limit,
 			});
-			alert("Dataset saved successfully!");
-			setDatasetName("");
-			setIsExporting(false);
+			alert("Dataset metadata saved.");
 		} catch (error) {
 			console.error("Failed to save dataset:", error);
-			alert("Failed to save dataset");
+			alert("Failed to save dataset metadata.");
 		}
 	};
 
-	const toggleEventType = (type: string) => {
-		setEventTypes((prev) =>
-			prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
-		);
+	const handleLaunchOpenAIFineTune = async () => {
+		if (!exportData) {
+			setLaunchError("Generate an export first.");
+			return;
+		}
+		if (!datasetName.trim()) {
+			setLaunchError("A dataset name is required before launching.");
+			return;
+		}
+		if (exportData.count < 10) {
+			setLaunchError("OpenAI fine-tuning is not useful with fewer than 10 examples.");
+			return;
+		}
+
+		setLaunchingFineTune(true);
+		setLaunchError(null);
+		setFineTuneMessage(null);
+
+		try {
+			const datasetId = await createDataset({
+				name: datasetName.trim(),
+				description: datasetDescription.trim() || undefined,
+				format,
+				minQuality,
+				eventTypes,
+				limit,
+			});
+
+			const csrfToken = await fetchCsrfToken();
+			const response = await fetch("/api/fine-tune/openai", {
+				method: "POST",
+				credentials: "same-origin",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
+				body: JSON.stringify({
+					action: "launch",
+					datasetName: datasetName.trim(),
+					records: exportData.data,
+					format: exportData.format,
+					baseModel: openAIBaseModel.trim(),
+					suffix: openAISuffix.trim() || undefined,
+					hyperparameters: {
+						nEpochs: parseHyperparameterValue(openAINEpochs),
+						batchSize: parseHyperparameterValue(openAIBatchSize),
+						learningRateMultiplier: parseHyperparameterValue(
+							openAILearningRateMultiplier,
+						),
+					},
+				}),
+			});
+
+			const payload = (await response.json()) as OpenAIJobResponse;
+			if (!response.ok || !payload.job) {
+				throw new Error(payload.error || "Failed to launch OpenAI fine-tuning.");
+			}
+
+			await linkFineTuningJob({
+				datasetId: datasetId as Id<"finetuningDatasets">,
+				provider: "openai",
+				jobId: payload.job.id,
+				baseModel: openAIBaseModel.trim(),
+				suffix: openAISuffix.trim() || undefined,
+				trainingFileId: payload.trainingFile?.id,
+				status: payload.job.status,
+				launchedAt: Date.now(),
+			});
+
+			setFineTuneMessage(
+				`OpenAI fine-tune job ${payload.job.id} launched successfully.`,
+			);
+		} catch (error) {
+			console.error("Failed to launch OpenAI fine-tune:", error);
+			setLaunchError(
+				error instanceof Error ? error.message : "Failed to launch OpenAI fine-tuning.",
+			);
+		} finally {
+			setLaunchingFineTune(false);
+		}
+	};
+
+	const handleCancelJob = async (
+		datasetId: Id<"finetuningDatasets">,
+		jobId: string,
+	) => {
+		setCancellingJobId(jobId);
+		setLaunchError(null);
+		setFineTuneMessage(null);
+
+		try {
+			const csrfToken = await fetchCsrfToken();
+			const response = await fetch("/api/fine-tune/openai", {
+				method: "POST",
+				credentials: "same-origin",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
+				body: JSON.stringify({
+					action: "cancel",
+					jobId,
+				}),
+			});
+			const payload = (await response.json()) as OpenAIJobResponse;
+			if (!response.ok || !payload.job) {
+				throw new Error(payload.error || "Failed to cancel OpenAI fine-tune.");
+			}
+
+			await syncFineTuningJob({
+				datasetId,
+				status: payload.job.status,
+				fineTunedModel: payload.job.fine_tuned_model || undefined,
+				errorMessage: payload.job.error?.message,
+				lastCheckedAt: Date.now(),
+			});
+			setFineTuneMessage(`Job ${jobId} was cancelled.`);
+		} catch (error) {
+			console.error("Failed to cancel OpenAI fine-tune:", error);
+			setLaunchError(
+				error instanceof Error ? error.message : "Failed to cancel OpenAI fine-tune.",
+			);
+		} finally {
+			setCancellingJobId(null);
+		}
 	};
 
 	return (
@@ -89,110 +394,83 @@ export default function DatasetExportDashboard() {
 			<div className="dashboard-header">
 				<h2>Training Data Export</h2>
 				<p className="dashboard-subtitle">
-					Export your interactions as fine-tuning datasets for OpenAI, Anthropic, or custom models.
+					Export reward signals, then launch an OpenAI supervised fine-tune directly from this TanStack Start app.
 				</p>
 			</div>
 
-			{/* Statistics Overview */}
 			{stats && (
 				<div className="stats-overview">
-					<h3>Available Training Data</h3>
+					<h3>Available Reinforcement Data</h3>
 					<div className="stats-grid">
 						<div className="stat-card">
-							<div className="stat-icon">📊</div>
+							<div className="stat-icon">📦</div>
 							<div className="stat-content">
-								<span className="stat-label">Total Events</span>
-								<span className="stat-value">{stats.totalEvents}</span>
+								<span className="stat-label">Tracked Events</span>
+								<span className="stat-value">{stats.eventsCount}</span>
 							</div>
 						</div>
 						<div className="stat-card">
-							<div className="stat-icon">✅</div>
+							<div className="stat-icon">🔎</div>
 							<div className="stat-content">
-								<span className="stat-label">Successful</span>
-								<span className="stat-value">{stats.successfulEvents}</span>
+								<span className="stat-label">Searches</span>
+								<span className="stat-value">{stats.totalSearches}</span>
+							</div>
+						</div>
+						<div className="stat-card">
+							<div className="stat-icon">🧠</div>
+							<div className="stat-content">
+								<span className="stat-label">Segments</span>
+								<span className="stat-value">{stats.totalSegments}</span>
+							</div>
+						</div>
+						<div className="stat-card">
+							<div className="stat-icon">👍</div>
+							<div className="stat-content">
+								<span className="stat-label">Feedback Events</span>
+								<span className="stat-value">{stats.totalFeedback}</span>
 							</div>
 						</div>
 						<div className="stat-card">
 							<div className="stat-icon">⭐</div>
 							<div className="stat-content">
 								<span className="stat-label">Avg Quality</span>
-								<span className="stat-value">{stats.averageQuality.toFixed(2)}</span>
+								<span className="stat-value">{stats.avgQuality.toFixed(2)}</span>
 							</div>
 						</div>
 						<div className="stat-card">
-							<div className="stat-icon">🎯</div>
+							<div className="stat-icon">⏱️</div>
 							<div className="stat-content">
-								<span className="stat-label">High Quality</span>
+								<span className="stat-label">Avg Runtime</span>
 								<span className="stat-value">
-									{stats.qualityDistribution?.high || 0}
+									{(stats.avgExecutionTime / 1000).toFixed(1)}s
 								</span>
 							</div>
 						</div>
 					</div>
 
-					{/* Quality Distribution Chart */}
-					<div className="quality-distribution">
-						<h4>Quality Distribution</h4>
-						<div className="distribution-bar">
-							<div
-								className="quality-segment gold"
-								style={{
-									width: `${((stats.qualityDistribution?.gold || 0) / stats.totalEvents) * 100}%`,
-								}}
-								title={`Gold (1.0): ${stats.qualityDistribution?.gold || 0}`}
-							/>
-							<div
-								className="quality-segment high"
-								style={{
-									width: `${((stats.qualityDistribution?.high || 0) / stats.totalEvents) * 100}%`,
-								}}
-								title={`High (0.7-0.9): ${stats.qualityDistribution?.high || 0}`}
-							/>
-							<div
-								className="quality-segment medium"
-								style={{
-									width: `${((stats.qualityDistribution?.medium || 0) / stats.totalEvents) * 100}%`,
-								}}
-								title={`Medium (0.4-0.6): ${stats.qualityDistribution?.medium || 0}`}
-							/>
-							<div
-								className="quality-segment low"
-								style={{
-									width: `${((stats.qualityDistribution?.low || 0) / stats.totalEvents) * 100}%`,
-								}}
-								title={`Low (0-0.3): ${stats.qualityDistribution?.low || 0}`}
-							/>
+					<div className="distribution-legend">
+						<div className="legend-item">
+							<span className="legend-color gold"></span>
+							<span>Total tokens: {stats.totalTokens.toLocaleString()}</span>
 						</div>
-						<div className="distribution-legend">
-							<div className="legend-item">
-								<span className="legend-color gold"></span>
-								<span>Gold (1.0)</span>
-							</div>
-							<div className="legend-item">
+						{Object.entries(stats.modelDistribution).map(([model, count]) => (
+							<div key={model} className="legend-item">
 								<span className="legend-color high"></span>
-								<span>High (0.7-0.9)</span>
+								<span>
+									{model}: {count}
+								</span>
 							</div>
-							<div className="legend-item">
-								<span className="legend-color medium"></span>
-								<span>Medium (0.4-0.6)</span>
-							</div>
-							<div className="legend-item">
-								<span className="legend-color low"></span>
-								<span>Low (0-0.3)</span>
-							</div>
-						</div>
+						))}
 					</div>
 				</div>
 			)}
 
-			{/* Export Configuration */}
 			<div className="export-configuration">
-				<h3>Export Configuration</h3>
+				<h3>Dataset Configuration</h3>
 
 				<div className="config-form">
-					{/* Format Selection */}
 					<div className="form-group">
-						<label>Export Format:</label>
+						<label>Export Format</label>
 						<div className="format-options">
 							<button
 								onClick={() => setFormat("openai_jsonl")}
@@ -200,7 +478,7 @@ export default function DatasetExportDashboard() {
 							>
 								<div className="format-icon">🤖</div>
 								<div className="format-name">OpenAI JSONL</div>
-								<div className="format-desc">For GPT fine-tuning</div>
+								<div className="format-desc">Best choice for automated launch</div>
 							</button>
 							<button
 								onClick={() => setFormat("anthropic_jsonl")}
@@ -208,7 +486,7 @@ export default function DatasetExportDashboard() {
 							>
 								<div className="format-icon">🧠</div>
 								<div className="format-name">Anthropic JSONL</div>
-								<div className="format-desc">For Claude fine-tuning</div>
+								<div className="format-desc">Prompt/completion export</div>
 							</button>
 							<button
 								onClick={() => setFormat("generic_json")}
@@ -216,12 +494,11 @@ export default function DatasetExportDashboard() {
 							>
 								<div className="format-icon">📋</div>
 								<div className="format-name">Generic JSON</div>
-								<div className="format-desc">For any model</div>
+								<div className="format-desc">Full metadata for offline analysis</div>
 							</button>
 						</div>
 					</div>
 
-					{/* Quality Threshold */}
 					<div className="form-group">
 						<label>Minimum Quality: {(minQuality * 100).toFixed(0)}%</label>
 						<input
@@ -241,95 +518,101 @@ export default function DatasetExportDashboard() {
 							<span>100%</span>
 						</div>
 						<div className="quality-hint">
-							💡 Higher threshold = Better quality but fewer examples
+							Higher thresholds bias the dataset toward better reward signals and fewer noisy traces.
 						</div>
 					</div>
 
-					{/* Event Types */}
 					<div className="form-group">
-						<label>Event Types:</label>
+						<label>Event Types</label>
 						<div className="event-types">
-							{["user_feedback", "segment_execution", "search_query", "reasoning_step"].map(
-								(type) => (
-									<label key={type} className="checkbox-label">
-										<input
-											type="checkbox"
-											checked={eventTypes.includes(type)}
-											onChange={() => toggleEventType(type)}
-											className="event-checkbox"
-										/>
-										<span>{type.replace(/_/g, " ")}</span>
-									</label>
-								),
-							)}
+							{EVENT_TYPE_OPTIONS.map((type) => (
+								<label key={type} className="checkbox-label">
+									<input
+										type="checkbox"
+										checked={eventTypes.includes(type)}
+										onChange={() => toggleEventType(type)}
+										className="event-checkbox"
+									/>
+									<span>{type.replace(/_/g, " ")}</span>
+								</label>
+							))}
 						</div>
 					</div>
 
-					{/* Limit */}
+					<div className="two-col">
+						<div className="form-group">
+							<label>Maximum Examples</label>
+							<input
+								type="number"
+								value={limit}
+								onChange={(e) => setLimit(Number(e.target.value))}
+								min="10"
+								max="10000"
+								step="10"
+								className="limit-input"
+							/>
+						</div>
+
+						<div className="form-group">
+							<label>Dataset Name</label>
+							<input
+								type="text"
+								value={datasetName}
+								onChange={(e) => setDatasetName(e.target.value)}
+								className="dataset-name-input"
+							/>
+						</div>
+					</div>
+
 					<div className="form-group">
-						<label>Maximum Examples:</label>
+						<label>Description</label>
 						<input
-							type="number"
-							value={limit}
-							onChange={(e) => setLimit(Number(e.target.value))}
-							min="100"
-							max="10000"
-							step="100"
-							className="limit-input"
+							type="text"
+							value={datasetDescription}
+							onChange={(e) => setDatasetDescription(e.target.value)}
+							placeholder="Optional note about this export batch"
+							className="dataset-name-input"
 						/>
 					</div>
 
-					{/* Export Actions */}
 					<div className="export-actions">
-						<button onClick={handleExport} className="btn btn-export" disabled={isExporting}>
-							{isExporting ? "⏳ Exporting..." : "📊 Generate Export"}
+						<button onClick={handleExport} className="btn btn-export">
+							📊 Generate Export
+						</button>
+						<button onClick={handleSaveDataset} className="btn btn-save">
+							💾 Save Dataset Metadata
 						</button>
 					</div>
 				</div>
 			</div>
 
-			{/* Export Preview */}
 			{exportData && (
 				<div className="export-preview">
 					<h3>Export Preview</h3>
 
 					<div className="preview-metadata">
 						<div className="metadata-item">
-							<strong>Total Examples:</strong> {exportData.metadata.total_examples}
+							<strong>Total Examples:</strong> {exportData.count}
 						</div>
 						<div className="metadata-item">
-							<strong>Format:</strong> {exportData.metadata.format}
+							<strong>Format:</strong> {exportData.format}
 						</div>
 						<div className="metadata-item">
-							<strong>Min Quality:</strong> {(exportData.metadata.min_quality * 100).toFixed(0)}%
+							<strong>Min Quality:</strong> {(minQuality * 100).toFixed(0)}%
 						</div>
 						<div className="metadata-item">
-							<strong>Generated:</strong> {new Date(exportData.metadata.generated_at).toLocaleString()}
+							<strong>Included Signals:</strong> {eventTypes.join(", ")}
 						</div>
 					</div>
 
-					{/* Sample Preview */}
 					<div className="sample-preview">
-						<h4>Sample Data (first 3 examples):</h4>
+						<h4>Sample Data (first 3 records)</h4>
 						<pre className="sample-code">
-							{JSON.stringify(exportData.data.slice(0, 3), null, 2)}
+							{previewText || "No records matched the current filters."}
 						</pre>
 					</div>
 
-					{/* Save & Download Actions */}
 					<div className="preview-actions">
-						<div className="save-form">
-							<input
-								type="text"
-								value={datasetName}
-								onChange={(e) => setDatasetName(e.target.value)}
-								placeholder="Dataset name (e.g., 'v1-high-quality')"
-								className="dataset-name-input"
-							/>
-							<button onClick={handleSaveDataset} className="btn btn-save">
-								💾 Save Dataset
-							</button>
-						</div>
 						<button onClick={handleDownload} className="btn btn-download">
 							⬇️ Download File
 						</button>
@@ -337,22 +620,169 @@ export default function DatasetExportDashboard() {
 				</div>
 			)}
 
-			{/* Saved Datasets */}
+			<div className="export-preview">
+				<h3>OpenAI Automated Fine-Tuning</h3>
+				<p className="dashboard-subtitle">
+					This uploads the current export to OpenAI as a `fine-tune` file and creates a supervised fine-tuning job. The TanStack Start server must have `OPENAI_API_KEY` configured.
+				</p>
+
+				<div className="config-form">
+					<div className="two-col">
+						<div className="form-group">
+							<label>Base Model</label>
+							<input
+								type="text"
+								value={openAIBaseModel}
+								onChange={(e) => setOpenAIBaseModel(e.target.value)}
+								className="dataset-name-input"
+							/>
+						</div>
+						<div className="form-group">
+							<label>Suffix</label>
+							<input
+								type="text"
+								value={openAISuffix}
+								onChange={(e) => setOpenAISuffix(e.target.value)}
+								className="dataset-name-input"
+							/>
+						</div>
+					</div>
+
+					<div className="three-col">
+						<div className="form-group">
+							<label>`n_epochs`</label>
+							<input
+								type="text"
+								value={openAINEpochs}
+								onChange={(e) => setOpenAINEpochs(e.target.value)}
+								placeholder="auto"
+								className="dataset-name-input"
+							/>
+						</div>
+						<div className="form-group">
+							<label>`batch_size`</label>
+							<input
+								type="text"
+								value={openAIBatchSize}
+								onChange={(e) => setOpenAIBatchSize(e.target.value)}
+								placeholder="auto"
+								className="dataset-name-input"
+							/>
+						</div>
+						<div className="form-group">
+							<label>`learning_rate_multiplier`</label>
+							<input
+								type="text"
+								value={openAILearningRateMultiplier}
+								onChange={(e) =>
+									setOpenAILearningRateMultiplier(e.target.value)
+								}
+								placeholder="auto"
+								className="dataset-name-input"
+							/>
+						</div>
+					</div>
+
+					{launchError ? <p className="message error">{launchError}</p> : null}
+					{fineTuneMessage ? (
+						<p className="message success">{fineTuneMessage}</p>
+					) : null}
+
+					<div className="export-actions">
+						<button
+							onClick={handleLaunchOpenAIFineTune}
+							className="btn btn-export"
+							disabled={launchingFineTune || !exportData}
+						>
+							{launchingFineTune ? "Launching..." : "🚀 Launch OpenAI Fine-Tune"}
+						</button>
+					</div>
+				</div>
+			</div>
+
 			{datasets && datasets.length > 0 && (
 				<div className="saved-datasets">
-					<h3>Saved Datasets</h3>
+					<h3>Saved Dataset Exports</h3>
 					<div className="datasets-list">
 						{datasets.map((dataset) => (
 							<div key={dataset._id} className="dataset-card">
 								<div className="dataset-header">
 									<h4>{dataset.name}</h4>
-									<span className="dataset-format">{dataset.format}</span>
+									<div className="job-header-right">
+										<span className="dataset-format">{dataset.format}</span>
+										{dataset.status ? (
+											<span className={`status-pill ${getStatusTone(dataset.status)}`}>
+												{dataset.status}
+											</span>
+										) : null}
+									</div>
 								</div>
+
 								<div className="dataset-details">
-									<span>📊 {dataset.totalExamples} examples</span>
-									<span>⭐ Min quality: {(dataset.minQuality * 100).toFixed(0)}%</span>
-									<span>📅 {new Date(dataset.exportedAt).toLocaleDateString()}</span>
+									<span>📊 {dataset.eventCount} examples</span>
+									<span>
+										⭐ Avg quality: {(dataset.metadata?.avgQuality ?? 0).toFixed(2)}
+									</span>
+									{dataset.metadata?.approvedSearchCount ? (
+										<span>
+											✅ {dataset.metadata.approvedSearchCount} approved searches
+										</span>
+									) : null}
+									{dataset.metadata?.usageEventCount ? (
+										<span>
+											🧪 {dataset.metadata.usageEventCount} event fallbacks
+										</span>
+									) : null}
+									<span>
+										📅 {new Date(dataset.exportedAt).toLocaleDateString()}
+									</span>
 								</div>
+
+								{dataset.description ? (
+									<p className="dashboard-subtitle">{dataset.description}</p>
+								) : null}
+
+								{dataset.jobId ? (
+									<div className="job-details">
+										<div className="metadata-item">
+											<strong>Provider:</strong> {dataset.provider}
+										</div>
+										<div className="metadata-item">
+											<strong>Job ID:</strong> {dataset.jobId}
+										</div>
+										<div className="metadata-item">
+											<strong>Base Model:</strong> {dataset.baseModel}
+										</div>
+										{dataset.fineTunedModel ? (
+											<div className="metadata-item">
+												<strong>Fine-Tuned Model:</strong>{" "}
+												{dataset.fineTunedModel}
+											</div>
+										) : null}
+										{dataset.errorMessage ? (
+											<div className="metadata-item error-text">
+												<strong>Error:</strong> {dataset.errorMessage}
+											</div>
+										) : null}
+										{dataset.jobId &&
+										dataset.status &&
+										!OPENAI_TERMINAL_STATUSES.has(dataset.status) ? (
+											<div className="preview-actions">
+												<button
+													onClick={() =>
+														handleCancelJob(dataset._id, dataset.jobId!)
+													}
+													className="btn btn-cancel"
+													disabled={cancellingJobId === dataset.jobId}
+												>
+													{cancellingJobId === dataset.jobId
+														? "Cancelling..."
+														: "Cancel Job"}
+												</button>
+											</div>
+										) : null}
+									</div>
+								) : null}
 							</div>
 						))}
 					</div>
@@ -381,7 +811,10 @@ export default function DatasetExportDashboard() {
 					color: #718096;
 				}
 
-				.stats-overview {
+				.stats-overview,
+				.export-configuration,
+				.export-preview,
+				.saved-datasets {
 					background: white;
 					border-radius: 12px;
 					padding: 2rem;
@@ -389,7 +822,10 @@ export default function DatasetExportDashboard() {
 					box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 				}
 
-				.stats-overview h3 {
+				.stats-overview h3,
+				.export-configuration h3,
+				.export-preview h3,
+				.saved-datasets h3 {
 					font-size: 1.5rem;
 					font-weight: 600;
 					color: #2d3748;
@@ -398,9 +834,9 @@ export default function DatasetExportDashboard() {
 
 				.stats-grid {
 					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+					grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 					gap: 1rem;
-					margin-bottom: 2rem;
+					margin-bottom: 1.5rem;
 				}
 
 				.stat-card {
@@ -430,86 +866,15 @@ export default function DatasetExportDashboard() {
 				}
 
 				.stat-value {
-					font-size: 1.75rem;
+					font-size: 1.5rem;
 					font-weight: 700;
 					color: white;
-				}
-
-				.quality-distribution {
-					margin-top: 2rem;
-				}
-
-				.quality-distribution h4 {
-					font-size: 1.125rem;
-					font-weight: 600;
-					color: #2d3748;
-					margin-bottom: 1rem;
-				}
-
-				.distribution-bar {
-					display: flex;
-					width: 100%;
-					height: 3rem;
-					border-radius: 8px;
-					overflow: hidden;
-					margin-bottom: 1rem;
-				}
-
-				.quality-segment {
-					height: 100%;
-					transition: all 0.3s;
-					cursor: help;
-				}
-
-				.quality-segment.gold { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); }
-				.quality-segment.high { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
-				.quality-segment.medium { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
-				.quality-segment.low { background: linear-gradient(135deg, #fc8181 0%, #f56565 100%); }
-
-				.distribution-legend {
-					display: flex;
-					gap: 1.5rem;
-					flex-wrap: wrap;
-				}
-
-				.legend-item {
-					display: flex;
-					align-items: center;
-					gap: 0.5rem;
-					font-size: 0.875rem;
-					color: #4a5568;
-				}
-
-				.legend-color {
-					width: 1rem;
-					height: 1rem;
-					border-radius: 3px;
-				}
-
-				.legend-color.gold { background: #ffd700; }
-				.legend-color.high { background: #48bb78; }
-				.legend-color.medium { background: #ed8936; }
-				.legend-color.low { background: #fc8181; }
-
-				.export-configuration {
-					background: white;
-					border-radius: 12px;
-					padding: 2rem;
-					margin-bottom: 2rem;
-					box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-				}
-
-				.export-configuration h3 {
-					font-size: 1.5rem;
-					font-weight: 600;
-					color: #2d3748;
-					margin-bottom: 1.5rem;
 				}
 
 				.config-form {
 					display: flex;
 					flex-direction: column;
-					gap: 2rem;
+					gap: 1.5rem;
 				}
 
 				.form-group label {
@@ -561,6 +926,20 @@ export default function DatasetExportDashboard() {
 				.format-desc {
 					font-size: 0.75rem;
 					opacity: 0.8;
+				}
+
+				.two-col,
+				.three-col {
+					display: grid;
+					gap: 1rem;
+				}
+
+				.two-col {
+					grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				}
+
+				.three-col {
+					grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 				}
 
 				.quality-slider {
@@ -629,7 +1008,8 @@ export default function DatasetExportDashboard() {
 					cursor: pointer;
 				}
 
-				.limit-input {
+				.limit-input,
+				.dataset-name-input {
 					width: 100%;
 					padding: 0.75rem;
 					border: 2px solid #e2e8f0;
@@ -637,14 +1017,15 @@ export default function DatasetExportDashboard() {
 					font-size: 1rem;
 				}
 
-				.export-actions {
+				.export-actions,
+				.preview-actions {
 					display: flex;
 					gap: 1rem;
-					padding-top: 1rem;
+					flex-wrap: wrap;
 				}
 
 				.btn {
-					padding: 1rem 2rem;
+					padding: 1rem 1.5rem;
 					border: none;
 					border-radius: 8px;
 					font-weight: 600;
@@ -656,35 +1037,29 @@ export default function DatasetExportDashboard() {
 					gap: 0.5rem;
 				}
 
-				.btn-export {
-					background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-					color: white;
-					box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
-				}
-
-				.btn-export:hover:not(:disabled) {
-					transform: translateY(-2px);
-					box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
-				}
-
-				.btn-export:disabled {
+				.btn:disabled {
 					opacity: 0.6;
 					cursor: not-allowed;
 				}
 
-				.export-preview {
-					background: white;
-					border-radius: 12px;
-					padding: 2rem;
-					margin-bottom: 2rem;
-					box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+				.btn-export {
+					background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+					color: white;
 				}
 
-				.export-preview h3 {
-					font-size: 1.5rem;
-					font-weight: 600;
-					color: #2d3748;
-					margin-bottom: 1.5rem;
+				.btn-save {
+					background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+					color: white;
+				}
+
+				.btn-download {
+					background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+					color: white;
+				}
+
+				.btn-cancel {
+					background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+					color: white;
 				}
 
 				.preview-metadata {
@@ -702,15 +1077,6 @@ export default function DatasetExportDashboard() {
 					color: #4a5568;
 				}
 
-				.metadata-item strong {
-					color: #2d3748;
-					margin-right: 0.5rem;
-				}
-
-				.sample-preview {
-					margin-bottom: 2rem;
-				}
-
 				.sample-preview h4 {
 					font-size: 1rem;
 					font-weight: 600;
@@ -724,68 +1090,11 @@ export default function DatasetExportDashboard() {
 					padding: 1.5rem;
 					border-radius: 8px;
 					overflow-x: auto;
-					font-family: 'Courier New', monospace;
+					font-family: "Courier New", monospace;
 					font-size: 0.875rem;
 					line-height: 1.6;
 					max-height: 400px;
 					overflow-y: auto;
-				}
-
-				.preview-actions {
-					display: flex;
-					gap: 1rem;
-					flex-wrap: wrap;
-					align-items: center;
-				}
-
-				.save-form {
-					display: flex;
-					gap: 1rem;
-					flex: 1;
-				}
-
-				.dataset-name-input {
-					flex: 1;
-					padding: 0.75rem;
-					border: 2px solid #e2e8f0;
-					border-radius: 8px;
-					font-size: 1rem;
-				}
-
-				.btn-save {
-					background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-					color: white;
-					box-shadow: 0 2px 4px rgba(72, 187, 120, 0.3);
-				}
-
-				.btn-save:hover {
-					transform: translateY(-2px);
-					box-shadow: 0 4px 8px rgba(72, 187, 120, 0.4);
-				}
-
-				.btn-download {
-					background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-					color: white;
-					box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3);
-				}
-
-				.btn-download:hover {
-					transform: translateY(-2px);
-					box-shadow: 0 4px 8px rgba(66, 153, 225, 0.4);
-				}
-
-				.saved-datasets {
-					background: white;
-					border-radius: 12px;
-					padding: 2rem;
-					box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-				}
-
-				.saved-datasets h3 {
-					font-size: 1.5rem;
-					font-weight: 600;
-					color: #2d3748;
-					margin-bottom: 1.5rem;
 				}
 
 				.datasets-list {
@@ -800,11 +1109,13 @@ export default function DatasetExportDashboard() {
 					border-left: 4px solid #667eea;
 				}
 
-				.dataset-header {
+				.dataset-header,
+				.job-header-right {
 					display: flex;
-					justify-content: space-between;
 					align-items: center;
-					margin-bottom: 0.75rem;
+					gap: 0.75rem;
+					justify-content: space-between;
+					flex-wrap: wrap;
 				}
 
 				.dataset-header h4 {
@@ -813,20 +1124,86 @@ export default function DatasetExportDashboard() {
 					color: #2d3748;
 				}
 
-				.dataset-format {
+				.dataset-format,
+				.status-pill {
 					padding: 0.25rem 0.75rem;
-					background: #edf2f7;
-					border-radius: 6px;
+					border-radius: 9999px;
 					font-size: 0.75rem;
 					font-weight: 600;
+				}
+
+				.dataset-format {
+					background: #edf2f7;
 					color: #4a5568;
 				}
 
-				.dataset-details {
+				.status-pill.neutral {
+					background: #e2e8f0;
+					color: #2d3748;
+				}
+
+				.status-pill.info {
+					background: #bee3f8;
+					color: #2b6cb0;
+				}
+
+				.status-pill.success {
+					background: #c6f6d5;
+					color: #276749;
+				}
+
+				.status-pill.danger {
+					background: #fed7d7;
+					color: #c53030;
+				}
+
+				.dataset-details,
+				.distribution-legend,
+				.job-details {
 					display: flex;
-					gap: 1.5rem;
+					gap: 1rem;
+					flex-wrap: wrap;
 					font-size: 0.875rem;
 					color: #718096;
+					margin-top: 0.75rem;
+				}
+
+				.legend-item {
+					display: flex;
+					align-items: center;
+					gap: 0.5rem;
+				}
+
+				.legend-color {
+					width: 0.9rem;
+					height: 0.9rem;
+					border-radius: 9999px;
+				}
+
+				.legend-color.gold {
+					background: #ecc94b;
+				}
+
+				.legend-color.high {
+					background: #48bb78;
+				}
+
+				.message {
+					padding: 0.75rem 1rem;
+					border-radius: 8px;
+					font-size: 0.95rem;
+					font-weight: 500;
+				}
+
+				.message.error,
+				.error-text {
+					color: #c53030;
+					background: #fff5f5;
+				}
+
+				.message.success {
+					color: #276749;
+					background: #f0fff4;
 				}
 			`}</style>
 		</div>

@@ -75,7 +75,7 @@ export function validateAPIKey(provider: string, key: string): APIKeyStatus {
 		anthropic: /^sk-ant-/,
 		openai: /^sk-/,
 		deepseek: /^sk-/,
-		autumn: /.+/,
+		brave: /.+/,
 		firecrawl: /.+/,
 	};
 

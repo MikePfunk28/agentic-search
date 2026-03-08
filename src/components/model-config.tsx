@@ -75,7 +75,7 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 
     try {
       // For local providers, test by listing models
-      if (selectedProvider === 'ollama' || selectedProvider === 'lmstudio') {
+      if (selectedProvider === 'ollama' || selectedProvider === 'lm_studio') {
         const url = baseURL || (selectedProvider === 'ollama' ? 'http://localhost:11434' : 'http://localhost:1234');
         const endpoint = selectedProvider === 'ollama' ? '/api/tags' : '/v1/models';
 
@@ -244,7 +244,7 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
           onChange={(e) => setBaseURL(e.target.value)}
           placeholder={
             selectedProvider === 'ollama' ? 'http://localhost:11434' :
-            selectedProvider === 'lmstudio' ? 'http://localhost:1234' :
+            selectedProvider === 'lm_studio' ? 'http://localhost:1234' :
             selectedProvider === 'vllm' ? 'http://localhost:8000' :
             selectedProvider === 'gguf' ? 'http://localhost:8080' :
             selectedProvider === 'onnx' ? 'http://localhost:8081' :
