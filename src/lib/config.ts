@@ -77,6 +77,7 @@ export function validateAPIKey(provider: string, key: string): APIKeyStatus {
 		deepseek: /^sk-/,
 		brave: /.+/,
 		firecrawl: /.+/,
+		autumn: /.+/,
 	};
 
 	const regex = validations[provider];

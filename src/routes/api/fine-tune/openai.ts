@@ -102,7 +102,14 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 						jsonl,
 					);
 					const job = await createFineTuneJob(
-						launchRequest,
+						{
+							datasetName: launchRequest.datasetName,
+							records: launchRequest.records,
+							format: launchRequest.format!,
+							baseModel: launchRequest.baseModel,
+							suffix: launchRequest.suffix,
+							hyperparameters: launchRequest.hyperparameters,
+						},
 						trainingFile.id,
 					);
 

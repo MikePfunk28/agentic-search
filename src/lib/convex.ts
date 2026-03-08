@@ -16,7 +16,7 @@ try {
 if (!VITE_CONVEX_URL) {
 	VITE_CONVEX_URL =
 		(typeof process !== "undefined" ? process.env?.VITE_CONVEX_URL : undefined) ||
-		"https://astute-quail-141.convex.cloud";
+		"";
 }
 
 export const convexClient = new ConvexReactClient(VITE_CONVEX_URL);

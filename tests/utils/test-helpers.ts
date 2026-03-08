@@ -32,7 +32,7 @@ export function setupTestEnvironment(overrides: Record<string, string> = {}) {
 }
 
 // Mock fetch wrapper for API calls
-export function mockFetch(responses: Map<string, any>) {
+export function mockFetch(responses: Map<string | RegExp, any>) {
   return vi.fn((url: string, options?: RequestInit) => {
     const matchedResponse = Array.from(responses.entries()).find(([pattern]) => {
       if (pattern instanceof RegExp) {
