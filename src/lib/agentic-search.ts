@@ -1040,6 +1040,8 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 		try {
 			// Strip /v1 suffix if present - Ollama uses /api/generate not /v1/...
 			const baseUrl = (model.baseUrl || "http://localhost:11434").replace(/\/v1\/?$/, "");
+			// Re-validate constructed URL to ensure SSRF protection at point-of-use
+			this.validateBaseUrl(baseUrl, model.provider);
 			const response = await fetch(`${baseUrl}/api/generate`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -1073,6 +1075,8 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 	private async callAnthropic(prompt: string, model: ModelConfig): Promise<string> {
 		try {
 			const baseUrl = (model.baseUrl || "https://api.anthropic.com").replace(/\/v1\/?$/, "");
+			// Re-validate constructed URL to ensure SSRF protection at point-of-use
+			this.validateBaseUrl(baseUrl, model.provider);
 			const response = await fetch(`${baseUrl}/v1/messages`, {
 				method: "POST",
 				headers: {
@@ -1111,6 +1115,8 @@ Return the top 5 most relevant, non-duplicate results with improved titles and s
 			// If it doesn't have a version segment, append /v1/chat/completions (OpenAI default).
 			let chatUrl: string;
 			const rawBase = (model.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
+			// Re-validate constructed URL to ensure SSRF protection at point-of-use
+			this.validateBaseUrl(rawBase, model.provider);
 
 			if (/\/v\d+$/.test(rawBase)) {
 				// baseUrl ends with /v1, /v4, etc. → append /chat/completions directly
