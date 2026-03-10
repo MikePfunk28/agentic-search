@@ -8,7 +8,11 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
+import type * as costEstimation from "../costEstimation.js";
+import type * as crons from "../crons.js";
 import type * as documents from "../documents.js";
+import type * as externalApiTracking from "../externalApiTracking.js";
 import type * as http from "../http.js";
 import type * as indexing from "../indexing.js";
 import type * as interactiveSegmentation from "../interactiveSegmentation.js";
@@ -29,12 +33,16 @@ import type * as mcp_mutations from "../mcp_mutations.js";
 import type * as modelConfiguration from "../modelConfiguration.js";
 import type * as ocr from "../ocr.js";
 import type * as orchestrator from "../orchestrator.js";
+import type * as rag from "../rag.js";
 import type * as reasoning from "../reasoning.js";
 import type * as search from "../search.js";
 import type * as searchHistory from "../searchHistory.js";
 import type * as secureApiKeys from "../secureApiKeys.js";
+import type * as sessionCleanup from "../sessionCleanup.js";
 import type * as todos from "../todos.js";
 import type * as usageTracking from "../usageTracking.js";
+import type * as userPreferences from "../userPreferences.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -51,7 +59,11 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
+  costEstimation: typeof costEstimation;
+  crons: typeof crons;
   documents: typeof documents;
+  externalApiTracking: typeof externalApiTracking;
   http: typeof http;
   indexing: typeof indexing;
   interactiveSegmentation: typeof interactiveSegmentation;
@@ -72,12 +84,16 @@ declare const fullApi: ApiFromModules<{
   modelConfiguration: typeof modelConfiguration;
   ocr: typeof ocr;
   orchestrator: typeof orchestrator;
+  rag: typeof rag;
   reasoning: typeof reasoning;
   search: typeof search;
   searchHistory: typeof searchHistory;
   secureApiKeys: typeof secureApiKeys;
+  sessionCleanup: typeof sessionCleanup;
   todos: typeof todos;
   usageTracking: typeof usageTracking;
+  userPreferences: typeof userPreferences;
+  users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

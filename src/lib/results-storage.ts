@@ -1,16 +1,26 @@
 /**
- * Researcher-Style Search Results Storage
- * 
- * Provides annotated, indexed, packaged results for use with other models/agents
- * Uses intelligent segmentation and structured storage for quality results
+ * Researcher-style result storage with best-effort persistence.
+ *
+ * Browser:
+ * - localStorage
+ *
+ * Node/dev server:
+ * - .agentic-search/research-storage.json
+ *
+ * Other runtimes:
+ * - in-memory fallback
  */
 
-import type { SearchResult } from './types';
+import type { SearchResult } from "./types";
+
+const BROWSER_STORAGE_KEY = "agentic-search-research-storage";
+const NODE_STORAGE_DIR = ".agentic-search";
+const NODE_STORAGE_FILE = "research-storage.json";
 
 export interface ResearchAnnotation {
 	id: string;
 	timestamp: number;
-	author: 'user' | 'ai' | 'system';
+	author: "user" | "ai" | "system";
 	text: string;
 	highlightedText?: string;
 	tags: string[];
@@ -19,62 +29,196 @@ export interface ResearchAnnotation {
 
 export interface ResearchSegment {
 	id: string;
-	type: 'entity' | 'relation' | 'constraint' | 'intent' | 'context' | 'comparison' | 'synthesis';
+	type:
+		| "entity"
+		| "relation"
+		| "constraint"
+		| "intent"
+		| "context"
+		| "comparison"
+		| "synthesis";
 	text: string;
 	relevance: number;
 	sources: string[];
 	subSegments?: ResearchSegment[];
 }
 
+export interface ResearchProvenance {
+	providers: string[];
+	providerCount: number;
+	crossCitedResults: number;
+	topDomains: string[];
+}
+
 export interface StoredResearchResult {
-	// Core result data
 	id: string;
 	query: string;
 	timestamp: number;
-	
-	// Search results with enhanced metadata
 	results: SearchResult[];
-	
-	// Researcher annotations
 	annotations: ResearchAnnotation[];
-	
-	// Intelligent segmentation
 	segments: ResearchSegment[];
-	
-	// Quality metrics
 	addScore: number;
 	userApproved: boolean;
 	userModifications: string[];
-	
-	// Indexing for retrieval
 	index: {
-		entities: Record<string, string[]>; // entity -> result IDs
-		keywords: Record<string, string[]>; // keyword -> result IDs
-		sources: Record<string, string[]>; // source -> result IDs
-		dates: Record<string, string[]>; // date range -> result IDs
+		entities: Record<string, string[]>;
+		keywords: Record<string, string[]>;
+		sources: Record<string, string[]>;
+		dates: Record<string, string[]>;
 	};
-	
-	// Export formats for other agents/models
 	exports: {
 		markdown: string;
 		json: string;
-		jsonl: string; // One result per line for training
-		prompt: string; // Ready-to-use prompt format
+		jsonl: string;
+		prompt: string;
 	};
-	
-	// Metadata
 	modelUsed: string;
 	tokensUsed: number;
 	executionTimeMs: number;
 	segmentCount: number;
+	provenance: ResearchProvenance;
 }
+
+type PersistenceMode = "browser" | "node" | "memory";
+type ErrnoLikeError = Error & { code?: string };
 
 export class ResearchStorage {
 	private storage: Map<string, StoredResearchResult> = new Map();
-	
-	/**
-	 * Store search results with full research context
-	 */
+	private loaded = false;
+	private persistenceMode: PersistenceMode = "memory";
+	private pendingPersist: Promise<void> = Promise.resolve();
+
+	private ensureLoadedSync(): void {
+		if (this.loaded) {
+			return;
+		}
+
+		if (typeof window === "undefined") {
+			return;
+		}
+
+		try {
+			const raw = window.localStorage.getItem(BROWSER_STORAGE_KEY);
+			if (raw) {
+				const parsed = JSON.parse(raw) as StoredResearchResult[];
+				this.hydrate(parsed);
+			}
+			this.persistenceMode = "browser";
+		} catch (error) {
+			console.warn("[ResearchStorage] Failed to load browser cache:", error);
+			this.persistenceMode = "memory";
+		}
+
+		this.loaded = true;
+	}
+
+	private async ensureLoaded(): Promise<void> {
+		if (this.loaded) {
+			return;
+		}
+
+		// Skip Node.js file persistence in browser or Cloudflare worker (no fs available)
+		if (typeof window !== "undefined" || typeof globalThis.caches !== "undefined") {
+			this.ensureLoadedSync();
+			return;
+		}
+
+		try {
+			const fsModuleId = "node:fs/promises";
+			const pathModuleId = "node:path";
+			const fs = await import(/* @vite-ignore */ fsModuleId);
+			const path = await import(/* @vite-ignore */ pathModuleId);
+			const cwd =
+				typeof process !== "undefined" && typeof process.cwd === "function"
+					? process.cwd()
+					: ".";
+			const storagePath = path.join(cwd, NODE_STORAGE_DIR, NODE_STORAGE_FILE);
+			const raw = await fs
+				.readFile(storagePath, "utf8")
+				.catch((error: ErrnoLikeError) => {
+					if (error.code === "ENOENT") {
+						return "";
+					}
+					throw error;
+				});
+
+			if (raw) {
+				const parsed = JSON.parse(raw) as StoredResearchResult[];
+				this.hydrate(parsed);
+			}
+
+			this.persistenceMode = "node";
+		} catch (error) {
+			console.warn(
+				"[ResearchStorage] Falling back to in-memory persistence:",
+				error,
+			);
+			this.persistenceMode = "memory";
+		}
+
+		this.loaded = true;
+	}
+
+	private hydrate(records: StoredResearchResult[]): void {
+		this.storage = new Map(records.map((record) => [record.id, record]));
+	}
+
+	private serialize(): StoredResearchResult[] {
+		return Array.from(this.storage.values()).sort(
+			(a, b) => b.timestamp - a.timestamp,
+		);
+	}
+
+	private queuePersist(): Promise<void> {
+		this.pendingPersist = this.pendingPersist
+			.then(async () => {
+				await this.persist();
+			})
+			.catch((error) => {
+				console.warn("[ResearchStorage] Persist failed:", error);
+			});
+		return this.pendingPersist;
+	}
+
+	private async persist(): Promise<void> {
+		if (!this.loaded) {
+			return;
+		}
+
+		const serialized = JSON.stringify(this.serialize());
+
+		if (this.persistenceMode === "browser" && typeof window !== "undefined") {
+			try {
+				window.localStorage.setItem(BROWSER_STORAGE_KEY, serialized);
+			} catch (error) {
+				console.warn(
+					"[ResearchStorage] Failed to persist browser cache:",
+					error,
+				);
+			}
+			return;
+		}
+
+		if (this.persistenceMode === "node") {
+			try {
+				const fsModuleId = "node:fs/promises";
+				const pathModuleId = "node:path";
+				const fs = await import(/* @vite-ignore */ fsModuleId);
+				const path = await import(/* @vite-ignore */ pathModuleId);
+				const cwd =
+					typeof process !== "undefined" && typeof process.cwd === "function"
+						? process.cwd()
+						: ".";
+				const storageDir = path.join(cwd, NODE_STORAGE_DIR);
+				const storagePath = path.join(storageDir, NODE_STORAGE_FILE);
+				await fs.mkdir(storageDir, { recursive: true });
+				await fs.writeFile(storagePath, serialized, "utf8");
+			} catch (error) {
+				console.warn("[ResearchStorage] Failed to persist node cache:", error);
+			}
+		}
+	}
+
 	async storeResults(
 		query: string,
 		results: SearchResult[],
@@ -84,19 +228,16 @@ export class ResearchStorage {
 			addScore?: number;
 			tokensUsed?: number;
 			executionTimeMs?: number;
-		}
+		},
 	): Promise<StoredResearchResult> {
-		const id = `research-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-		
-		// Build index
+		await this.ensureLoaded();
+
+		const id = `research-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 		const index = this.buildIndex(results);
-		
-		// Generate exports
 		const exports = this.generateExports(query, results, modelUsed);
-		
-		// Auto-generate segments if not provided
-		const segments = options?.segments || this.autoGenerateSegments(query, results);
-		
+		const segments =
+			options?.segments || this.autoGenerateSegments(query, results);
+
 		const storedResult: StoredResearchResult = {
 			id,
 			query,
@@ -113,216 +254,245 @@ export class ResearchStorage {
 			tokensUsed: options?.tokensUsed || 0,
 			executionTimeMs: options?.executionTimeMs || 0,
 			segmentCount: segments.length,
+			provenance: this.buildProvenance(results),
 		};
-		
+
 		this.storage.set(id, storedResult);
-		
+		await this.queuePersist();
+
 		return storedResult;
 	}
-	
-	/**
-	 * Add user annotation to result
-	 */
+
 	addAnnotation(
 		resultId: string,
-		annotation: Omit<ResearchAnnotation, 'id' | 'timestamp'>
+		annotation: Omit<ResearchAnnotation, "id" | "timestamp">,
 	): boolean {
+		this.ensureLoadedSync();
 		const result = this.storage.get(resultId);
 		if (!result) return false;
-		
-		const fullAnnotation: ResearchAnnotation = {
-			id: `ann-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+
+		result.annotations.push({
+			id: `ann-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
 			timestamp: Date.now(),
 			...annotation,
-		};
-		
-		result.annotations.push(fullAnnotation);
+		});
+		void this.queuePersist();
 		return true;
 	}
-	
-	/**
-	 * Mark result as user-approved
-	 */
+
 	approveResult(resultId: string, modifications?: string[]): boolean {
+		this.ensureLoadedSync();
 		const result = this.storage.get(resultId);
 		if (!result) return false;
-		
+
 		result.userApproved = true;
 		if (modifications) {
 			result.userModifications.push(...modifications);
 		}
-		
+
+		void this.queuePersist();
 		return true;
 	}
-	
-	/**
-	 * Build searchable index from results
-	 */
-	private buildIndex(results: SearchResult[]): StoredResearchResult['index'] {
-		const index: StoredResearchResult['index'] = {
+
+	private buildIndex(results: SearchResult[]): StoredResearchResult["index"] {
+		const index: StoredResearchResult["index"] = {
 			entities: {},
 			keywords: {},
 			sources: {},
 			dates: {},
 		};
-		
+
 		for (const result of results) {
-			// Extract entities (capitalized words, tech terms)
 			const text = `${result.title} ${result.snippet}`;
 			const entities = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
-			
+
 			for (const entity of entities) {
 				if (!index.entities[entity]) index.entities[entity] = [];
 				index.entities[entity].push(result.id);
 			}
-			
-			// Extract keywords (meaningful words > 3 chars)
-			const keywords = text.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+
+			const keywords = text
+				.toLowerCase()
+				.split(/\s+/)
+				.filter((word) => word.length > 3);
 			for (const keyword of keywords) {
 				if (!index.keywords[keyword]) index.keywords[keyword] = [];
 				if (!index.keywords[keyword].includes(result.id)) {
 					index.keywords[keyword].push(result.id);
 				}
 			}
-			
-			// Index by source
-			const source = result.source || 'unknown';
+
+			const source = result.source || "unknown";
 			if (!index.sources[source]) index.sources[source] = [];
 			index.sources[source].push(result.id);
-			
-			// Index by date (year-month)
+
 			if (result.publishedDate) {
 				const date = new Date(result.publishedDate);
-				const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+				const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 				if (!index.dates[dateKey]) index.dates[dateKey] = [];
 				index.dates[dateKey].push(result.id);
 			}
 		}
-		
+
 		return index;
 	}
-	
-	/**
-	 * Auto-generate segments from query and results
-	 */
-	private autoGenerateSegments(query: string, results: SearchResult[]): ResearchSegment[] {
+
+	private buildProvenance(results: SearchResult[]): ResearchProvenance {
+		const providers = Array.from(
+			new Set(results.map((result) => result.provider).filter(Boolean)),
+		) as string[];
+		const hostnames = results
+			.map((result) => {
+				try {
+					return new URL(result.url).hostname.replace(/^www\./, "");
+				} catch {
+					return "";
+				}
+			})
+			.filter(Boolean);
+
+		const hostnameCounts = new Map<string, number>();
+		for (const hostname of hostnames) {
+			hostnameCounts.set(hostname, (hostnameCounts.get(hostname) || 0) + 1);
+		}
+
+		const topDomains = Array.from(hostnameCounts.entries())
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 5)
+			.map(([hostname]) => hostname);
+
+		return {
+			providers,
+			providerCount: providers.length,
+			crossCitedResults: results.filter(
+				(result) => (result.citationCount || 0) > 1,
+			).length,
+			topDomains,
+		};
+	}
+
+	private autoGenerateSegments(
+		query: string,
+		results: SearchResult[],
+	): ResearchSegment[] {
 		const segments: ResearchSegment[] = [];
-		
-		// Entity segments - extract main entities from query
 		const entities = query.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
+
 		for (const entity of entities) {
 			segments.push({
 				id: `seg-entity-${segments.length}`,
-				type: 'entity',
+				type: "entity",
 				text: entity,
 				relevance: 0.9,
-				sources: results.map(r => r.url),
+				sources: results.map((result) => result.url),
 			});
 		}
-		
-		// Intent segment - determine what user wants
-		const intentKeywords = ['explain', 'how', 'what', 'why', 'when', 'compare'];
-		const intent = intentKeywords.find(kw => query.toLowerCase().includes(kw));
+
+		const intentKeywords = ["explain", "how", "what", "why", "when", "compare"];
+		const intent = intentKeywords.find((keyword) =>
+			query.toLowerCase().includes(keyword),
+		);
 		if (intent) {
 			segments.push({
 				id: `seg-intent-${segments.length}`,
-				type: 'intent',
+				type: "intent",
 				text: `${intent} query`,
 				relevance: 0.85,
 				sources: [],
 			});
 		}
-		
-		// Synthesis segment - overall findings
+
 		segments.push({
 			id: `seg-synthesis-${segments.length}`,
-			type: 'synthesis',
+			type: "synthesis",
 			text: `Synthesis of ${results.length} results`,
-			relevance: 1.0,
-			sources: results.map(r => r.url),
+			relevance: 1,
+			sources: results.map((result) => result.url),
 		});
-		
+
 		return segments;
 	}
-	
-	/**
-	 * Generate export formats for other agents/models
-	 */
+
 	private generateExports(
 		query: string,
 		results: SearchResult[],
-		modelUsed: string
-	): StoredResearchResult['exports'] {
-		// Markdown format
-		const markdown = `# Research Results: ${query}\n\n**Model Used:** ${modelUsed}\n**Results Found:** ${results.length}\n**Timestamp:** ${new Date().toISOString()}\n\n## Results\n\n${results.map((r, i) => `### ${i + 1}. ${r.title}\n\n**Source:** ${r.url}\n**Quality Score:** ${r.addScore?.toFixed(2) || 'N/A'}\n\n${r.snippet}\n\n---\n`).join('\n')}`;
-		
-		// JSON format
-		const json = JSON.stringify({
-			query,
-			modelUsed,
-			timestamp: new Date().toISOString(),
-			results: results.map(r => ({
-				id: r.id,
-				title: r.title,
-				snippet: r.snippet,
-				url: r.url,
-				source: r.source,
-				addScore: r.addScore,
-				publishedDate: r.publishedDate,
-			})),
-		}, null, 2);
-		
-		// JSONL format (one result per line for training)
-		const jsonl = results.map(r => JSON.stringify({
-			query,
-			result: {
-				title: r.title,
-				snippet: r.snippet,
-				url: r.url,
-				addScore: r.addScore,
+		modelUsed: string,
+	): StoredResearchResult["exports"] {
+		const markdown = `# Research Results: ${query}\n\n**Model Used:** ${modelUsed}\n**Results Found:** ${results.length}\n**Timestamp:** ${new Date().toISOString()}\n\n## Results\n\n${results.map((result, index) => `### ${index + 1}. ${result.title}\n\n**Source:** ${result.url}\n**Quality Score:** ${result.addScore?.toFixed(2) || "N/A"}\n\n${result.snippet}\n\n---\n`).join("\n")}`;
+
+		const json = JSON.stringify(
+			{
+				query,
+				modelUsed,
+				timestamp: new Date().toISOString(),
+				results: results.map((result) => ({
+					id: result.id,
+					title: result.title,
+					snippet: result.snippet,
+					url: result.url,
+					source: result.source,
+					addScore: result.addScore,
+					publishedDate: result.publishedDate,
+					provider: result.provider,
+				})),
 			},
-		})).join('\n');
-		
-		// Prompt format (ready for other models)
-		const prompt = `You are analyzing search results for the query: "${query}"\n\nHere are ${results.length} high-quality results:\n\n${results.map((r, i) => `[${i + 1}] ${r.title}\nSource: ${r.url}\nQuality: ${r.addScore?.toFixed(2)}\nContent: ${r.snippet}\n`).join('\n')}\n\nPlease analyze these results and provide insights.`;
-		
+			null,
+			2,
+		);
+
+		const jsonl = results
+			.map((result) =>
+				JSON.stringify({
+					query,
+					result: {
+						title: result.title,
+						snippet: result.snippet,
+						url: result.url,
+						addScore: result.addScore,
+						provider: result.provider,
+					},
+				}),
+			)
+			.join("\n");
+
+		const prompt = `You are analyzing search results for the query: "${query}"\n\nHere are ${results.length} high-quality results:\n\n${results.map((result, index) => `[${index + 1}] ${result.title}\nSource: ${result.url}\nProvider: ${result.provider || "unknown"}\nQuality: ${result.addScore?.toFixed(2)}\nContent: ${result.snippet}\n`).join("\n")}\n\nPlease analyze these results and provide insights.`;
+
 		return { markdown, json, jsonl, prompt };
 	}
-	
-	/**
-	 * Search stored results by query, entity, or keyword
-	 */
+
 	search(searchTerm: string): StoredResearchResult[] {
+		this.ensureLoadedSync();
 		const term = searchTerm.toLowerCase();
 		const results: StoredResearchResult[] = [];
-		
+
 		for (const result of this.storage.values()) {
-			// Search in query
 			if (result.query.toLowerCase().includes(term)) {
 				results.push(result);
 				continue;
 			}
-			
-			// Search in index
+
 			if (result.index.keywords[term] || result.index.entities[term]) {
 				results.push(result);
 				continue;
 			}
-			
-			// Search in annotations
-			if (result.annotations.some(a => a.text.toLowerCase().includes(term))) {
+
+			if (
+				result.annotations.some((annotation) =>
+					annotation.text.toLowerCase().includes(term),
+				)
+			) {
 				results.push(result);
 			}
 		}
-		
+
 		return results;
 	}
 
-	/**
-	 * Return best-effort fallback results from prior successful searches.
-	 * This keeps search useful when live providers or keys are unavailable.
-	 */
-	findRelevantResults(query: string, limit = 10): SearchResult[] {
+	async findRelevantResults(
+		query: string,
+		limit = 10,
+	): Promise<SearchResult[]> {
+		await this.ensureLoaded();
 		const normalizedQuery = query.toLowerCase().trim();
 		if (!normalizedQuery) {
 			return [];
@@ -332,7 +502,7 @@ export class ResearchStorage {
 			.split(/\s+/)
 			.filter((term) => term.length > 2);
 
-		const candidates = this.getAllResults()
+		const candidates = this.serialize()
 			.map((entry) => {
 				const haystack = [
 					entry.query,
@@ -341,7 +511,9 @@ export class ResearchStorage {
 					.join(" ")
 					.toLowerCase();
 
-				const exactQueryMatch = entry.query.toLowerCase().includes(normalizedQuery)
+				const exactQueryMatch = entry.query
+					.toLowerCase()
+					.includes(normalizedQuery)
 					? 3
 					: 0;
 				const termMatches = queryTerms.reduce(
@@ -387,45 +559,41 @@ export class ResearchStorage {
 
 		return Array.from(deduped.values());
 	}
-	
-	/**
-	 * Get result by ID
-	 */
+
 	getResult(id: string): StoredResearchResult | null {
+		this.ensureLoadedSync();
 		return this.storage.get(id) || null;
 	}
-	
-	/**
-	 * Get all results
-	 */
+
 	getAllResults(): StoredResearchResult[] {
-		return Array.from(this.storage.values());
+		this.ensureLoadedSync();
+		return this.serialize();
 	}
-	
-	/**
-	 * Export result in specified format
-	 */
-	exportResult(id: string, format: 'markdown' | 'json' | 'jsonl' | 'prompt'): string | null {
+
+	exportResult(
+		id: string,
+		format: "markdown" | "json" | "jsonl" | "prompt",
+	): string | null {
+		this.ensureLoadedSync();
 		const result = this.storage.get(id);
 		if (!result) return null;
-		
 		return result.exports[format];
 	}
-	
-	/**
-	 * Delete result
-	 */
+
 	deleteResult(id: string): boolean {
-		return this.storage.delete(id);
+		this.ensureLoadedSync();
+		const deleted = this.storage.delete(id);
+		if (deleted) {
+			void this.queuePersist();
+		}
+		return deleted;
 	}
-	
-	/**
-	 * Clear all results
-	 */
+
 	clearAll(): void {
+		this.ensureLoadedSync();
 		this.storage.clear();
+		void this.queuePersist();
 	}
 }
 
-// Singleton instance
 export const researchStorage = new ResearchStorage();

@@ -9,4 +9,4 @@ enabled = true
 # Secrets are managed in Cloudflare dashboard (Settings > Variables)
 # VITE_CONVEX_URL, CONVEX_SITE_URL, CONVEX_DEPLOY_KEY
 [vars]
-VITE_DISABLE_AUTH = "true"
+VITE_DISABLE_AUTH = "false"

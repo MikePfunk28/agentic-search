@@ -25,18 +25,19 @@
     "@ai-sdk/openai": "^2.0.64",
     "@ai-sdk/openai-compatible": "^1.0.27",
     "@ai-sdk/react": "^2.0.8",
+    "@auth/core": "^0.37.4",
     "@cloudflare/vite-plugin": "^1.14.1",
     "@convex-dev/auth": "^0.0.90",
     "@convex-dev/react-query": "0.0.0-alpha.11",
-    "@modelcontextprotocol/sdk": "^1.8.0",
-    "@orpc/client": "^1.7.5",
-    "@orpc/json-schema": "^1.7.5",
-    "@orpc/openapi": "^1.7.5",
-    "@orpc/server": "^1.7.5",
-    "@orpc/tanstack-query": "^1.7.5",
-    "@orpc/zod": "^1.7.5",
-    "@sentry/react": "^10.23.0",
-    "@sentry/tanstackstart-react": "^10.22.0",
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "@orpc/client": "^1.13.6",
+    "@orpc/json-schema": "^1.13.6",
+    "@orpc/openapi": "^1.13.6",
+    "@orpc/server": "^1.13.6",
+    "@orpc/tanstack-query": "^1.13.6",
+    "@orpc/zod": "^1.13.6",
+    "@sentry/react": "^10.26.0",
+    "@sentry/tanstackstart-react": "^10.26.0",
     "@sentry/vite-plugin": "^4.6.0",
     "@t3-oss/env-core": "^0.13.8",
     "@tailwindcss/vite": "^4.0.6",
@@ -90,6 +91,21 @@
     "vite": "^7.1.7",
     "vitest": "^3.0.5",
     "web-vitals": "^5.1.0",
-    "wrangler": "^4.47.0"
+    "wrangler": "^4.59.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "seroval": "1.5.0",
+      "seroval-plugins": "1.5.0",
+      "minimatch": ">=9.0.7",
+      "rollup": ">=4.59.0",
+      "undici": ">=7.22.0",
+      "body-parser": ">=2.2.1",
+      "ajv": ">=8.18.0",
+      "qs": ">=6.14.1",
+      "js-yaml": ">=4.1.0",
+      "diff": ">=8.0.3",
+      "mdast-util-to-hast": ">=13.2.1"
+    }
   }
 }

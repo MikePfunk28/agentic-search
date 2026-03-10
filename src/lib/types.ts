@@ -10,8 +10,25 @@ export interface SearchResult {
 	snippet: string;
 	url: string;
 	publishedDate?: string;
-	source: "web" | "firecrawl" | "brave" | "academic" | "news";
-	provider?: "brave" | "firecrawl" | "tavily" | "exa" | "cache"; // Which API returned this
+	source:
+		| "web"
+		| "firecrawl"
+		| "brave"
+		| "duckduckgo"
+		| "wikipedia"
+		| "academic"
+		| "encyclopedia"
+		| "news";
+	provider?:
+		| "brave"
+		| "firecrawl"
+		| "tavily"
+		| "exa"
+		| "duckduckgo"
+		| "wikipedia"
+		| "semantic_scholar"
+		| "arxiv"
+		| "cache"; // Which API returned this
 	addScore?: number; // ADD (Adversarial Differential Discrimination) score
 	domainAuthority?: number; // 0-1 domain reputation score
 	citationCount?: number; // How many providers returned this URL

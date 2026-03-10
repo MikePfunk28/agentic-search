@@ -8,8 +8,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
 	SearchProgressStep,
 	SearchScope,
+	SearchStepModifications,
 } from "../components/SearchProgressPanel";
 import { getClientSearchConfig, getSearchApiKeys } from "../lib/model-store";
+import { researchStorage } from "../lib/results-storage";
+import type { SearchResult } from "../lib/types";
 import type { UnifiedSearchResult } from "../lib/unified-search-orchestrator";
 
 export interface SearchProgressState {
@@ -27,7 +30,7 @@ export interface UseSearchProgressReturn extends SearchProgressState {
 	stopSearch: () => void;
 	updateScope: (scope: SearchScope) => void;
 	approveStep: (stepId: string) => void;
-	modifyStep: (stepId: string, modifications: any) => void;
+	modifyStep: (stepId: string, modifications: SearchStepModifications) => void;
 }
 
 export interface SearchCompletionSummary {
@@ -45,27 +48,31 @@ export interface SearchCompletionSummary {
 }
 
 export function useSearchProgress(
-	onResults?: (results: any[], summary?: SearchCompletionSummary) => void,
+	onResults?: (
+		results: SearchResult[],
+		summary?: SearchCompletionSummary,
+	) => void,
 ): UseSearchProgressReturn {
 	const [state, setState] = useState<SearchProgressState>(() => {
 		const keys = getSearchApiKeys();
-		const hasLocalKeys = !!(keys.tavily || keys.exa || keys.firecrawl || keys.brave);
 		return {
 			isSearching: false,
 			isPaused: false,
 			steps: [],
 			scope: {
 				sources: {
-					tavily: hasLocalKeys ? !!keys.tavily : true,
-					exa: hasLocalKeys ? !!keys.exa : true,
-					firecrawl: hasLocalKeys ? !!keys.firecrawl : true,
-					brave: hasLocalKeys ? !!keys.brave : true,
-					academic: true,
-					news: true,
+					duckduckgo: true,
+					wikipedia: true,
+					tavily: !!keys.tavily,
+					exa: !!keys.exa,
+					firecrawl: !!keys.firecrawl,
+					brave: !!keys.brave,
+					academic: false,
+					news: false,
 				},
 				maxResults: 20,
 				useReasoning: true,
-				useSegmentation: true,
+				useSegmentation: false,
 			},
 			error: null,
 		};
@@ -184,11 +191,14 @@ export function useSearchProgress(
 				// Safety timeout: if no progress events arrive within 60s
 				safetyTimeoutRef.current = setTimeout(() => {
 					if (!receivedProgressEvents) {
-						console.error("[SearchProgress] Safety timeout: no progress events received within 60s");
+						console.error(
+							"[SearchProgress] Safety timeout: no progress events received within 60s",
+						);
 						setState((prev) => ({
 							...prev,
 							isSearching: false,
-							error: "Search timed out. Check your TanStack Start server logs, search API keys, and any optional model endpoints.",
+							error:
+								"Search timed out. Check your TanStack Start server logs, search API keys, and any optional model endpoints.",
 						}));
 						abortControllerRef.current?.abort();
 					}
@@ -207,8 +217,8 @@ export function useSearchProgress(
 						sseBuffer += decoder.decode(value, { stream: true });
 
 						// SSE events are separated by double-newline
-						let eventEnd: number;
-						while ((eventEnd = sseBuffer.indexOf("\n\n")) !== -1) {
+						let eventEnd = sseBuffer.indexOf("\n\n");
+						while (eventEnd !== -1) {
 							const eventText = sseBuffer.slice(0, eventEnd);
 							sseBuffer = sseBuffer.slice(eventEnd + 2);
 
@@ -240,7 +250,25 @@ export function useSearchProgress(
 											break;
 
 										case "results":
-											onResults?.(data.results, data.summary);
+											if (
+												data.summary?.query &&
+												Array.isArray(data.results) &&
+												data.results.length > 0
+											) {
+												await researchStorage.storeResults(
+													data.summary.query,
+													data.results,
+													`${data.summary.provider || "web-only"}:${data.summary.modelUsed || "none"}`,
+													{
+														addScore: data.summary.addMetrics?.overallScore,
+														tokensUsed: data.summary.totalTokens,
+														executionTimeMs: data.summary.totalProcessingTime,
+													},
+												);
+											}
+											await Promise.resolve(
+												onResults?.(data.results, data.summary),
+											);
 											setState((prev) => ({ ...prev, isSearching: false }));
 											break;
 
@@ -272,6 +300,8 @@ export function useSearchProgress(
 									// ignore malformed SSE data lines
 								}
 							}
+
+							eventEnd = sseBuffer.indexOf("\n\n");
 						}
 					}
 				} catch (err) {
@@ -437,30 +467,33 @@ export function useSearchProgress(
 		}
 	}, []);
 
-	const modifyStep = useCallback(async (stepId: string, modifications: any) => {
-		if (!searchIdRef.current) return;
+	const modifyStep = useCallback(
+		async (stepId: string, modifications: SearchStepModifications) => {
+			if (!searchIdRef.current) return;
 
-		try {
-			const csrfResponse = await fetch("/api/csrf-token");
-			const { token: csrfToken } = await csrfResponse.json();
+			try {
+				const csrfResponse = await fetch("/api/csrf-token");
+				const { token: csrfToken } = await csrfResponse.json();
 
-			await fetch(`/api/search/control`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"X-CSRF-Token": csrfToken,
-				},
-				body: JSON.stringify({
-					searchId: searchIdRef.current,
-					action: "modify_step",
-					stepId,
-					modifications,
-				}),
-			});
-		} catch (error) {
-			console.error("Failed to modify step:", error);
-		}
-	}, []);
+				await fetch(`/api/search/control`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRF-Token": csrfToken,
+					},
+					body: JSON.stringify({
+						searchId: searchIdRef.current,
+						action: "modify_step",
+						stepId,
+						modifications,
+					}),
+				});
+			} catch (error) {
+				console.error("Failed to modify step:", error);
+			}
+		},
+		[],
+	);
 
 	return {
 		...state,

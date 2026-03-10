@@ -4,8 +4,14 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { validateCsrfRequest, createCsrfErrorResponse } from "@/lib/csrf-protection";
-import { ModelConfigManager, buildModelConfigFromClient } from "@/lib/model-config";
+import {
+	validateCsrfRequest,
+	createCsrfErrorResponse,
+} from "@/lib/csrf-protection";
+import {
+	ModelConfigManager,
+	buildModelConfigFromClient,
+} from "@/lib/model-config";
 import { getAvailableProviders } from "@/lib/search-providers";
 import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
 import { researchStorage } from "@/lib/results-storage";
@@ -18,6 +24,12 @@ import { getSearchScope } from "./control";
 // Events are pushed directly onto the SSE response stream for the SAME request.
 // This avoids the cross-isolate state problem where workerd/Vite evaluates
 // progress.ts (GET) and stream.ts (POST) in separate module contexts.
+//
+// KNOWN LIMITATION (Cloudflare Workers): These module-level Maps are scoped to
+// the current isolate. Pause/resume via /api/search/control will only work if
+// the control request hits the SAME isolate as the streaming request. In
+// production Workers with multiple isolates, cross-isolate pause/resume would
+// require Durable Objects or KV-backed state.
 // ---------------------------------------------------------------------------
 const eventPushers = new Map<string, (data: any) => void>();
 const searchFlags = new Map<string, { paused: boolean; stopped: boolean }>();
@@ -46,28 +58,40 @@ function isSearchStopped(searchId: string): boolean {
 }
 
 // Cloudflare Workers: waitUntil keeps background promises alive after the
-// response is sent.  Falls back to a no-op for non-CF environments.
-// Also grab `env` so we can read .dev.vars / dashboard secret keys.
+// response is sent.  Grab `env` so we can read .dev.vars / dashboard secret keys.
 let cfWaitUntil: ((p: Promise<unknown>) => void) | undefined;
 let cfEnv: Record<string, string | undefined> = {};
 try {
 	// Dynamic import so this still builds outside of workerd
 	const cf = await import("cloudflare:workers");
 	cfWaitUntil = cf.waitUntil;
-	cfEnv = (cf as any).env ?? {};
+	if (cf.env) cfEnv = cf.env as Record<string, string | undefined>;
 } catch {
 	// Not running inside workerd – ignore
 }
 
-/** Merge client-sent API keys with server-side env keys (client wins). */
+/** Helper: read an env var from any available source.
+ *  Priority: cloudflare worker bindings (.dev.vars) > process.env > import.meta.env */
+function getEnvVar(name: string): string | undefined {
+	return cfEnv[name]
+		|| (typeof process !== "undefined" ? process.env?.[name] : undefined)
+		|| (import.meta as any).env?.[name]
+		|| undefined;
+}
+
+/** BYOK only — paid provider keys come from the user via Settings, never from
+ *  server env vars. Owner's .dev.vars keys are NOT used as fallback. */
 function mergeSearchApiKeys(clientKeys?: {
-	firecrawl?: string; tavily?: string; exa?: string; brave?: string;
+	firecrawl?: string;
+	tavily?: string;
+	exa?: string;
+	brave?: string;
 }): { firecrawl?: string; tavily?: string; exa?: string; brave?: string } {
 	return {
-		firecrawl: clientKeys?.firecrawl || cfEnv.FIRECRAWL_API_KEY,
-		tavily:    clientKeys?.tavily    || cfEnv.TAVILY_API_KEY,
-		exa:       clientKeys?.exa       || cfEnv.EXA_SEARCH_API_KEY,
-		brave:     clientKeys?.brave     || cfEnv.BRAVE_SEARCH_API_KEY,
+		firecrawl: clientKeys?.firecrawl || undefined,
+		tavily: clientKeys?.tavily || undefined,
+		exa: clientKeys?.exa || undefined,
+		brave: clientKeys?.brave || undefined,
 	};
 }
 
@@ -78,19 +102,23 @@ export const Route = createFileRoute("/api/search/stream")({
 				// CSRF Protection
 				const validation = validateCsrfRequest(request);
 				if (!validation.valid) {
-					console.warn("[CSRF] Validation failed for /api/search/stream:", validation.error);
+					console.warn(
+						"[CSRF] Validation failed for /api/search/stream:",
+						validation.error,
+					);
 					return createCsrfErrorResponse(validation.error!);
 				}
 
-                try {
-                    const { query, scope, searchId, modelConfig: clientModelConfig, modelConfigs: clientModelConfigs, searchApiKeys } = await request.json();
-
-					if (!query || !searchId) {
-						return new Response(
-							JSON.stringify({ error: "query and searchId are required" }),
-							{ status: 400, headers: { "Content-Type": "application/json" } }
-						);
-					}
+				try {
+					const {
+						query,
+						scope,
+						searchId,
+						modelConfig: clientModelConfig,
+						modelConfigs: clientModelConfigs,
+						searchApiKeys,
+						ragConfig,
+					} = await request.json();
 
 					// Merge client-sent API keys with server env keys (.dev.vars / dashboard)
 					const resolvedApiKeys = mergeSearchApiKeys(searchApiKeys);
@@ -132,19 +160,32 @@ export const Route = createFileRoute("/api/search/stream")({
 					// Start search — pushes events via the local sendStepUpdate /
 					// sendResults / sendError which use eventPushers map.
 					const searchPromise = executeSearchWithProgress(
-						query, scope, searchId,
-						clientModelConfig, clientModelConfigs, resolvedApiKeys,
-					).then(() => {
-						eventPushers.delete(searchId);
-						searchFlags.delete(searchId);
-						try { streamController.close(); } catch {}
-					}).catch((error) => {
-						console.error("Background search error:", error);
-						pushEvent({ type: "error", message: error?.message ?? "Search failed" });
-						eventPushers.delete(searchId);
-						searchFlags.delete(searchId);
-						try { streamController.close(); } catch {}
-					});
+						query,
+						scope,
+						searchId,
+						clientModelConfig,
+						clientModelConfigs,
+						resolvedApiKeys,
+					)
+						.then(() => {
+							eventPushers.delete(searchId);
+							searchFlags.delete(searchId);
+							try {
+								streamController.close();
+							} catch {}
+						})
+						.catch((error) => {
+							console.error("Background search error:", error);
+							pushEvent({
+								type: "error",
+								message: error?.message ?? "Search failed",
+							});
+							eventPushers.delete(searchId);
+							searchFlags.delete(searchId);
+							try {
+								streamController.close();
+							} catch {}
+						});
 
 					// Keep the search promise alive after handler returns
 					if (cfWaitUntil) {
@@ -156,7 +197,7 @@ export const Route = createFileRoute("/api/search/stream")({
 					const sseHeaders: Record<string, string> = {
 						"Content-Type": "text/event-stream",
 						"Cache-Control": "no-cache",
-						"Connection": "keep-alive",
+						Connection: "keep-alive",
 					};
 					if (requestOrigin) {
 						sseHeaders["Access-Control-Allow-Origin"] = requestOrigin;
@@ -168,7 +209,7 @@ export const Route = createFileRoute("/api/search/stream")({
 					console.error("Stream search API error:", error);
 					return new Response(
 						JSON.stringify({ error: "Failed to start search" }),
-						{ status: 500, headers: { "Content-Type": "application/json" } }
+						{ status: 500, headers: { "Content-Type": "application/json" } },
 					);
 				}
 			},
@@ -180,15 +221,46 @@ export const Route = createFileRoute("/api/search/stream")({
  * Execute search with real-time progress updates
  */
 async function executeSearchWithProgress(
-    query: string,
-    initialScope: SearchScope,
-    searchId: string,
-    clientModelConfig?: { provider: string; model: string; baseUrl: string; apiKey?: string; protocol: string },
-    clientModelConfigs?: Array<{ provider: string; model: string; baseUrl: string; apiKey?: string; protocol: string; role?: string }>,
-    searchApiKeys?: { firecrawl?: string; tavily?: string; exa?: string; brave?: string },
+	query: string,
+	initialScope: SearchScope,
+	searchId: string,
+	clientModelConfig?: {
+		provider: string;
+		model: string;
+		baseUrl: string;
+		apiKey?: string;
+		protocol: string;
+	},
+	clientModelConfigs?: Array<{
+		provider: string;
+		model: string;
+		baseUrl: string;
+		apiKey?: string;
+		protocol: string;
+		role?: string;
+	}>,
+	searchApiKeys?: {
+		firecrawl?: string;
+		tavily?: string;
+		exa?: string;
+		brave?: string;
+	},
+	ragConfig?: {
+		level?: string;
+		chunks?: Array<{
+			text: string;
+			score: number;
+			documentName?: string;
+			chunkIndex?: number;
+		}>;
+		latencyMs?: number;
+		tokensUsed?: number;
+	},
 ) {
 	try {
-		console.log(`[StreamSearch] Starting search for searchId=${searchId}, query="${query}"`);
+		console.log(
+			`[StreamSearch] Starting search for searchId=${searchId}, query="${query}"`,
+		);
 
 		// Send initial step
 		sendStepUpdate(searchId, {
@@ -210,14 +282,29 @@ async function executeSearchWithProgress(
 		// default Ollama config because it would try to reach localhost:11434 which
 		// may not be running and hangs the search.
 		let modelConfig = null;
-		if (clientModelConfig && clientModelConfig.provider && clientModelConfig.model) {
+		if (
+			clientModelConfig &&
+			clientModelConfig.provider &&
+			clientModelConfig.model
+		) {
 			modelConfig = buildModelConfigFromClient(clientModelConfig);
-			console.log(`[StreamSearch] Using client-provided model: ${clientModelConfig.provider}:${clientModelConfig.model}`);
+			console.log(
+				`[StreamSearch] Using client-provided model: ${clientModelConfig.provider}:${clientModelConfig.model}`,
+			);
 		} else {
-			console.log("[StreamSearch] No client model config — running web search + ADD scoring only (no model calls)");
+			console.log(
+				"[StreamSearch] No client model config — running web search + ADD scoring only (no model calls)",
+			);
 		}
 
 		const availableProviders = getAvailableProviders(searchApiKeys);
+		const configuredPremiumProviders = [
+			searchApiKeys?.tavily ? "tavily" : null,
+			searchApiKeys?.exa ? "exa" : null,
+			searchApiKeys?.firecrawl ? "firecrawl" : null,
+			searchApiKeys?.brave ? "brave" : null,
+		].filter(Boolean);
+		const freeOnlyMode = configuredPremiumProviders.length === 0;
 		const keyStatus = {
 			tavily: !!searchApiKeys?.tavily,
 			exa: !!searchApiKeys?.exa,
@@ -225,15 +312,18 @@ async function executeSearchWithProgress(
 			brave: !!searchApiKeys?.brave,
 		};
 		console.log(`[StreamSearch] Search API keys received:`, keyStatus);
-		console.log(`[StreamSearch] Available providers: ${availableProviders.join(', ') || 'NONE'}`);
+		console.log(
+			`[StreamSearch] Available providers: ${availableProviders.join(", ") || "NONE"}`,
+		);
 
-		if (availableProviders.length === 0) {
+		if (freeOnlyMode) {
 			sendStepUpdate(searchId, {
 				id: `${searchId}-fallback`,
 				type: "source",
 				status: "in-progress",
-				title: "Using Search Fallbacks",
-				description: "No client-side search key detected. Trying server env keys and cached prior results.",
+				title: "Using Free Web Search",
+				description:
+					"Running DuckDuckGo and Wikipedia with no model or API key required.",
 				timestamp: Date.now(),
 			});
 		}
@@ -257,9 +347,11 @@ async function executeSearchWithProgress(
 
 		// Send source search progress — actual search happens in unified orchestrator below.
 		// This just shows UI progress indicators for each enabled source.
-		const enabledSources = Object.entries(currentScope.sources)
-			.filter(([_, enabled]) => enabled)
-			.map(([source, _]) => source);
+		const enabledSources = availableProviders.filter((provider) => {
+			const sourceEnabled =
+				currentScope.sources[provider as keyof typeof currentScope.sources];
+			return sourceEnabled ?? true;
+		});
 
 		for (const source of enabledSources) {
 			await waitWhilePaused(searchId);
@@ -292,102 +384,131 @@ async function executeSearchWithProgress(
 		await waitWhilePaused(searchId);
 		if (isSearchStopped(searchId)) return;
 
-        // Build parallel model configs from the client-provided array
-        const parallelModelConfigs = (clientModelConfigs || [])
-            .filter((c: any) => c && c.provider && c.model)
-            .map((c: any) => buildModelConfigFromClient(c));
+		// Build parallel model configs from the client-provided array
+		const parallelModelConfigs = (clientModelConfigs || [])
+			.filter((c: any) => c && c.provider && c.model)
+			.map((c: any) => buildModelConfigFromClient(c));
 
-        // Enable parallel execution when multiple models are active
-        const hasMultipleModels = parallelModelConfigs.length > 1;
+		// Enable parallel execution when multiple models are active
+		const hasMultipleModels = parallelModelConfigs.length > 1;
 
-        if (hasMultipleModels) {
-            console.log(`[StreamSearch] Parallel execution enabled with ${parallelModelConfigs.length} models`);
-            sendStepUpdate(searchId, {
-                id: `${searchId}-parallel`,
-                type: "reasoning",
-                status: "in-progress",
-                title: "Parallel Model Execution",
-                description: `Running ${parallelModelConfigs.length} models in parallel for consensus`,
-                timestamp: Date.now(),
-                metadata: {
-                    modelCount: parallelModelConfigs.length,
-                    models: parallelModelConfigs.map((c: any) => `${c.provider}:${c.model}`),
-                },
-            });
-        }
+		if (hasMultipleModels) {
+			console.log(
+				`[StreamSearch] Parallel execution enabled with ${parallelModelConfigs.length} models`,
+			);
+			sendStepUpdate(searchId, {
+				id: `${searchId}-parallel`,
+				type: "reasoning",
+				status: "in-progress",
+				title: "Parallel Model Execution",
+				description: `Running ${parallelModelConfigs.length} models in parallel for consensus`,
+				timestamp: Date.now(),
+				metadata: {
+					modelCount: parallelModelConfigs.length,
+					models: parallelModelConfigs.map(
+						(c: any) => `${c.provider}:${c.model}`,
+					),
+				},
+			});
+		}
 
-        const searchResult = await unifiedSearchOrchestrator.search(query, modelConfig, {
-            useParallelModels: hasMultipleModels,
-            useInterleavedReasoning: updatedScope.useReasoning,
-            useSegmentation: updatedScope.useSegmentation,
-            enableValidation: true,
-            parallelModelConfigs: hasMultipleModels ? parallelModelConfigs : [],
-            apiKeys: searchApiKeys,
-        });
-        const usedFallbackCache = searchResult.reasoning.some((step) =>
-            step.toLowerCase().includes("cached result")
-        );
+		// ── RAG Knowledge Base step ──────────────────────────────────────
+		const hasRag = ragConfig?.level && ragConfig.level !== "none" && ragConfig.chunks && ragConfig.chunks.length > 0;
+		if (hasRag) {
+			sendStepUpdate(searchId, {
+				id: `${searchId}-rag`,
+				type: "source",
+				status: "completed",
+				title: "Knowledge Base Search",
+				description: `Found ${ragConfig!.chunks!.length} chunks from your knowledge base (${ragConfig!.level} mode)`,
+				timestamp: Date.now(),
+				metadata: {
+					source: "rag",
+					documentsFound: ragConfig!.chunks!.length,
+					ragLevel: ragConfig!.level,
+					ragLatencyMs: ragConfig!.latencyMs,
+				},
+			});
+		}
 
-        if (availableProviders.length === 0) {
-            sendStepUpdate(searchId, {
-                id: `${searchId}-fallback`,
-                type: "source",
-                status: "completed",
-                title: usedFallbackCache ? "Used Cached Research Memory" : "Checked Search Fallbacks",
-                description: usedFallbackCache
-                    ? `Recovered ${searchResult.results.length} cached result(s) from prior successful searches`
-                    : "No cached results were available from prior successful searches",
-                timestamp: Date.now(),
-                metadata: {
-                    usedFallbackCache,
-                    resultsFound: searchResult.results.length,
-                },
-            });
-        }
+		const searchResult = await unifiedSearchOrchestrator.search(
+			query,
+			modelConfig,
+			{
+				useParallelModels: hasMultipleModels,
+				useInterleavedReasoning: updatedScope.useReasoning,
+				useSegmentation: updatedScope.useSegmentation,
+				enableValidation: true,
+				parallelModelConfigs: hasMultipleModels ? parallelModelConfigs : [],
+				apiKeys: searchApiKeys,
+			},
+		);
+		const usedFallbackCache = searchResult.reasoning.some((step) =>
+			step.toLowerCase().includes("cached result"),
+		);
 
-        if (searchResult.results.length === 0 && availableProviders.length === 0) {
-            sendError(
-                searchId,
-                "No live search providers or cached research results are available yet. Add a Tavily, Exa, Firecrawl, or Brave key, or run one successful search to seed the cache.",
-            );
-            return;
-        }
+		if (freeOnlyMode) {
+			sendStepUpdate(searchId, {
+				id: `${searchId}-fallback`,
+				type: "source",
+				status: "completed",
+				title: usedFallbackCache
+					? "Used Cached Research Memory"
+					: "Completed Free Web Search",
+				description: usedFallbackCache
+					? `Recovered ${searchResult.results.length} cached result(s) from prior successful searches`
+					: `DuckDuckGo and Wikipedia returned ${searchResult.results.length} result(s)`,
+				timestamp: Date.now(),
+				metadata: {
+					usedFallbackCache,
+					resultsFound: searchResult.results.length,
+				},
+			});
+		}
 
-        // Mark source steps as completed with real result counts
-        for (const source of enabledSources) {
-            const stepId = `${searchId}-${source}`;
-            const sourceResults = searchResult.results.filter(
-                (r: any) => r.provider === source || r.source === source
-            );
-            sendStepUpdate(searchId, {
-                id: stepId,
-                type: "source",
-                status: "completed",
-                title: `Searched ${source}`,
-                description: `Found ${sourceResults.length} results from ${source}`,
-                timestamp: Date.now(),
-                metadata: {
-                    source,
-                    documentsFound: sourceResults.length,
-                    confidence: searchResult.addMetrics.overallScore,
-                },
-            });
-        }
+		if (searchResult.results.length === 0) {
+			sendError(
+				searchId,
+				"Search returned no results from the free providers. Try a different query, or add Tavily, Exa, Firecrawl, or Brave for broader coverage.",
+			);
+			return;
+		}
 
-        if (hasMultipleModels) {
-            sendStepUpdate(searchId, {
-                id: `${searchId}-parallel`,
-                type: "reasoning",
-                status: "completed",
-                title: "Parallel Model Execution",
-                description: `${parallelModelConfigs.length} models completed${searchResult.parallelResults ? ` — agreement: ${(searchResult.parallelResults.agreementScore * 100).toFixed(0)}%` : ''}`,
-                timestamp: Date.now(),
-                metadata: {
-                    modelCount: parallelModelConfigs.length,
-                    confidence: searchResult.parallelResults?.overallConfidence,
-                },
-            });
-        }
+		// Mark source steps as completed with real result counts
+		for (const source of enabledSources) {
+			const stepId = `${searchId}-${source}`;
+			const sourceResults = searchResult.results.filter(
+				(r: any) => r.provider === source || r.source === source,
+			);
+			sendStepUpdate(searchId, {
+				id: stepId,
+				type: "source",
+				status: "completed",
+				title: `Searched ${source}`,
+				description: `Found ${sourceResults.length} results from ${source}`,
+				timestamp: Date.now(),
+				metadata: {
+					source,
+					documentsFound: sourceResults.length,
+					confidence: searchResult.addMetrics.overallScore,
+				},
+			});
+		}
+
+		if (hasMultipleModels) {
+			sendStepUpdate(searchId, {
+				id: `${searchId}-parallel`,
+				type: "reasoning",
+				status: "completed",
+				title: "Parallel Model Execution",
+				description: `${parallelModelConfigs.length} models completed${searchResult.parallelResults ? ` — agreement: ${(searchResult.parallelResults.agreementScore * 100).toFixed(0)}%` : ""}`,
+				timestamp: Date.now(),
+				metadata: {
+					modelCount: parallelModelConfigs.length,
+					confidence: searchResult.parallelResults?.overallConfidence,
+				},
+			});
+		}
 
 		await waitWhilePaused(searchId);
 		if (isSearchStopped(searchId)) return;
@@ -446,12 +567,31 @@ async function executeSearchWithProgress(
 			storageId = storageResult.id;
 		}
 
+		// ── Merge RAG chunks into results ────────────────────────────────
+		const mergedResults = [...searchResult.results];
+		if (hasRag && ragConfig!.chunks) {
+			for (const chunk of ragConfig!.chunks) {
+				mergedResults.push({
+					title: chunk.documentName || "Knowledge Base",
+					url: "",
+					snippet: chunk.text.slice(0, 500),
+					fullContent: chunk.text,
+					source: "knowledge-base" as any,
+					provider: "rag" as any,
+					relevanceScore: chunk.score,
+					timestamp: new Date().toISOString(),
+				});
+			}
+			// Re-sort by relevance so RAG and web results interleave naturally
+			mergedResults.sort((a: any, b: any) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
+		}
+
 		// Send final results
-		sendResults(searchId, searchResult.results, {
+		sendResults(searchId, mergedResults, {
 			query,
 			modelUsed: searchResult.modelUsed,
 			provider: searchResult.provider,
-			totalTokens: searchResult.totalTokens,
+			totalTokens: searchResult.totalTokens + (ragConfig?.tokensUsed ?? 0),
 			totalProcessingTime: searchResult.totalProcessingTime,
 			addMetrics: searchResult.addMetrics,
 			parallelResults: searchResult.parallelResults,
@@ -459,11 +599,20 @@ async function executeSearchWithProgress(
 			availableProviders,
 			usedFallbackCache,
 			storageId,
+			ragMetadata: hasRag ? {
+				level: ragConfig!.level,
+				chunkCount: ragConfig!.chunks!.length,
+				latencyMs: ragConfig!.latencyMs,
+				tokensUsed: ragConfig!.tokensUsed,
+			} : undefined,
 		});
 	} catch (error) {
 		const errMsg = error instanceof Error ? error.message : "Search failed";
 		const errStack = error instanceof Error ? error.stack : String(error);
-		console.error(`[StreamSearch] Search execution error for searchId=${searchId}:`, errMsg);
+		console.error(
+			`[StreamSearch] Search execution error for searchId=${searchId}:`,
+			errMsg,
+		);
 		console.error(`[StreamSearch] Stack:`, errStack);
 		sendError(searchId, errMsg);
 	}

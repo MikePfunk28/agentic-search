@@ -43,8 +43,19 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 	server: {
 		handlers: {
 			GET: async ({ request }) => {
+				// Auth gate: require valid session unless auth is explicitly disabled (dev mode)
+				const authDisabled = typeof process !== "undefined" && process.env?.VITE_DISABLE_AUTH === "true";
+				if (!authDisabled) {
+					const cookie = request.headers.get("cookie") || "";
+					const hasSession = cookie.includes("__session") || cookie.includes("wos-session");
+					if (!hasSession) {
+						return new Response(
+							JSON.stringify({ error: "Authentication required" }),
+							{ status: 401, headers: { "Content-Type": "application/json" } },
+						);
+					}
+				}
 				// CSRF protection on GET — fine-tune status should not be leaked via cross-site requests
-				// TODO: Add WorkOS session validation when VITE_DISABLE_AUTH is removed
 				const csrfCheck = validateCsrfRequest(request);
 				if (!csrfCheck.valid) {
 					return createCsrfErrorResponse(csrfCheck.error!);
@@ -82,6 +93,18 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 				}
 			},
 			POST: async ({ request }) => {
+				// Auth gate: require valid session unless auth is explicitly disabled (dev mode)
+				const postAuthDisabled = typeof process !== "undefined" && process.env?.VITE_DISABLE_AUTH === "true";
+				if (!postAuthDisabled) {
+					const cookie = request.headers.get("cookie") || "";
+					const hasSession = cookie.includes("__session") || cookie.includes("wos-session");
+					if (!hasSession) {
+						return new Response(
+							JSON.stringify({ error: "Authentication required" }),
+							{ status: 401, headers: { "Content-Type": "application/json" } },
+						);
+					}
+				}
 				const validation = validateCsrfRequest(request);
 				if (!validation.valid) {
 					return createCsrfErrorResponse(validation.error!);

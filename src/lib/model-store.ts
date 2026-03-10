@@ -35,6 +35,8 @@ const ActiveModelEntrySchema = z.object({
 	role: z.enum(["validator", "reasoner", "synthesizer", "orchestrator"]).default("reasoner"),
 });
 
+const RagLevelSchema = z.enum(["none", "minimal", "medium", "full"]).default("none");
+
 const ModelStoreSchema = z.object({
 	version: z.number().default(1),
 	activeProvider: z.string().nullable(),
@@ -48,8 +50,16 @@ const ModelStoreSchema = z.object({
 	tavilyApiKey: z.string().optional(),
 	exaApiKey: z.string().optional(),
 	braveApiKey: z.string().optional(),
+	/** RAG pipeline level: none | minimal (BM25) | medium (+embeddings) | full (+crawl+graph) */
+	ragLevel: RagLevelSchema.optional(),
+	/** Active knowledge base ID (Convex doc ID string) */
+	ragKnowledgeBaseId: z.string().optional(),
+	/** Embedding model for medium/full RAG */
+	ragEmbeddingModel: z.string().optional(),
+	ragEmbeddingProvider: z.string().optional(),
 });
 
+export type RagLevel = z.infer<typeof RagLevelSchema>;
 export type ActiveModelEntry = z.infer<typeof ActiveModelEntrySchema>;
 export type LocalProvider = z.infer<typeof LocalProviderSchema>;
 export type CustomProvider = z.infer<typeof CustomProviderSchema>;
@@ -117,20 +127,24 @@ export function getActiveModelConfig(): {
 	}
 
 	if (store.activeProvider === "ollama" && store.ollama) {
+		const rawUrl = store.ollama.baseUrl || "";
+		try { new URL(rawUrl); } catch { return null; } // Invalid stored URL — bail
 		return {
 			provider: "ollama",
 			model: store.activeModel,
-			baseUrl: store.ollama.baseUrl + "/v1",
+			baseUrl: rawUrl.replace(/\/+$/, "") + "/v1",
 			apiKey: store.ollama.apiKey,
 			protocol: "openai-compatible",
 		};
 	}
 
 	if (store.activeProvider === "lmstudio" && store.lmstudio) {
+		const rawUrl = store.lmstudio.baseUrl || "";
+		try { new URL(rawUrl); } catch { return null; } // Invalid stored URL — bail
 		return {
 			provider: "lm_studio",
 			model: store.activeModel,
-			baseUrl: store.lmstudio.baseUrl + "/v1",
+			baseUrl: rawUrl.replace(/\/+$/, "") + "/v1",
 			apiKey: store.lmstudio.apiKey,
 			protocol: "openai-compatible",
 		};
@@ -664,6 +678,46 @@ export function setActiveModel(provider: string, model: string): void {
 export function setFirecrawlApiKey(key: string): void {
 	const store = getModelStore();
 	store.firecrawlApiKey = key || undefined;
+	setModelStore(store);
+}
+
+// --- RAG Configuration ---
+
+/** Get the current RAG level */
+export function getRagLevel(): RagLevel {
+	return getModelStore().ragLevel ?? "none";
+}
+
+/** Set the RAG level */
+export function setRagLevel(level: RagLevel): void {
+	const store = getModelStore();
+	store.ragLevel = level;
+	setModelStore(store);
+}
+
+/** Get the active knowledge base ID */
+export function getRagKnowledgeBaseId(): string | undefined {
+	return getModelStore().ragKnowledgeBaseId;
+}
+
+/** Set the active knowledge base ID */
+export function setRagKnowledgeBaseId(id: string | undefined): void {
+	const store = getModelStore();
+	store.ragKnowledgeBaseId = id;
+	setModelStore(store);
+}
+
+/** Get RAG embedding config */
+export function getRagEmbeddingConfig(): { model?: string; provider?: string } {
+	const store = getModelStore();
+	return { model: store.ragEmbeddingModel, provider: store.ragEmbeddingProvider };
+}
+
+/** Set RAG embedding config */
+export function setRagEmbeddingConfig(model: string, provider: string): void {
+	const store = getModelStore();
+	store.ragEmbeddingModel = model;
+	store.ragEmbeddingProvider = provider;
 	setModelStore(store);
 }
 

@@ -1,7 +1,19 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import { authTables } from '@convex-dev/auth/server'
 
 export default defineSchema({
+  // Auth tables (users, authAccounts, authSessions, authRateLimits, authRefreshTokens, authVerificationCodes)
+  ...authTables,
+  // Custom users table (extends the default from authTables)
+  users: defineTable({
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+  }).index("email", ["email"]),
+
   // OCR Results (compressed documents)
   ocrResults: defineTable({
     documentUrl: v.string(),
@@ -436,6 +448,137 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_search", ["searchHistoryId"])
     .index("by_search_step", ["searchHistoryId", "stepNumber"]),
+
+  // External API Usage Tracking (Firecrawl, Tavily, Brave, Exa, LlamaParse, DeepSeek OCR, PaddleOCR, etc.)
+  externalApiUsage: defineTable({
+    userId: v.string(),
+    provider: v.string(), // "firecrawl", "tavily", "brave", "exa", "llamaparse", "deepseek_ocr", "paddleocr", "openai", "anthropic", "google"
+    endpoint: v.string(), // specific API endpoint called
+    tokensUsed: v.optional(v.number()),
+    requestCount: v.number(), // number of API calls in this event
+    responseTimeMs: v.number(),
+    success: v.boolean(),
+    costEstimate: v.optional(v.number()), // estimated cost in USD
+    metadata: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_provider", ["provider"])
+    .index("by_user_provider", ["userId", "provider"])
+    .index("by_created", ["createdAt"])
+    .index("by_user_created", ["userId", "createdAt"]),
+
+  // ── RAG Pipeline ────────────────────────────────────────────────────
+
+  // RAG Knowledge Bases (user-scoped collections of documents)
+  ragKnowledgeBases: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    description: v.optional(v.string()),
+    ragLevel: v.union(
+      v.literal("minimal"),   // BM25 text search only
+      v.literal("medium"),    // + vector embeddings via local model
+      v.literal("full"),      // + web crawl + knowledge graph
+    ),
+    documentCount: v.number(),
+    totalChunks: v.number(),
+    totalTokens: v.number(),
+    embeddingModel: v.optional(v.string()), // e.g. "nomic-embed-text"
+    embeddingProvider: v.optional(v.string()), // "ollama" | "openai" | "local"
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_active", ["userId", "isActive"]),
+
+  // RAG Document Chunks (searchable text segments)
+  ragChunks: defineTable({
+    userId: v.string(),
+    knowledgeBaseId: v.id("ragKnowledgeBases"),
+    documentId: v.id("documents"),
+    text: v.string(),
+    chunkIndex: v.number(),
+    tokenCount: v.number(),
+    page: v.optional(v.number()),
+    // Embedding stored as array of floats (for medium/full RAG)
+    embedding: v.optional(v.array(v.number())),
+    // Knowledge boundary metadata (for full RAG)
+    domain: v.optional(v.string()),
+    topic: v.optional(v.string()),
+    relatedChunkIds: v.optional(v.array(v.string())),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_knowledge_base", ["knowledgeBaseId"])
+    .index("by_document", ["documentId"])
+    .searchIndex("search_text", {
+      searchField: "text",
+      filterFields: ["userId", "knowledgeBaseId"],
+    }),
+
+  // RAG Crawl Jobs (for full RAG — web crawl pipeline)
+  ragCrawlJobs: defineTable({
+    userId: v.string(),
+    knowledgeBaseId: v.id("ragKnowledgeBases"),
+    seedUrl: v.string(),
+    canonicalUrl: v.optional(v.string()),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("crawling"),
+      v.literal("indexing"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    depth: v.number(), // how many links deep to follow
+    maxPages: v.number(),
+    pagesCrawled: v.number(),
+    chunksCreated: v.number(),
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_knowledge_base", ["knowledgeBaseId"])
+    .index("by_status", ["status"]),
+
+  // RAG Analytics — tracks how RAG results perform vs. web-only
+  ragAnalytics: defineTable({
+    userId: v.string(),
+    searchHistoryId: v.optional(v.id("searchHistory")),
+    query: v.string(),
+    ragLevel: v.union(
+      v.literal("none"),      // web search only (baseline)
+      v.literal("minimal"),
+      v.literal("medium"),
+      v.literal("full"),
+    ),
+    // Result quality metrics
+    ragResultCount: v.number(),
+    webResultCount: v.number(),
+    mergedResultCount: v.number(),
+    addScoreRag: v.optional(v.number()),  // ADD score for RAG-sourced results
+    addScoreWeb: v.optional(v.number()),  // ADD score for web-sourced results
+    addScoreMerged: v.number(),           // ADD score for final merged set
+    // Performance
+    ragLatencyMs: v.number(),
+    webLatencyMs: v.number(),
+    totalLatencyMs: v.number(),
+    ragTokensUsed: v.number(),
+    // User feedback
+    userRating: v.optional(v.number()), // 1-5
+    userPreferredSource: v.optional(v.union(
+      v.literal("rag"),
+      v.literal("web"),
+      v.literal("merged"),
+    )),
+    feedback: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_rag_level", ["ragLevel"])
+    .index("by_created", ["createdAt"])
+    .index("by_user_created", ["userId", "createdAt"]),
 })
 
 

@@ -875,4 +875,127 @@ export const syncFineTuningJob = mutation({
   },
 });
 
+/**
+ * Get usage events grouped by day for time-series charts
+ */
+export const getUsageTimeSeries = query({
+  args: {
+    daysBack: v.optional(v.number()),
+    eventType: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userIdentity = await ctx.auth.getUserIdentity();
+    if (!userIdentity) return [];
+
+    const userId = userIdentity.subject;
+    const cutoff = Date.now() - (args.daysBack ?? 30) * 24 * 60 * 60 * 1000;
+
+    let events = await ctx.db
+      .query("usageEvents")
+      .withIndex("by_user_created", (q) =>
+        q.eq("userId", userId).gte("createdAt", cutoff)
+      )
+      .collect();
+
+    if (args.eventType) {
+      events = events.filter((e) => e.eventType === args.eventType);
+    }
+
+    // Group by day
+    const byDay = new Map<string, {
+      date: string;
+      searchCount: number;
+      totalTokens: number;
+      avgQuality: number;
+      qualitySum: number;
+      qualityCount: number;
+    }>();
+
+    for (const event of events) {
+      const date = new Date(event.createdAt).toISOString().split("T")[0];
+      const existing = byDay.get(date) ?? {
+        date,
+        searchCount: 0,
+        totalTokens: 0,
+        avgQuality: 0,
+        qualitySum: 0,
+        qualityCount: 0,
+      };
+
+      existing.searchCount++;
+      existing.totalTokens += event.tokensUsed ?? 0;
+      if (event.quality != null) {
+        existing.qualitySum += event.quality;
+        existing.qualityCount++;
+        existing.avgQuality = existing.qualitySum / existing.qualityCount;
+      }
+
+      byDay.set(date, existing);
+    }
+
+    return Array.from(byDay.values())
+      .map(({ qualitySum, qualityCount, ...rest }) => rest)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  },
+});
+
+/**
+ * Get top queries by frequency
+ */
+export const getTopQueries = query({
+  args: {
+    limit: v.optional(v.number()),
+    daysBack: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userIdentity = await ctx.auth.getUserIdentity();
+    if (!userIdentity) return [];
+
+    const userId = userIdentity.subject;
+    const cutoff = Date.now() - (args.daysBack ?? 30) * 24 * 60 * 60 * 1000;
+
+    const events = await ctx.db
+      .query("usageEvents")
+      .withIndex("by_user_created", (q) =>
+        q.eq("userId", userId).gte("createdAt", cutoff)
+      )
+      .collect();
+
+    const queryEvents = events.filter((e) => e.eventType === "search" && e.query);
+
+    const byQuery = new Map<string, {
+      query: string;
+      count: number;
+      avgQuality: number;
+      qualitySum: number;
+      qualityCount: number;
+    }>();
+
+    for (const event of queryEvents) {
+      const q = event.query!;
+      const existing = byQuery.get(q) ?? {
+        query: q,
+        count: 0,
+        avgQuality: 0,
+        qualitySum: 0,
+        qualityCount: 0,
+      };
+
+      existing.count++;
+      if (event.quality != null) {
+        existing.qualitySum += event.quality;
+        existing.qualityCount++;
+        existing.avgQuality = existing.qualitySum / existing.qualityCount;
+      }
+
+      byQuery.set(q, existing);
+    }
+
+    return Array.from(byQuery.values())
+      .map(({ qualitySum, qualityCount, ...rest }) => rest)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, args.limit ?? 10);
+  },
+});
+
 

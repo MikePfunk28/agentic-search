@@ -20,10 +20,14 @@ if (!VITE_CONVEX_URL) {
 }
 
 if (!VITE_CONVEX_URL) {
-	console.error("[Convex] VITE_CONVEX_URL is not set. The Convex client will not connect. This variable must be configured in the Cloudflare dashboard under Settings > Variables.");
+	console.warn(
+		"[convex] VITE_CONVEX_URL is not set. Convex queries will fail until configured in environment variables or wrangler.toml."
+	);
 }
 
-export const convexClient = new ConvexReactClient(VITE_CONVEX_URL);
+export const convexClient = VITE_CONVEX_URL
+	? new ConvexReactClient(VITE_CONVEX_URL)
+	: (null as unknown as ConvexReactClient); // Will fail gracefully on use rather than crash SSR cold start
 
 // Export for type-safe usage in components
 export type { ConvexReactClient };

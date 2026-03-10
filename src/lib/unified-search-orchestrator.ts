@@ -4,560 +4,809 @@
  * This is what makes the search intelligent and validated
  */
 
-import type { ModelConfig } from "./model-config";
-import { agenticSearch } from "./agentic-search";
-import { ParallelModelOrchestrator } from "./parallel-model-orchestrator";
-import { InterleavedReasoningEngine } from "./interleaved-reasoning-engine";
 import { AdversarialDifferentialDiscriminator } from "./add-discriminator";
+import { agenticSearch } from "./agentic-search";
 import { ComponentValidationPipeline } from "./component-validation-pipeline";
+import { InterleavedReasoningEngine } from "./interleaved-reasoning-engine";
+import type { ModelConfig } from "./model-config";
+import { ParallelModelOrchestrator } from "./parallel-model-orchestrator";
 import { researchStorage } from "./results-storage";
-import type { SearchResult } from "./types";
+import { buildSearchEvidence } from "./search/evidence";
+import {
+	assignExecutionRoles,
+	resolveSearchExecutionPolicy,
+	type SearchExecutionSummary,
+} from "./search/execution-policy";
 import { QuerySegmenter, SegmentCoordinator } from "./segment";
+import type { SearchResult } from "./types";
 
 const OPENAI_COMPATIBLE_REASONING_PROVIDERS = new Set([
-  "openai",
-  "ollama",
-  "lm_studio",
-  "deepseek",
-  "moonshot",
-  "kimi",
-  "openrouter",
-  "azure_openai",
-  "vllm",
-  "gguf",
-  "onnx",
+	"openai",
+	"ollama",
+	"lm_studio",
+	"deepseek",
+	"moonshot",
+	"kimi",
+	"openrouter",
+	"azure_openai",
+	"vllm",
+	"gguf",
+	"onnx",
 ]);
 
 export interface UnifiedSearchResult {
-  // Search results
-  results: SearchResult[];
+	// Search results
+	results: SearchResult[];
 
-  // Parallel model outputs
-  parallelResults?: {
-    models: Array<{
-      model: string;
-      response: string;
-      confidence: number;
-      tokenCount: number;
-      processingTime: number;
-    }>;
-    consensus: string;
-    overallConfidence: number;
-    agreementScore: number;
-  };
+	execution?: SearchExecutionSummary;
 
-  // Interleaved reasoning steps
-  reasoningSteps?: Array<{
-    step: string;
-    type: "analysis" | "planning" | "execution" | "validation" | "synthesis";
-    input: string;
-    output: string;
-    confidence: number;
-    isValid: boolean;
-    error?: string;
-    duration: number;
-  }>;
+	// Parallel model outputs
+	parallelResults?: {
+		models: Array<{
+			model: string;
+			response: string;
+			confidence: number;
+			tokenCount: number;
+			processingTime: number;
+			verdict?: "supported" | "mixed" | "insufficient" | "error";
+			supportedResultIds?: string[];
+		}>;
+		consensus: string;
+		overallConfidence: number;
+		agreementScore: number;
+		verificationMode?: "raw_query" | "evidence";
+		supportedResultIds?: string[];
+		evidenceCoverage?: number;
+	};
 
-  // Segmentation results (if enabled)
-  segmentation?: {
-    segmentCount: number;
-    segments: Array<{
-      id: string;
-      type: string;
-      text: string;
-      modelUsed: string;
-      tokensUsed: number;
-      timeMs: number;
-      success: boolean;
-    }>;
-    coordinationLog: Array<{
-      timestamp: number;
-      segmentId: string;
-      action: string;
-      metadata: any;
-    }>;
-    synthesizedResponse: string;
-  };
+	// Interleaved reasoning steps
+	reasoningSteps?: Array<{
+		step: string;
+		type: "analysis" | "planning" | "execution" | "validation" | "synthesis";
+		input: string;
+		output: string;
+		confidence: number;
+		isValid: boolean;
+		error?: string;
+		duration: number;
+	}>;
 
-  // Quality metrics
-  addMetrics: {
-    relevance: number;
-    diversity: number;
-    freshness: number;
-    consistency: number;
-    overallScore: number;
-    drift: number;
-    trend: "improving" | "stable" | "declining";
-    recommendation: string;
-  };
+	// Segmentation results (if enabled)
+	segmentation?: {
+		segmentCount: number;
+		segments: Array<{
+			id: string;
+			type: string;
+			text: string;
+			modelUsed: string;
+			tokensUsed: number;
+			timeMs: number;
+			success: boolean;
+		}>;
+		coordinationLog: Array<{
+			timestamp: number;
+			segmentId: string;
+			action: string;
+			metadata: Record<string, unknown>;
+		}>;
+		synthesizedResponse: string;
+	};
 
-  // Component validation
-  validation: {
-    retrieval: { valid: boolean; confidence: number; errors: string[] };
-    reasoning: { valid: boolean; confidence: number; errors: string[] };
-    response: { valid: boolean; confidence: number; errors: string[] };
-  };
+	// Quality metrics
+	addMetrics: {
+		relevance: number;
+		diversity: number;
+		freshness: number;
+		consistency: number;
+		overallScore: number;
+		drift: number;
+		trend: "improving" | "stable" | "declining";
+		recommendation: string;
+	};
 
-  // Metadata
-  strategy: string;
-  reasoning: string[];
-  quality: number;
-  timestamp: string;
-  modelUsed: string;
-  provider: string;
-  totalTokens: number;
-  totalProcessingTime: number;
+	// Component validation
+	validation: {
+		retrieval: { valid: boolean; confidence: number; errors: string[] };
+		reasoning: { valid: boolean; confidence: number; errors: string[] };
+		response: { valid: boolean; confidence: number; errors: string[] };
+	};
+
+	// Metadata
+	strategy: string;
+	reasoning: string[];
+	quality: number;
+	timestamp: string;
+	modelUsed: string;
+	provider: string;
+	totalTokens: number;
+	totalProcessingTime: number;
 }
 
 export interface SearchOptions {
-  useParallelModels?: boolean;
-  useInterleavedReasoning?: boolean;
-  enableValidation?: boolean;
-  parallelModelConfigs?: ModelConfig[];
-  useSegmentation?: boolean; // Enable query segmentation and coordination
-  apiKeys?: { firecrawl?: string; tavily?: string; exa?: string; brave?: string };
+	useParallelModels?: boolean;
+	useInterleavedReasoning?: boolean;
+	enableValidation?: boolean;
+	parallelModelConfigs?: ModelConfig[];
+	useSegmentation?: boolean; // Enable query segmentation and coordination
+	apiKeys?: {
+		firecrawl?: string;
+		tavily?: string;
+		exa?: string;
+		brave?: string;
+	};
 }
 
 export class UnifiedSearchOrchestrator {
-  private addDiscriminator: AdversarialDifferentialDiscriminator;
-  private validationPipeline: ComponentValidationPipeline;
+	private addDiscriminator: AdversarialDifferentialDiscriminator;
+	private validationPipeline: ComponentValidationPipeline;
 
-  constructor() {
-    this.addDiscriminator = new AdversarialDifferentialDiscriminator();
-    this.validationPipeline = new ComponentValidationPipeline();
-  }
+	constructor() {
+		this.addDiscriminator = new AdversarialDifferentialDiscriminator();
+		this.validationPipeline = new ComponentValidationPipeline();
+	}
 
-  /**
-   * Execute unified search with all advanced features
-   */
-  async search(
-    query: string,
-    primaryModelConfig: ModelConfig | null | undefined,
-    options: SearchOptions = {}
-  ): Promise<UnifiedSearchResult> {
-    const startTime = Date.now();
-    const {
-      useParallelModels = true,
-      useInterleavedReasoning = true,
-      enableValidation = true,
-      parallelModelConfigs = [],
-      useSegmentation = false,
-    } = options;
+	/**
+	 * Execute unified search with all advanced features
+	 */
+	async search(
+		query: string,
+		primaryModelConfig: ModelConfig | null | undefined,
+		options: SearchOptions = {},
+	): Promise<UnifiedSearchResult> {
+		const startTime = Date.now();
+		const {
+			useParallelModels = true,
+			useInterleavedReasoning = true,
+			enableValidation = true,
+			parallelModelConfigs = [],
+			useSegmentation = false,
+		} = options;
+		const executionPolicy = resolveSearchExecutionPolicy({
+			primaryModelConfig,
+			parallelModelConfigs,
+			requestedParallelModels: useParallelModels,
+			requestedSegmentation: useSegmentation,
+			requestedInterleavedReasoning: useInterleavedReasoning,
+		});
 
-    console.log(`[UnifiedSearch] Starting search for: "${query}"`);
-    console.log(`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}, validation=${enableValidation}, segmentation=${useSegmentation}`);
+		console.log(`[UnifiedSearch] Starting search for: "${query}"`);
+		console.log(
+			`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}, validation=${enableValidation}, segmentation=${useSegmentation}`,
+		);
+		console.log(
+			`[UnifiedSearch] Execution mode: ${executionPolicy.mode} (${executionPolicy.reason})`,
+		);
 
-    // Route to segmented search if enabled (requires a model)
-    if (useSegmentation && primaryModelConfig) {
-      console.log('[UnifiedSearch] Routing to segmented search...');
-      return this.searchWithSegmentation(query, primaryModelConfig, options);
-    }
+		// Route to segmented search if enabled (requires a model)
+		if (executionPolicy.useSegmentation && primaryModelConfig) {
+			console.log("[UnifiedSearch] Routing to segmented search...");
+			return this.searchWithSegmentation(query, primaryModelConfig, options);
+		}
 
-    try {
-      // Phase 1: Execute base agentic search
-      console.log("[UnifiedSearch] Phase 1: Executing base agentic search...");
-      const baseSearchResult = await agenticSearch.search(query, primaryModelConfig, { searchApiKeys: options.apiKeys });
+		try {
+			// Phase 1: Execute base agentic search
+			console.log("[UnifiedSearch] Phase 1: Executing base agentic search...");
+			const baseSearchResult = await agenticSearch.search(
+				query,
+				primaryModelConfig,
+				{ searchApiKeys: options.apiKeys },
+			);
 
-      if (baseSearchResult.results.length === 0) {
-        const cachedResults = researchStorage.findRelevantResults(query, 10);
-        if (cachedResults.length > 0) {
-          console.warn(
-            `[UnifiedSearch] Live providers returned no results. Falling back to ${cachedResults.length} cached result(s).`,
-          );
-          baseSearchResult.results = cachedResults;
-          baseSearchResult.reasoning.push(
-            `Falling back to ${cachedResults.length} cached result(s) from prior successful searches.`,
-          );
-        }
-      }
+			if (baseSearchResult.results.length === 0) {
+				const cachedResults = await researchStorage.findRelevantResults(
+					query,
+					10,
+				);
+				if (cachedResults.length > 0) {
+					console.warn(
+						`[UnifiedSearch] Live providers returned no results. Falling back to ${cachedResults.length} cached result(s).`,
+					);
+					baseSearchResult.results = cachedResults;
+					baseSearchResult.reasoning.push(
+						`Falling back to ${cachedResults.length} cached result(s) from prior successful searches.`,
+					);
+				}
+			}
 
-      let parallelResults;
-      let reasoningSteps;
-      let totalTokens = 0;
+			let parallelResults: UnifiedSearchResult["parallelResults"];
+			let reasoningSteps: UnifiedSearchResult["reasoningSteps"];
+			let totalTokens = 0;
+			const evidenceBundle = buildSearchEvidence(
+				query,
+				baseSearchResult.results,
+			);
 
-      // Phase 2: Parallel model orchestration (if enabled and configs provided)
-      if (useParallelModels && parallelModelConfigs.length > 0) {
-        console.log(`[UnifiedSearch] Phase 2: Running parallel models (${parallelModelConfigs.length} models)...`);
+			// Phase 2: Parallel model orchestration (if enabled and configs provided)
+			if (
+				executionPolicy.useParallelModels &&
+				parallelModelConfigs.length > 0
+			) {
+				console.log(
+					`[UnifiedSearch] Phase 2: Running parallel models (${parallelModelConfigs.length} models)...`,
+				);
 
-        // Convert ModelConfig[] to ParallelModelConfig[] for the orchestrator
-        const parallelConfigs = parallelModelConfigs.map((config) => ({
-          name: `${config.provider}:${config.model}`,
-          config,
-          role: ("reasoner" as const),
-        }));
+				const parallelConfigs = assignExecutionRoles(
+					parallelModelConfigs,
+					executionPolicy.mode,
+				);
 
-        const orchestrator = new ParallelModelOrchestrator(parallelConfigs);
+				const orchestrator = new ParallelModelOrchestrator(parallelConfigs);
 
-        // Use parallel execution for diverse perspectives
-        const parallelResult = await orchestrator.runParallel(query, parallelConfigs);
+				const parallelResult =
+					evidenceBundle.items.length > 0
+						? await orchestrator.runEvidenceVerification(
+								query,
+								evidenceBundle,
+								parallelConfigs,
+							)
+						: await orchestrator.runParallel(query, parallelConfigs);
 
-        parallelResults = {
-          models: parallelResult.responses.map(r => ({
-            model: r.modelName,
-            response: r.response,
-            confidence: r.confidence,
-            tokenCount: r.tokenCount,
-            processingTime: r.processingTime,
-          })),
-          consensus: parallelResult.consensus ?? '',
-          overallConfidence: parallelResult.confidenceScore,
-          agreementScore: parallelResult.consensusAnalysis.agreementScore,
-        };
+				parallelResults = {
+					models: parallelResult.responses.map((r) => ({
+						model: r.modelName,
+						response: r.response,
+						confidence: r.confidence,
+						tokenCount: r.tokenCount,
+						processingTime: r.processingTime,
+						verdict: r.verdict,
+						supportedResultIds: r.supportedResultIds,
+					})),
+					consensus: parallelResult.consensus ?? "",
+					overallConfidence: parallelResult.confidenceScore,
+					agreementScore: parallelResult.consensusAnalysis.agreementScore,
+					verificationMode: parallelResult.verificationMode,
+					supportedResultIds: parallelResult.supportedResultIds,
+					evidenceCoverage: parallelResult.evidenceCoverage,
+				};
 
-        totalTokens += parallelResult.totalTokens;
-        console.log(
-          `[UnifiedSearch] Parallel models completed. Confidence: ${parallelResult.confidenceScore.toFixed(2)}, ` +
-          `Agreement: ${(parallelResult.consensusAnalysis.agreementScore * 100).toFixed(0)}%, ` +
-          `Strategy: ${parallelResult.consensusAnalysis.strategy}`
-        );
-      }
+				totalTokens += parallelResult.totalTokens;
+				console.log(
+					`[UnifiedSearch] Parallel models completed. Confidence: ${parallelResult.confidenceScore.toFixed(2)}, ` +
+						`Agreement: ${(parallelResult.consensusAnalysis.agreementScore * 100).toFixed(0)}%, ` +
+						`Strategy: ${parallelResult.consensusAnalysis.strategy}, ` +
+						`Mode: ${parallelResult.verificationMode || "raw_query"}`,
+				);
+			}
 
-      // Phase 3: Interleaved reasoning (if enabled and model available)
-      if (useInterleavedReasoning && primaryModelConfig) {
-        if (OPENAI_COMPATIBLE_REASONING_PROVIDERS.has(primaryModelConfig.provider)) {
-          console.log("[UnifiedSearch] Phase 3: Executing interleaved reasoning...");
+			// Phase 3: Interleaved reasoning (if enabled and model available)
+			if (executionPolicy.useInterleavedReasoning && primaryModelConfig) {
+				if (
+					OPENAI_COMPATIBLE_REASONING_PROVIDERS.has(primaryModelConfig.provider)
+				) {
+					console.log(
+						"[UnifiedSearch] Phase 3: Executing interleaved reasoning...",
+					);
 
-          try {
-            const baseUrl = (primaryModelConfig.baseUrl || 'http://localhost:11434').replace(/\/_?v1$/, '');
-            const reasoningEngine = new InterleavedReasoningEngine(
-              {
-                orchestratorModel: primaryModelConfig.model,
-                validatorModel: primaryModelConfig.model,
-              },
-              baseUrl,
-              primaryModelConfig.apiKey || (primaryModelConfig.provider === "ollama" ? "ollama" : "local"),
-            );
+					try {
+						const baseUrl = (
+							primaryModelConfig.baseUrl || "http://localhost:11434"
+						).replace(/\/_?v1$/, "");
+						const reasoningEngine = new InterleavedReasoningEngine(
+							{
+								orchestratorModel: primaryModelConfig.model,
+								validatorModel: primaryModelConfig.model,
+							},
+							baseUrl,
+							primaryModelConfig.apiKey ||
+								(primaryModelConfig.provider === "ollama" ? "ollama" : "local"),
+						);
 
-            const reasoningResult = await reasoningEngine.reason(query, { searchResults: baseSearchResult.results });
-            const averageStepDuration = reasoningResult.steps.length > 0
-              ? reasoningResult.processingTime / reasoningResult.steps.length
-              : 0;
+						const reasoningResult = await reasoningEngine.reason(query, {
+							searchResults: baseSearchResult.results,
+						});
+						const averageStepDuration =
+							reasoningResult.steps.length > 0
+								? reasoningResult.processingTime / reasoningResult.steps.length
+								: 0;
 
-            reasoningSteps = reasoningResult.steps.map(step => ({
-              step: step.id,
-              type: step.type as "analysis" | "planning" | "execution" | "validation" | "synthesis",
-              input: step.input,
-              output: step.output,
-              confidence: step.confidence,
-              isValid: step.validated,
-              error: step.validationErrors?.[0],
-              duration: averageStepDuration,
-            }));
+						reasoningSteps = reasoningResult.steps.map((step) => ({
+							step: step.id,
+							type: step.type as
+								| "analysis"
+								| "planning"
+								| "execution"
+								| "validation"
+								| "synthesis",
+							input: step.input,
+							output: step.output,
+							confidence: step.confidence,
+							isValid: step.validated,
+							error: step.validationErrors?.[0],
+							duration: averageStepDuration,
+						}));
 
-            totalTokens += reasoningResult.totalTokens;
-            console.log(`[UnifiedSearch] Reasoning completed. ${reasoningResult.steps.length} steps, confidence: ${reasoningResult.overallConfidence.toFixed(2)}`);
-          } catch (error) {
-            console.error("[UnifiedSearch] Interleaved reasoning failed, continuing with base search results:", error);
-          }
-        } else {
-          console.log(`[UnifiedSearch] Skipping interleaved reasoning for unsupported provider ${primaryModelConfig.provider}`);
-        }
-      }
+						totalTokens += reasoningResult.totalTokens;
+						console.log(
+							`[UnifiedSearch] Reasoning completed. ${reasoningResult.steps.length} steps, confidence: ${reasoningResult.overallConfidence.toFixed(2)}`,
+						);
+					} catch (error) {
+						console.error(
+							"[UnifiedSearch] Interleaved reasoning failed, continuing with base search results:",
+							error,
+						);
+					}
+				} else {
+					console.log(
+						`[UnifiedSearch] Skipping interleaved reasoning for unsupported provider ${primaryModelConfig.provider}`,
+					);
+				}
+			}
 
-      // Phase 4: ADD quality scoring
-      console.log("[UnifiedSearch] Phase 4: Calculating ADD quality metrics...");
-      const addScore = this.addDiscriminator.scoreResults(query, baseSearchResult.results);
-      const driftAnalysis = this.addDiscriminator.analyzeDrift();
+			// Phase 4: ADD quality metrics — derived from the per-result scores
+			// that agenticSearch.assessAndRankResults() already computed.
+			// Previously this ran a weaker second-pass scorer (addDiscriminator)
+			// whose output disagreed with the per-result addScores. Now we derive
+			// the summary metrics directly from the strong scorer's output.
+			console.log(
+				"[UnifiedSearch] Phase 4: Calculating ADD quality metrics...",
+			);
+			const results = baseSearchResult.results;
+			const qualityScores = baseSearchResult.quality || [];
+			const avgAdd = results.length > 0
+				? results.reduce((s, r) => s + (r.addScore || 0), 0) / results.length
+				: 0;
+			const avgRelevance = qualityScores.length > 0
+				? qualityScores.reduce((s, q) => s + (q.relevance || 0), 0) / qualityScores.length
+				: avgAdd;
+			const avgFreshness = qualityScores.length > 0
+				? qualityScores.reduce((s, q) => s + (q.freshness || 0), 0) / qualityScores.length
+				: 0.5;
+			const avgCredibility = qualityScores.length > 0
+				? qualityScores.reduce((s, q) => s + (q.credibility || 0), 0) / qualityScores.length
+				: 0.5;
+			// Diversity: measure uniqueness of domains
+			const uniqueDomains = new Set(results.map(r => {
+				try { return new URL(r.url).hostname; } catch { return r.url; }
+			}));
+			const diversityScore = results.length > 0
+				? Math.min(1.0, uniqueDomains.size / Math.max(results.length, 1))
+				: 0;
+			// Consistency: all results have required fields
+			const consistencyScore = results.length > 0
+				? results.filter(r => r.url && r.snippet && r.title).length / results.length
+				: 0;
 
-      const addMetrics = {
-        relevance: addScore.relevanceScore,
-        diversity: addScore.diversityScore,
-        freshness: addScore.freshnessScore,
-        consistency: addScore.consistencyScore,
-        overallScore: addScore.overallScore,
-        drift: driftAnalysis.driftMagnitude,
-        trend: this.addDiscriminator.getMetrics().recentTrend,
-        recommendation: driftAnalysis.recommendation,
-      };
+			// Still run drift analysis from the discriminator for trend tracking
+			this.addDiscriminator.scoreResults(query, results);
+			const driftAnalysis = this.addDiscriminator.analyzeDrift();
 
-      // Phase 5: Component validation (if enabled)
-      let validation = {
-        retrieval: { valid: false, confidence: 0, errors: ['not yet validated'] as string[] },
-        reasoning: { valid: false, confidence: 0, errors: ['not yet validated'] as string[] },
-        response: { valid: false, confidence: 0, errors: ['not yet validated'] as string[] },
-      };
+			const addMetrics = {
+				relevance: avgRelevance,
+				diversity: diversityScore,
+				freshness: avgFreshness,
+				consistency: consistencyScore,
+				overallScore: avgAdd,
+				drift: driftAnalysis.driftMagnitude,
+				trend: this.addDiscriminator.getMetrics().recentTrend,
+				recommendation: driftAnalysis.recommendation,
+			};
 
-      if (enableValidation) {
-        console.log("[UnifiedSearch] Phase 5: Validating components...");
+			// Phase 5: Component validation (if enabled)
+			const validation: UnifiedSearchResult["validation"] = {
+				retrieval: {
+					valid: false,
+					confidence: 0,
+					errors: ["not yet validated"] as string[],
+				},
+				reasoning: {
+					valid: false,
+					confidence: 0,
+					errors: ["not yet validated"] as string[],
+				},
+				response: {
+					valid: false,
+					confidence: 0,
+					errors: ["not yet validated"] as string[],
+				},
+			};
 
-        const finalResponse = parallelResults?.consensus || baseSearchResult.reasoning.join('\n');
-        const pipeline = await this.validationPipeline.validate({
-          query,
-          searchResults: baseSearchResult.results,
-          reasoningSteps: (reasoningSteps || []).map(s => ({ input: s.input, output: s.output, confidence: s.confidence })),
-          finalResponse,
-        });
+			if (enableValidation) {
+				console.log("[UnifiedSearch] Phase 5: Validating components...");
 
-        const retrievalComp = pipeline.components.find(c => c.componentName === 'retrieval');
-        const reasoningComp = pipeline.components.find(c => c.componentName === 'reasoning');
-        const responseComp = pipeline.components.find(c => c.componentName === 'response');
+				const finalResponse =
+					parallelResults?.consensus || baseSearchResult.reasoning.join("\n");
+				const pipeline = await this.validationPipeline.validate({
+					query,
+					searchResults: baseSearchResult.results,
+					reasoningSteps: (reasoningSteps || []).map((s) => ({
+						input: s.input,
+						output: s.output,
+						confidence: s.confidence,
+					})),
+					finalResponse,
+				});
 
-        if (retrievalComp) {
-          validation.retrieval = { valid: retrievalComp.valid, confidence: retrievalComp.confidence, errors: retrievalComp.errors };
-        }
-        if (reasoningComp) {
-          validation.reasoning = { valid: reasoningComp.valid, confidence: reasoningComp.confidence, errors: reasoningComp.errors };
-        }
-        if (responseComp) {
-          validation.response = { valid: responseComp.valid, confidence: responseComp.confidence, errors: responseComp.errors };
-        }
+				const retrievalComp = pipeline.components.find(
+					(c) => c.componentName === "retrieval",
+				);
+				const reasoningComp = pipeline.components.find(
+					(c) => c.componentName === "reasoning",
+				);
+				const responseComp = pipeline.components.find(
+					(c) => c.componentName === "response",
+				);
 
-        console.log(`[UnifiedSearch] Validation complete. Retrieval: ${validation.retrieval.valid}, Reasoning: ${validation.reasoning.valid}, Response: ${validation.response.valid}`);
-      }
+				if (retrievalComp) {
+					validation.retrieval = {
+						valid: retrievalComp.valid,
+						confidence: retrievalComp.confidence,
+						errors: retrievalComp.errors,
+					};
+				}
+				if (reasoningComp) {
+					validation.reasoning = {
+						valid: reasoningComp.valid,
+						confidence: reasoningComp.confidence,
+						errors: reasoningComp.errors,
+					};
+				}
+				if (responseComp) {
+					validation.response = {
+						valid: responseComp.valid,
+						confidence: responseComp.confidence,
+						errors: responseComp.errors,
+					};
+				}
 
-      const totalProcessingTime = Date.now() - startTime;
+				console.log(
+					`[UnifiedSearch] Validation complete. Retrieval: ${validation.retrieval.valid}, Reasoning: ${validation.reasoning.valid}, Response: ${validation.response.valid}`,
+				);
+			}
 
-      // Additional protection: high-risk query cross-check
-      const isHighRisk = this.isHighRiskQuery(query);
-      if (isHighRisk) {
-        if (!parallelResults || (parallelResults.agreementScore ?? 0) < 0.6) {
-          validation.response = {
-            valid: false,
-            confidence: (validation.response.confidence ?? 0) * 0.6,
-            errors: [...validation.response.errors, 'High-risk query lacked consensus across sources'],
-          };
-        }
-      }
+			const totalProcessingTime = Date.now() - startTime;
 
-      const result: UnifiedSearchResult = {
-        results: baseSearchResult.results,
-        parallelResults,
-        reasoningSteps,
-        addMetrics,
-        validation,
-        strategy: baseSearchResult.strategy.primaryQuery,
-        reasoning: baseSearchResult.reasoning,
-        quality: baseSearchResult.quality.length > 0
-          ? baseSearchResult.quality.reduce((sum, q) => sum + q.addScore, 0) / baseSearchResult.quality.length
-          : 0,
-        timestamp: new Date().toISOString(),
-        modelUsed: primaryModelConfig?.model ?? 'none',
-        provider: primaryModelConfig?.provider ?? 'web-only',
-        totalTokens,
-        totalProcessingTime,
-      };
+			// Additional protection: high-risk query cross-check
+			const isHighRisk = this.isHighRiskQuery(query);
+			if (isHighRisk) {
+				const weakEvidenceVerification =
+					!parallelResults ||
+					(parallelResults.agreementScore ?? 0) < 0.6 ||
+					parallelResults.verificationMode !== "evidence" ||
+					(parallelResults.evidenceCoverage ?? 0) < 0.2;
+				if (weakEvidenceVerification) {
+					validation.response = {
+						valid: false,
+						confidence: (validation.response.confidence ?? 0) * 0.6,
+						errors: [
+							...validation.response.errors,
+							"High-risk query lacked evidence-grounded consensus",
+						],
+					};
+				}
+			}
 
-      console.log(`[UnifiedSearch] Search completed in ${totalProcessingTime}ms`);
-      console.log(`[UnifiedSearch] Quality: ${addMetrics.overallScore.toFixed(2)}, Tokens: ${totalTokens}`);
+			const result: UnifiedSearchResult = {
+				results: baseSearchResult.results,
+				execution: {
+					mode: executionPolicy.mode,
+					reason: executionPolicy.reason,
+					modelCount: executionPolicy.modelCount,
+				},
+				parallelResults,
+				reasoningSteps,
+				addMetrics,
+				validation,
+				strategy: baseSearchResult.strategy.primaryQuery,
+				reasoning: baseSearchResult.reasoning,
+				quality:
+					baseSearchResult.quality.length > 0
+						? baseSearchResult.quality.reduce((sum, q) => sum + q.addScore, 0) /
+							baseSearchResult.quality.length
+						: 0,
+				timestamp: new Date().toISOString(),
+				modelUsed: primaryModelConfig?.model ?? "none",
+				provider: primaryModelConfig?.provider ?? "web-only",
+				totalTokens,
+				totalProcessingTime,
+			};
 
-      return result;
+			console.log(
+				`[UnifiedSearch] Search completed in ${totalProcessingTime}ms`,
+			);
+			console.log(
+				`[UnifiedSearch] Quality: ${addMetrics.overallScore.toFixed(2)}, Tokens: ${totalTokens}`,
+			);
 
-    } catch (error) {
-      console.error("[UnifiedSearch] Search failed:", error);
+			return result;
+		} catch (error) {
+			console.error("[UnifiedSearch] Search failed:", error);
 
-      // Return fallback result
-      return {
-        results: [],
-        addMetrics: {
-          relevance: 0,
-          diversity: 0,
-          freshness: 0,
-          consistency: 0,
-          overallScore: 0,
-          drift: 0,
-          trend: "declining",
-          recommendation: "System error - please retry",
-        },
-        validation: {
-          retrieval: { valid: false, confidence: 0, errors: ["Search failed"] },
-          reasoning: { valid: false, confidence: 0, errors: ["Not executed"] },
-          response: { valid: false, confidence: 0, errors: ["Not generated"] },
-        },
-        strategy: "error",
-        reasoning: [`Search failed: ${error instanceof Error ? error.message : "Unknown error"}`],
-        quality: 0,
-        timestamp: new Date().toISOString(),
-        modelUsed: primaryModelConfig?.model ?? 'none',
-        provider: primaryModelConfig?.provider ?? 'web-only',
-        totalTokens: 0,
-        totalProcessingTime: Date.now() - startTime,
-      };
-    }
-  }
+			// Return fallback result
+			return {
+				results: [],
+				execution: {
+					mode: executionPolicy.mode,
+					reason: executionPolicy.reason,
+					modelCount: executionPolicy.modelCount,
+				},
+				addMetrics: {
+					relevance: 0,
+					diversity: 0,
+					freshness: 0,
+					consistency: 0,
+					overallScore: 0,
+					drift: 0,
+					trend: "declining",
+					recommendation: "System error - please retry",
+				},
+				validation: {
+					retrieval: { valid: false, confidence: 0, errors: ["Search failed"] },
+					reasoning: { valid: false, confidence: 0, errors: ["Not executed"] },
+					response: { valid: false, confidence: 0, errors: ["Not generated"] },
+				},
+				strategy: "error",
+				reasoning: [
+					`Search failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+				],
+				quality: 0,
+				timestamp: new Date().toISOString(),
+				modelUsed: primaryModelConfig?.model ?? "none",
+				provider: primaryModelConfig?.provider ?? "web-only",
+				totalTokens: 0,
+				totalProcessingTime: Date.now() - startTime,
+			};
+		}
+	}
 
-  /**
-   * Execute search with query segmentation and coordination
-   */
-  async searchWithSegmentation(
-    query: string,
-    primaryModelConfig: ModelConfig,
-    options: SearchOptions = {}
-  ): Promise<UnifiedSearchResult> {
-    const startTime = Date.now();
-    const { enableValidation = true } = options;
+	/**
+	 * Execute search with query segmentation and coordination
+	 */
+	async searchWithSegmentation(
+		query: string,
+		primaryModelConfig: ModelConfig,
+		options: SearchOptions = {},
+	): Promise<UnifiedSearchResult> {
+		const startTime = Date.now();
+		const { enableValidation = true } = options;
 
-    console.log(`[SegmentedSearch] Starting segmented search for: "${query}"`);
-    console.log(`[SegmentedSearch] This will work equally well with tiny or powerful models!`);
+		console.log(`[SegmentedSearch] Starting segmented search for: "${query}"`);
+		console.log(
+			`[SegmentedSearch] This will work equally well with tiny or powerful models!`,
+		);
 
-    try {
-      // Phase 1: Query Segmentation
-      console.log("[SegmentedSearch] Phase 1: Segmenting query...");
-      const segmenter = new QuerySegmenter(primaryModelConfig);
-      const segmentation = await segmenter.segment(query);
+		try {
+			// Phase 1: Query Segmentation
+			console.log("[SegmentedSearch] Phase 1: Segmenting query...");
+			const segmenter = new QuerySegmenter(primaryModelConfig);
+			const segmentation = await segmenter.segment(query);
 
-      console.log(`[SegmentedSearch] Created ${segmentation.segments.length} segments:`);
-      segmentation.segments.forEach(seg => {
-        console.log(`  - ${seg.type}: "${seg.text}" (priority: ${seg.priority}, complexity: ${seg.estimatedComplexity})`);
-        console.log(`    Recommended model: ${seg.recommendedModel} (SUGGESTION ONLY - user controls actual model)`);
-      });
+			console.log(
+				`[SegmentedSearch] Created ${segmentation.segments.length} segments:`,
+			);
+			segmentation.segments.forEach((seg) => {
+				console.log(
+					`  - ${seg.type}: "${seg.text}" (priority: ${seg.priority}, complexity: ${seg.estimatedComplexity})`,
+				);
+				console.log(
+					`    Recommended model: ${seg.recommendedModel} (SUGGESTION ONLY - user controls actual model)`,
+				);
+			});
 
-      // Phase 2: Segment Coordination and Execution
-      console.log(`[SegmentedSearch] Phase 2: Executing ${segmentation.segments.length} segments with coordination...`);
-      const coordinator = new SegmentCoordinator(primaryModelConfig, options.apiKeys);
-      const coordinatedResult = await coordinator.execute(segmentation);
+			// Phase 2: Segment Coordination and Execution
+			console.log(
+				`[SegmentedSearch] Phase 2: Executing ${segmentation.segments.length} segments with coordination...`,
+			);
+			const coordinator = new SegmentCoordinator(
+				primaryModelConfig,
+				options.apiKeys,
+			);
+			const coordinatedResult = await coordinator.execute(segmentation);
 
-      // If segmented search returned nothing, fall back to the non-segmented path
-      if (coordinatedResult.finalResults.length === 0) {
-        console.warn("[SegmentedSearch] Zero results — falling back to non-segmented path");
-        throw new Error("Segmented search returned zero results");
-      }
+			// If segmented search returned nothing, fall back to the non-segmented path
+			if (coordinatedResult.finalResults.length === 0) {
+				console.warn(
+					"[SegmentedSearch] Zero results — falling back to non-segmented path",
+				);
+				throw new Error("Segmented search returned zero results");
+			}
 
-      console.log(`[SegmentedSearch] Coordination complete!`);
-      console.log(`  - Completed segments: ${coordinatedResult.coordinationState.completedSegments.size}`);
-      console.log(`  - Failed segments: ${coordinatedResult.coordinationState.failedSegments.size}`);
-      console.log(`  - Total coordination events: ${coordinatedResult.coordinationState.coordinationLog.length}`);
+			console.log(`[SegmentedSearch] Coordination complete!`);
+			console.log(
+				`  - Completed segments: ${coordinatedResult.coordinationState.completedSegments.size}`,
+			);
+			console.log(
+				`  - Failed segments: ${coordinatedResult.coordinationState.failedSegments.size}`,
+			);
+			console.log(
+				`  - Total coordination events: ${coordinatedResult.coordinationState.coordinationLog.length}`,
+			);
 
-      // Phase 3: ADD Quality Scoring (aggregate metrics for the unified result)
-      console.log("[SegmentedSearch] Phase 3: Calculating ADD quality metrics...");
-      const addScore = this.addDiscriminator.scoreResults(
-        query,
-        coordinatedResult.finalResults,
-      );
+			// Phase 3: ADD Quality Scoring (aggregate metrics for the unified result)
+			console.log(
+				"[SegmentedSearch] Phase 3: Calculating ADD quality metrics...",
+			);
+			const addScore = this.addDiscriminator.scoreResults(
+				query,
+				coordinatedResult.finalResults,
+			);
 
-      const driftAnalysis = this.addDiscriminator.analyzeDrift();
-      const metrics = this.addDiscriminator.getMetrics();
+			const driftAnalysis = this.addDiscriminator.analyzeDrift();
+			const metrics = this.addDiscriminator.getMetrics();
 
-      const addMetrics = {
-        relevance: addScore.relevanceScore,
-        diversity: addScore.diversityScore,
-        freshness: addScore.freshnessScore,
-        consistency: addScore.consistencyScore,
-        overallScore: addScore.overallScore,
-        drift: driftAnalysis.driftMagnitude,
-        trend: metrics.recentTrend,
-        recommendation: driftAnalysis.recommendation,
-      };
+			const addMetrics = {
+				relevance: addScore.relevanceScore,
+				diversity: addScore.diversityScore,
+				freshness: addScore.freshnessScore,
+				consistency: addScore.consistencyScore,
+				overallScore: addScore.overallScore,
+				drift: driftAnalysis.driftMagnitude,
+				trend: metrics.recentTrend,
+				recommendation: driftAnalysis.recommendation,
+			};
 
-      // Phase 4: Component Validation (if enabled)
-      let validation = {
-        retrieval: { valid: false, confidence: 0, errors: ['not yet validated'] as string[] },
-        reasoning: { valid: false, confidence: 0, errors: ['not yet validated'] as string[] },
-        response: { valid: false, confidence: 0, errors: ['not yet validated'] as string[] },
-      };
+			// Phase 4: Component Validation (if enabled)
+			const validation: UnifiedSearchResult["validation"] = {
+				retrieval: {
+					valid: false,
+					confidence: 0,
+					errors: ["not yet validated"] as string[],
+				},
+				reasoning: {
+					valid: false,
+					confidence: 0,
+					errors: ["not yet validated"] as string[],
+				},
+				response: {
+					valid: false,
+					confidence: 0,
+					errors: ["not yet validated"] as string[],
+				},
+			};
 
-      if (enableValidation) {
-        console.log("[SegmentedSearch] Phase 4: Validating components...");
+			if (enableValidation) {
+				console.log("[SegmentedSearch] Phase 4: Validating components...");
 
-        const pipeline = await this.validationPipeline.validate({
-          query,
-          searchResults: coordinatedResult.finalResults,
-          reasoningSteps: [],
-          finalResponse: coordinatedResult.synthesizedResponse,
-        });
+				const pipeline = await this.validationPipeline.validate({
+					query,
+					searchResults: coordinatedResult.finalResults,
+					reasoningSteps: [],
+					finalResponse: coordinatedResult.synthesizedResponse,
+				});
 
-        const retrievalComp = pipeline.components.find(c => c.componentName === 'retrieval');
-        const responseComp = pipeline.components.find(c => c.componentName === 'response');
+				const retrievalComp = pipeline.components.find(
+					(c) => c.componentName === "retrieval",
+				);
+				const responseComp = pipeline.components.find(
+					(c) => c.componentName === "response",
+				);
 
-        if (retrievalComp) {
-          validation.retrieval = { valid: retrievalComp.valid, confidence: retrievalComp.confidence, errors: retrievalComp.errors };
-        }
-        if (responseComp) {
-          validation.response = { valid: responseComp.valid, confidence: responseComp.confidence, errors: responseComp.errors };
-        }
+				if (retrievalComp) {
+					validation.retrieval = {
+						valid: retrievalComp.valid,
+						confidence: retrievalComp.confidence,
+						errors: retrievalComp.errors,
+					};
+				}
+				if (responseComp) {
+					validation.response = {
+						valid: responseComp.valid,
+						confidence: responseComp.confidence,
+						errors: responseComp.errors,
+					};
+				}
 
-        console.log(
-          `[SegmentedSearch] Validation complete. Retrieval: ${validation.retrieval.valid}, Response: ${validation.response.valid}`
-        );
-      }
+				console.log(
+					`[SegmentedSearch] Validation complete. Retrieval: ${validation.retrieval.valid}, Response: ${validation.response.valid}`,
+				);
+			}
 
-      const totalProcessingTime = Date.now() - startTime;
+			const totalProcessingTime = Date.now() - startTime;
 
-      // Prepare segmentation details for response
-      const segmentationDetails = {
-        segmentCount: segmentation.segments.length,
-        segments: coordinatedResult.segmentBreakdown.map(seg => ({
-          id: seg.segmentId,
-          type: seg.type,
-          text: segmentation.segments.find(s => s.id === seg.segmentId)?.text || '',
-          modelUsed: seg.modelUsed,
-          tokensUsed: seg.tokensUsed,
-          timeMs: seg.timeMs,
-          success: seg.success,
-        })),
-        coordinationLog: coordinatedResult.coordinationState.coordinationLog,
-        synthesizedResponse: coordinatedResult.synthesizedResponse,
-      };
+			// Prepare segmentation details for response
+			const segmentationDetails = {
+				segmentCount: segmentation.segments.length,
+				segments: coordinatedResult.segmentBreakdown.map((seg) => ({
+					id: seg.segmentId,
+					type: seg.type,
+					text:
+						segmentation.segments.find((s) => s.id === seg.segmentId)?.text ||
+						"",
+					modelUsed: seg.modelUsed,
+					tokensUsed: seg.tokensUsed,
+					timeMs: seg.timeMs,
+					success: seg.success,
+				})),
+				coordinationLog: coordinatedResult.coordinationState.coordinationLog,
+				synthesizedResponse: coordinatedResult.synthesizedResponse,
+			};
 
-      const result: UnifiedSearchResult = {
-        results: coordinatedResult.finalResults,
-        segmentation: segmentationDetails,
-        addMetrics,
-        validation,
-        strategy: 'segmented',
-        reasoning: [
-          `Query segmented into ${segmentation.segments.length} coordinated parts`,
-          `Execution graph: ${segmentation.executionGraph.totalStages} stages`,
-          `Segments communicated via shared context pool`,
-          coordinatedResult.synthesizedResponse,
-        ],
-        quality: coordinatedResult.quality.overall,
-        timestamp: new Date().toISOString(),
-        modelUsed: primaryModelConfig.model,
-        provider: primaryModelConfig.provider,
-        totalTokens: coordinatedResult.totalTokens,
-        totalProcessingTime,
-      };
+			const result: UnifiedSearchResult = {
+				results: coordinatedResult.finalResults,
+				execution: {
+					mode: "single_model",
+					reason:
+						"Segmented search currently requires a primary model and coordinated execution.",
+					modelCount: 1,
+				},
+				segmentation: segmentationDetails,
+				addMetrics,
+				validation,
+				strategy: "segmented",
+				reasoning: [
+					`Query segmented into ${segmentation.segments.length} coordinated parts`,
+					`Execution graph: ${segmentation.executionGraph.totalStages} stages`,
+					`Segments communicated via shared context pool`,
+					coordinatedResult.synthesizedResponse,
+				],
+				quality: coordinatedResult.quality.overall,
+				timestamp: new Date().toISOString(),
+				modelUsed: primaryModelConfig.model,
+				provider: primaryModelConfig.provider,
+				totalTokens: coordinatedResult.totalTokens,
+				totalProcessingTime,
+			};
 
-      console.log(`[SegmentedSearch] Search completed in ${totalProcessingTime}ms`);
-      console.log(`[SegmentedSearch] Quality: ${coordinatedResult.quality.overall.toFixed(2)}, Tokens: ${coordinatedResult.totalTokens}`);
-      console.log(`[SegmentedSearch] Segmentation completed with intelligent coordination!`);
+			console.log(
+				`[SegmentedSearch] Search completed in ${totalProcessingTime}ms`,
+			);
+			console.log(
+				`[SegmentedSearch] Quality: ${coordinatedResult.quality.overall.toFixed(2)}, Tokens: ${coordinatedResult.totalTokens}`,
+			);
+			console.log(
+				`[SegmentedSearch] Segmentation completed with intelligent coordination!`,
+			);
 
-      return result;
+			return result;
+		} catch (error) {
+			console.error("[SegmentedSearch] Search failed:", error);
+			console.log("[SegmentedSearch] Falling back to non-segmented search");
+			return this.search(query, primaryModelConfig, {
+				...options,
+				useSegmentation: false,
+			});
+		}
+	}
 
-    } catch (error) {
-      console.error("[SegmentedSearch] Search failed:", error);
-      console.log("[SegmentedSearch] Falling back to non-segmented search");
-      return this.search(query, primaryModelConfig, {
-        ...options,
-        useSegmentation: false,
-      });
-    }
-  }
+	/**
+	 * Export training data for fine-tuning
+	 */
+	async exportTrainingData(_includeUserFeedback = true): Promise<string> {
+		// Get current metrics from ADD discriminator
+		const metrics = this.addDiscriminator.getMetrics();
 
-  /**
-   * Export training data for fine-tuning
-   */
-  async exportTrainingData(includeUserFeedback = true): Promise<string> {
-    // Get current metrics from ADD discriminator
-    const metrics = this.addDiscriminator.getMetrics();
+		return JSON.stringify(
+			{
+				currentScore: metrics.currentScore,
+				historicalAverage: metrics.historicalAverage,
+				trend: metrics.recentTrend,
+			},
+			null,
+			2,
+		);
+	}
 
-    return JSON.stringify({
-      currentScore: metrics.currentScore,
-      historicalAverage: metrics.historicalAverage,
-      trend: metrics.recentTrend,
-    }, null, 2);
-  }
+	/**
+	 * Get performance statistics
+	 */
+	getStatistics() {
+		return {
+			addMetrics: this.addDiscriminator.getMetrics(),
+			driftAnalysis: this.addDiscriminator.analyzeDrift(),
+			validationStats: this.validationPipeline.getStatistics(),
+		};
+	}
 
-  /**
-   * Get performance statistics
-   */
-  getStatistics() {
-    return {
-      addMetrics: this.addDiscriminator.getMetrics(),
-      driftAnalysis: this.addDiscriminator.analyzeDrift(),
-      validationStats: this.validationPipeline.getStatistics(),
-    };
-  }
-
-  private isHighRiskQuery(query: string): boolean {
-    const q = query.toLowerCase();
-    const riskTerms = [
-      'password', 'token', 'api key', 'secret', 'auth', 'login',
-      'payment', 'stripe', 'bank', 'invoice', 'billing',
-      'pii', 'personal data', 'gdpr', 'hipaa',
-    ];
-    return riskTerms.some(t => q.includes(t));
-  }
+	private isHighRiskQuery(query: string): boolean {
+		const q = query.toLowerCase();
+		const riskTerms = [
+			"password",
+			"token",
+			"api key",
+			"secret",
+			"auth",
+			"login",
+			"payment",
+			"stripe",
+			"bank",
+			"invoice",
+			"billing",
+			"pii",
+			"personal data",
+			"gdpr",
+			"hipaa",
+		];
+		return riskTerms.some((t) => q.includes(t));
+	}
 }
 
 // Singleton instance

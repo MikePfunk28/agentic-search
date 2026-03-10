@@ -9,14 +9,18 @@ import { useMutation } from "convex/react";
 import {
 	Bot,
 	Brain,
+	Mic,
+	MicOff,
 	Search,
 	Send,
 	Settings,
 	Sparkles,
 	User,
+	Volume2,
+	VolumeX,
 	Zap,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
@@ -28,7 +32,8 @@ import {
 	type SearchCompletionSummary,
 	useSearchProgress,
 } from "../hooks/useSearchProgress";
-import { getActiveModelConfig, getModelStore, getSearchApiKeys } from "../lib/model-store";
+import { useSpeechRecognition, useSpeechSynthesis } from "../hooks/useSpeech";
+import { getActiveModelConfig, getModelStore } from "../lib/model-store";
 import type { SearchResult } from "../lib/types";
 import type { UnifiedSearchResult } from "../lib/unified-search-orchestrator";
 import { ADDQualityPanel } from "./ADDQualityPanel";
@@ -50,10 +55,40 @@ interface AgenticChatProps {
 	onSearchResults?: (results: SearchResult[]) => void;
 }
 
+const SEARCH_KEYWORDS = [
+	"search",
+	"find",
+	"look for",
+	"research",
+	"discover",
+	"what is",
+	"how to",
+	"explain",
+	"tell me about",
+	"latest",
+	"news",
+	"information about",
+];
+
+function ReasoningIcon({ type }: { type: ChatReasoningStep["type"] }) {
+	switch (type) {
+		case "analysis":
+			return <Brain className="w-4 h-4 text-blue-500" />;
+		case "planning":
+			return <Sparkles className="w-4 h-4 text-purple-500" />;
+		case "search":
+			return <Search className="w-4 h-4 text-green-500" />;
+		case "synthesis":
+			return <Zap className="w-4 h-4 text-orange-500" />;
+	}
+}
+
 function readSelectedModelsFromStore(): string[] {
 	const store = getModelStore();
 	if (store.activeModels.length > 0) {
-		return store.activeModels.map((entry) => `${entry.provider}:${entry.model}`);
+		return store.activeModels.map(
+			(entry) => `${entry.provider}:${entry.model}`,
+		);
 	}
 	if (store.activeProvider && store.activeModel) {
 		return [`${store.activeProvider}:${store.activeModel}`];
@@ -82,98 +117,138 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 	const [reasoningSteps, setReasoningSteps] = useState<ChatReasoningStep[]>([]);
 	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 	const [isSearching, setIsSearching] = useState(false);
-	const [selectedModels, setSelectedModels] = useState<string[]>(() => readSelectedModelsFromStore());
+	const [selectedModels, setSelectedModels] = useState<string[]>(() =>
+		readSelectedModelsFromStore(),
+	);
+	const {
+		supported: micSupported,
+		listening,
+		startListening,
+		stopListening,
+		transcript,
+		clearTranscript,
+	} = useSpeechRecognition();
+	const {
+		supported: ttsSupported,
+		speak,
+		stop: stopSpeaking,
+	} = useSpeechSynthesis();
+	const [voiceResponsesEnabled, setVoiceResponsesEnabled] = useState(true);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const currentSearchQueryRef = useRef("");
 	const currentSearchStartedAtRef = useRef<number | null>(null);
+	const lastVoiceSubmissionRef = useRef("");
+	const lastSpokenAssistantIdRef = useRef("");
+
+	function buildSpokenSearchSummary(
+		query: string,
+		results: SearchResult[],
+	): string {
+		const topResults = results
+			.slice(0, 3)
+			.map((result, index) => {
+				const summary = result.snippet
+					.replace(/\s+/g, " ")
+					.trim()
+					.split(". ")[0]
+					.slice(0, 160);
+				return `${index + 1}. ${result.title}. ${summary}.`;
+			})
+			.join(" ");
+
+		return `Search complete for ${query}. ${topResults}`;
+	}
 
 	// Human-in-the-loop search progress
 	const searchProgress = useSearchProgress(
 		async (results, summary?: SearchCompletionSummary) => {
-		const searchQuery = summary?.query || currentSearchQueryRef.current;
-		const executionTimeMs =
-			summary?.totalProcessingTime ||
-			(currentSearchStartedAtRef.current
-				? Date.now() - currentSearchStartedAtRef.current
-				: 0);
-		const overallQuality =
-			summary?.addMetrics?.overallScore ||
-			(results.length > 0
-				? results.reduce((sum, result) => sum + (result.addScore || 0), 0) /
-					results.length
-				: 0);
+			const searchQuery = summary?.query || currentSearchQueryRef.current;
+			const executionTimeMs =
+				summary?.totalProcessingTime ||
+				(currentSearchStartedAtRef.current
+					? Date.now() - currentSearchStartedAtRef.current
+					: 0);
+			const overallQuality =
+				summary?.addMetrics?.overallScore ||
+				(results.length > 0
+					? results.reduce((sum, result) => sum + (result.addScore || 0), 0) /
+						results.length
+					: 0);
 
-		if (summary) {
-			setDashboardData({
-				parallelResults: summary.parallelResults,
-				reasoningSteps: summary.reasoningSteps,
-				addMetrics: summary.addMetrics,
-			});
-		}
+			if (summary) {
+				setDashboardData({
+					parallelResults: summary.parallelResults,
+					reasoningSteps: summary.reasoningSteps,
+					addMetrics: summary.addMetrics,
+				});
+			}
 
-		setSearchResults(results);
-		onSearchResults?.(results);
-		setIsSearching(false);
-		try {
-			const hashes = await Promise.all(
-				results.map(async (r) => {
-					const enc = new TextEncoder().encode(r.snippet || "");
-					const dig = await crypto.subtle.digest("SHA-256", enc);
-					const hex = Array.from(new Uint8Array(dig))
-						.map((b) => b.toString(16).padStart(2, "0"))
-						.join("");
-					return { id: r.id, source: r.source, hash: hex };
-				}),
-			);
-			await saveSearch({
-				query: searchQuery,
-				modelUsed: `${summary?.provider || "web-only"}:${summary?.modelUsed || "none"}`,
-				results: results.map((result) => ({
-					title: result.title,
-					url: result.url,
-					snippet: result.snippet,
-					addScore: result.addScore,
-				})),
-				segments: [],
-				executionTimeMs,
-				tokensUsed: summary?.totalTokens || 0,
-				quality: overallQuality,
-			});
-			await trackUsage({
-				query: searchQuery,
-				modelUsed: `${summary?.provider || "web-only"}:${summary?.modelUsed || "none"}`,
-				tokensUsed: summary?.totalTokens,
-				executionTimeMs,
-				success: true,
-				quality: overallQuality,
-				metadata: {
-					retrievedIds: results.map((r) => r.id),
-					sources: results.map((r) => r.source),
-					hashes,
-					availableProviders: summary?.availableProviders,
-					storageId: summary?.storageId,
-					usedFallbackCache: summary?.usedFallbackCache,
-					reasoningSummary: summary?.reasoningSteps
-						?.slice(0, 5)
-						.map((step) => ({
-							type: step.type,
-							output: step.output,
-							confidence: step.confidence,
-						})),
-					topResults: results.slice(0, 5).map((result) => ({
+			setSearchResults(results);
+			onSearchResults?.(results);
+			setIsSearching(false);
+			if (voiceResponsesEnabled && ttsSupported && results.length > 0) {
+				speak(buildSpokenSearchSummary(searchQuery, results));
+			}
+			try {
+				const hashes = await Promise.all(
+					results.map(async (r) => {
+						const enc = new TextEncoder().encode(r.snippet || "");
+						const dig = await crypto.subtle.digest("SHA-256", enc);
+						const hex = Array.from(new Uint8Array(dig))
+							.map((b) => b.toString(16).padStart(2, "0"))
+							.join("");
+						return { id: r.id, source: r.source, hash: hex };
+					}),
+				);
+				await saveSearch({
+					query: searchQuery,
+					modelUsed: `${summary?.provider || "web-only"}:${summary?.modelUsed || "none"}`,
+					results: results.map((result) => ({
 						title: result.title,
 						url: result.url,
 						snippet: result.snippet,
 						addScore: result.addScore,
-						source: result.source,
 					})),
-				},
-			});
-		} catch (e) {
-			console.error("Usage tracking failed", e);
-		}
-		currentSearchStartedAtRef.current = null;
-	},
+					segments: [],
+					executionTimeMs,
+					tokensUsed: summary?.totalTokens || 0,
+					quality: overallQuality,
+				});
+				await trackUsage({
+					query: searchQuery,
+					modelUsed: `${summary?.provider || "web-only"}:${summary?.modelUsed || "none"}`,
+					tokensUsed: summary?.totalTokens,
+					executionTimeMs,
+					success: true,
+					quality: overallQuality,
+					metadata: {
+						retrievedIds: results.map((r) => r.id),
+						sources: results.map((r) => r.source),
+						hashes,
+						availableProviders: summary?.availableProviders,
+						storageId: summary?.storageId,
+						usedFallbackCache: summary?.usedFallbackCache,
+						reasoningSummary: summary?.reasoningSteps
+							?.slice(0, 5)
+							.map((step) => ({
+								type: step.type,
+								output: step.output,
+								confidence: step.confidence,
+							})),
+						topResults: results.slice(0, 5).map((result) => ({
+							title: result.title,
+							url: result.url,
+							snippet: result.snippet,
+							addScore: result.addScore,
+							source: result.source,
+						})),
+					},
+				});
+			} catch (e) {
+				console.error("Usage tracking failed", e);
+			}
+			currentSearchStartedAtRef.current = null;
+		},
 	);
 	const [showSettings, setShowSettings] = useState(false);
 
@@ -182,6 +257,12 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 			setIsSearching(false);
 		}
 	}, [searchProgress.isSearching]);
+
+	useEffect(() => {
+		if (transcript) {
+			setInput(transcript);
+		}
+	}, [transcript]);
 
 	useEffect(() => {
 		const syncSelectedModels = () => {
@@ -271,267 +352,153 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 		}),
 	});
 
-	// Function to perform agentic search
-	const performAgenticSearch = async (
-		query: string,
-	): Promise<SearchResult[]> => {
-		try {
-			const response = await fetch("/api/search", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					...(csrfToken && { "X-CSRF-Token": csrfToken }),
-				},
-				body: JSON.stringify({
-					query,
-					modelConfig: getActiveModelConfig(),
-					searchApiKeys: getSearchApiKeys(),
-					useParallelModels: selectedModels.length > 1,
-					useInterleavedReasoning: true,
-				}),
-			});
-
-			if (!response.ok) {
-				throw new Error(`Search failed: ${response.status}`);
-			}
-
-			const data: UnifiedSearchResult = await response.json();
-
-			// Store dashboard data from unified search result
-			setDashboardData({
-				parallelResults: data.parallelResults,
-				reasoningSteps: data.reasoningSteps,
-				addMetrics: data.addMetrics,
-			});
-
-			// Log retrievals with hashes
-			try {
-				const hashes = await Promise.all(
-					(data.results || []).map(async (r) => {
-						const enc = new TextEncoder().encode(r.snippet || "");
-						const dig = await crypto.subtle.digest("SHA-256", enc);
-						const hex = Array.from(new Uint8Array(dig))
-							.map((b) => b.toString(16).padStart(2, "0"))
-							.join("");
-						return { id: r.id, source: r.source, hash: hex };
-					}),
-				);
-				await trackUsage({
-					query,
-					modelUsed: data.provider + ":" + data.modelUsed,
-					executionTimeMs: data.totalProcessingTime,
-					success: true,
-					quality: data.addMetrics?.overallScore,
-					metadata: {
-						retrievedIds: (data.results || []).map((r) => r.id),
-						sources: (data.results || []).map((r) => r.source),
-						hashes,
-					},
-				});
-			} catch (e) {
-				console.error("Usage tracking failed", e);
-			}
-
-			return data.results || [];
-		} catch (error) {
-			console.error("Search error:", error);
-
-			// Clear dashboard data on error
-			setDashboardData({});
-
-			// Return mock results as fallback
-			return [
-				{
-					id: "error-fallback",
-					title: `Search Results for: ${query}`,
-					snippet:
-						"Search functionality is currently in development. This is a placeholder result.",
-					url: "https://example.com/placeholder",
-					source: "firecrawl" as const,
-					addScore: 0.5,
-				},
-			];
-		}
-	};
-
-	const scrollToBottom = () => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	};
+	const isBusy =
+		status === "streaming" ||
+		!isReady ||
+		isSearching ||
+		searchProgress.isSearching;
+	const scrollTrigger = `${messages.length}:${reasoningSteps.length}:${searchResults.length}`;
 
 	useEffect(() => {
-		scrollToBottom();
-	}, [messages, reasoningSteps]);
+		if (!scrollTrigger) {
+			return;
+		}
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, [scrollTrigger]);
 
-	const addReasoningStep = (
-		type: ChatReasoningStep["type"],
-		message: string,
-	) => {
-		const step: ChatReasoningStep = {
-			id: Date.now().toString(),
-			type,
-			message,
-			timestamp: Date.now(),
-		};
-		setReasoningSteps((prev) => [...prev, step]);
-	};
+	const addReasoningStep = useCallback(
+		(type: ChatReasoningStep["type"], message: string) => {
+			const step: ChatReasoningStep = {
+				id: Date.now().toString(),
+				type,
+				message,
+				timestamp: Date.now(),
+			};
+			setReasoningSteps((prev) => [...prev, step]);
+		},
+		[],
+	);
 
-	const detectSearchIntent = (message: string): boolean => {
-		const searchKeywords = [
-			"search",
-			"find",
-			"look for",
-			"research",
-			"discover",
-			"what is",
-			"how to",
-			"explain",
-			"tell me about",
-			"latest",
-			"news",
-			"information about",
-		];
-		return searchKeywords.some((keyword) =>
+	const detectSearchIntent = useCallback((message: string): boolean => {
+		return SEARCH_KEYWORDS.some((keyword) =>
 			message.toLowerCase().includes(keyword),
 		);
-	};
+	}, []);
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (
-			!input.trim() ||
-			status === "streaming" ||
-			!isReady ||
-			isSearching ||
-			searchProgress.isSearching
-		)
-			return;
-
-		const userMessage = input.trim();
-		setInput("");
-		setReasoningSteps([]);
-
-		// Add reasoning step for intent analysis
-		addReasoningStep("analysis", `Analyzing user query: "${userMessage}"`);
-
-		// Check if this looks like a search query
-		if (detectSearchIntent(userMessage)) {
+	const startSearchFlow = useCallback(
+		(userMessage: string, hasActiveModel: boolean) => {
+			stopSpeaking();
+			setInput("");
+			setReasoningSteps([]);
+			setSearchResults([]);
+			setDashboardData({});
+			addReasoningStep("analysis", `Analyzing user query: "${userMessage}"`);
 			addReasoningStep(
 				"planning",
-				"Detected search intent - planning agentic search strategy",
+				hasActiveModel
+					? "Detected search intent - planning agentic search strategy"
+					: "No model configured - defaulting to free web search mode",
 			);
 			addReasoningStep(
 				"search",
 				"Initiating multi-source search with AI agents",
 			);
-
 			setIsSearching(true);
 			currentSearchQueryRef.current = userMessage;
 			currentSearchStartedAtRef.current = Date.now();
+			void searchProgress.startSearch(userMessage, searchProgress.scope);
+		},
+		[
+			addReasoningStep,
+			searchProgress.scope,
+			searchProgress.startSearch,
+			stopSpeaking,
+		],
+	);
 
-			// Start search with human-in-the-loop controls
-			searchProgress.startSearch(userMessage, searchProgress.scope);
-
-			// Note: Results will be handled by the useSearchProgress hook callback
-			// Skip the old performAgenticSearch call
-			return;
-
-			// OLD CODE BELOW (kept for fallback)
-			// Perform actual agentic search
-			try {
-				addReasoningStep(
-					"search",
-					"Searching across web sources with Firecrawl",
-				);
-				const startTime = Date.now();
-				const searchResults = await performAgenticSearch(userMessage);
-				const executionTime = Date.now() - startTime;
-
-				addReasoningStep("search", "Applying ADD quality scoring to results");
-				addReasoningStep(
-					"synthesis",
-					"Synthesizing and ranking search results",
-				);
-
-				setSearchResults(searchResults);
-				setIsSearching(false);
-				onSearchResults?.(searchResults);
-
-				addReasoningStep(
-					"synthesis",
-					`Found ${searchResults.length} high-quality results`,
-				);
-
-				// Save search to history
-				try {
-					const plan = {
-						reason: "Persist non-sensitive search metadata",
-						tool_name: "convex.mutation.searchHistory.saveSearch",
-						arguments: {
-							query: userMessage,
-							modelUsed: selectedModels[0] || "unknown",
-							results: searchResults,
-							segments: [],
-							executionTimeMs: executionTime,
-							tokensUsed:
-								dashboardData.parallelResults?.models.reduce(
-									(sum, m) => sum + m.tokenCount,
-									0,
-								) || 0,
-							quality: dashboardData.addMetrics?.overallScore || 0.5,
-						},
-						expected_effect: "Store search summary for user history",
-					};
-					const approved = await approveToolPlan(plan);
-					if (approved) {
-						await saveSearch(plan.arguments);
-					} else {
-						console.warn("Governor rejected saveSearch plan");
-					}
-				} catch (saveError) {
-					console.error("Failed to save search history:", saveError);
-				}
-			} catch (error) {
-				console.error("Search failed:", error);
-				addReasoningStep(
-					"synthesis",
-					"Search completed with some issues - showing available results",
-				);
-
-				// Fallback to basic results
-				const fallbackResults: SearchResult[] = [
-					{
-						id: "fallback-1",
-						title: `Search Results for: ${userMessage}`,
-						snippet:
-							"Search functionality encountered an issue. This is a fallback result.",
-						url: "https://example.com/fallback",
-						source: "firecrawl",
-						addScore: 0.5,
-					},
-				];
-
-				setSearchResults(fallbackResults);
-				setIsSearching(false);
-				onSearchResults?.(fallbackResults);
+	const submitPrompt = useCallback(
+		(rawMessage: string, options?: { preferSearch?: boolean }) => {
+			const userMessage = rawMessage.trim();
+			if (!userMessage || isBusy) {
+				return;
 			}
-		}
 
-		// Send the message to the chat API
-		sendMessage({ text: userMessage });
+			const hasActiveModel = Boolean(getActiveModelConfig());
+			const shouldRunSearch =
+				options?.preferSearch ||
+				detectSearchIntent(userMessage) ||
+				!hasActiveModel;
+
+			if (shouldRunSearch) {
+				startSearchFlow(userMessage, hasActiveModel);
+				return;
+			}
+
+			stopSpeaking();
+			setInput("");
+			setReasoningSteps([]);
+			addReasoningStep(
+				"analysis",
+				`Routing "${userMessage}" to the active chat model`,
+			);
+			sendMessage({ text: userMessage });
+		},
+		[
+			addReasoningStep,
+			detectSearchIntent,
+			isBusy,
+			sendMessage,
+			startSearchFlow,
+			stopSpeaking,
+		],
+	);
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		submitPrompt(input);
 	};
 
-	const ReasoningIcon = ({ type }: { type: ChatReasoningStep["type"] }) => {
-		switch (type) {
-			case "analysis":
-				return <Brain className="w-4 h-4 text-blue-500" />;
-			case "planning":
-				return <Sparkles className="w-4 h-4 text-purple-500" />;
-			case "search":
-				return <Search className="w-4 h-4 text-green-500" />;
-			case "synthesis":
-				return <Zap className="w-4 h-4 text-orange-500" />;
+	useEffect(() => {
+		const voiceQuery = transcript.trim();
+		if (!voiceQuery || listening || isBusy) {
+			return;
 		}
-	};
+		if (lastVoiceSubmissionRef.current === voiceQuery) {
+			return;
+		}
+
+		lastVoiceSubmissionRef.current = voiceQuery;
+		clearTranscript();
+		submitPrompt(voiceQuery, { preferSearch: true });
+	}, [clearTranscript, isBusy, listening, submitPrompt, transcript]);
+
+	useEffect(() => {
+		if (!voiceResponsesEnabled || !ttsSupported || status === "streaming") {
+			return;
+		}
+
+		const lastAssistantMessage = [...messages]
+			.reverse()
+			.find((message) => message.role === "assistant");
+		if (!lastAssistantMessage) {
+			return;
+		}
+		if (lastSpokenAssistantIdRef.current === lastAssistantMessage.id) {
+			return;
+		}
+
+		const spokenText = lastAssistantMessage.parts
+			.map((part) => (part.type === "text" ? part.text : ""))
+			.join(" ")
+			.replace(/\s+/g, " ")
+			.trim();
+		if (!spokenText) {
+			return;
+		}
+
+		lastSpokenAssistantIdRef.current = lastAssistantMessage.id;
+		speak(spokenText);
+	}, [messages, speak, status, ttsSupported, voiceResponsesEnabled]);
 
 	return (
 		<div className="flex flex-col h-full bg-slate-900">
@@ -549,7 +516,32 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 						onChange={setSelectedModels}
 						allowMultiple={true}
 					/>
+					{ttsSupported && (
+						<button
+							type="button"
+							onClick={() => {
+								if (voiceResponsesEnabled) {
+									stopSpeaking();
+								}
+								setVoiceResponsesEnabled((enabled) => !enabled);
+							}}
+							className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-white font-medium"
+							title={
+								voiceResponsesEnabled
+									? "Disable spoken responses"
+									: "Enable spoken responses"
+							}
+						>
+							{voiceResponsesEnabled ? (
+								<Volume2 className="w-5 h-5" />
+							) : (
+								<VolumeX className="w-5 h-5" />
+							)}
+							<span>{voiceResponsesEnabled ? "Voice On" : "Voice Off"}</span>
+						</button>
+					)}
 					<button
+						type="button"
 						onClick={() => setShowSettings(true)}
 						className="flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-700 rounded-lg transition-colors text-white font-medium"
 						title="Configure API Keys for OpenAI, Anthropic, etc."
@@ -609,7 +601,7 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 									if (part.type === "text") {
 										return (
 											<div
-												key={index}
+												key={`${message.id}-part-${index}-${part.text.slice(0, 24)}`}
 												className="prose prose-sm dark:prose-invert max-w-none"
 											>
 												<ReactMarkdown
@@ -677,7 +669,7 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 				{/* Search Progress Panel - Human-in-the-Loop */}
 				{searchProgress.isSearching && (
 					<SearchProgressPanel
-						query={input || "Search in progress"}
+						query={currentSearchQueryRef.current || "Search in progress"}
 						steps={searchProgress.steps}
 						scope={searchProgress.scope}
 						isPaused={searchProgress.isPaused}
@@ -741,7 +733,8 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 											),
 											consensusAnalysis: {
 												text: dashboardData.parallelResults.consensus,
-												agreementScore: dashboardData.parallelResults.agreementScore,
+												agreementScore:
+													dashboardData.parallelResults.agreementScore,
 												agreedClaims: [],
 												contradictions: [],
 												strategy: "weighted" as const,
@@ -776,9 +769,9 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 											success: dashboardData.reasoningSteps.every(
 												(s) => s.isValid,
 											),
-											errors: dashboardData.reasoningSteps
-												.filter((s) => s.error)
-												.map((s) => s.error!),
+											errors: dashboardData.reasoningSteps.flatMap((s) =>
+												s.error ? [s.error] : [],
+											),
 											totalTokens: 0, // Total tokens tracked at search level
 											processingTime: dashboardData.reasoningSteps.reduce(
 												(sum, s) => sum + s.duration,
@@ -845,7 +838,9 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 							onChange={(e) => setInput(e.target.value)}
 							placeholder={
 								isReady
-									? "Ask me anything or search the web with AI agents..."
+									? listening
+										? "Listening..."
+										: "Ask, type, or tap the mic to search the web..."
 									: "Initializing security..."
 							}
 							disabled={
@@ -854,13 +849,13 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 								isSearching ||
 								searchProgress.isSearching
 							}
-							className="w-full rounded-lg border border-slate-600 bg-slate-700 pl-4 pr-12 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+							className="w-full rounded-lg border border-slate-600 bg-slate-700 pl-4 pr-24 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
 							rows={1}
 							style={{ minHeight: "44px", maxHeight: "120px" }}
 							onInput={(e) => {
 								const target = e.target as HTMLTextAreaElement;
 								target.style.height = "auto";
-								target.style.height = Math.min(target.scrollHeight, 120) + "px";
+								target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
 							}}
 							onKeyDown={(e) => {
 								if (e.key === "Enter" && !e.shiftKey) {
@@ -869,15 +864,36 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 								}
 							}}
 						/>
+						{micSupported && (
+							<button
+								type="button"
+								onClick={() => {
+									if (listening) {
+										stopListening();
+									} else {
+										stopSpeaking();
+										lastVoiceSubmissionRef.current = "";
+										clearTranscript();
+										startListening();
+									}
+								}}
+								disabled={isBusy}
+								className="absolute right-10 top-1/2 -translate-y-1/2 p-2 text-primary-400 hover:text-primary-300 disabled:text-slate-500 transition-colors"
+								title={listening ? "Stop voice input" : "Start voice input"}
+								aria-label={
+									listening ? "Stop voice input" : "Start voice input"
+								}
+							>
+								{listening ? (
+									<MicOff className="w-4 h-4" />
+								) : (
+									<Mic className="w-4 h-4" />
+								)}
+							</button>
+						)}
 						<button
 							type="submit"
-							disabled={
-								!input.trim() ||
-								status === "streaming" ||
-								!isReady ||
-								isSearching ||
-								searchProgress.isSearching
-							}
+							disabled={!input.trim() || isBusy}
 							className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-primary-400 hover:text-primary-300 disabled:text-slate-500 transition-colors"
 							title="Send message"
 						>
@@ -885,27 +901,11 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 						</button>
 					</div>
 					<p className="text-xs text-slate-400 mt-2 text-center">
-						AI agents will automatically detect search intent and perform
-						agentic searches
+						Tap the mic and speak. Voice input auto-runs search, and spoken
+						results are {voiceResponsesEnabled ? "on" : "off"}.
 					</p>
 				</form>
 			</div>
 		</div>
 	);
-}
-
-async function approveToolPlan(plan: {
-	reason: string;
-	tool_name: string;
-	arguments: any;
-	expected_effect: string;
-}): Promise<boolean> {
-	const argStr = JSON.stringify(plan.arguments);
-	const tooLarge = argStr.length > 100_000;
-	const destructive = /drop\s+table|delete\s+from|update\s+.*set/gi.test(
-		argStr,
-	);
-	const exfil = /api\s*key|token|password/gi.test(argStr);
-	if (tooLarge || destructive || exfil) return false;
-	return true;
 }

@@ -8,6 +8,24 @@ import { getAvailableProviders } from "@/lib/search-providers";
 import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
 import { researchStorage } from "@/lib/results-storage";
 
+// Cloudflare Workers: read env bindings from .dev.vars / dashboard secrets
+let cfEnv: Record<string, string | undefined> = {};
+try {
+	const cf = await import("cloudflare:workers");
+	if (cf.env) cfEnv = cf.env as Record<string, string | undefined>;
+} catch {
+	// Not running inside workerd – ignore
+}
+
+/** Read an env var from any available source.
+ *  Priority: cloudflare worker bindings (.dev.vars) > process.env > import.meta.env */
+function getEnvVar(name: string): string | undefined {
+	return cfEnv[name]
+		|| (typeof process !== "undefined" ? process.env?.[name] : undefined)
+		|| (import.meta as any).env?.[name]
+		|| undefined;
+}
+
 interface SearchResult {
 	id: string;
 	title: string;
@@ -72,12 +90,12 @@ export const Route = createFileRoute("/api/search")({
 						console.log("[SearchAPI] No model configured, continuing with web-only search");
 					}
 
-					// Merge client-provided keys with server-side env vars
+					// BYOK only — paid provider keys come from the user, never from server env vars
 					const mergedSearchApiKeys = {
-						firecrawl: searchApiKeys?.firecrawl || (typeof process !== "undefined" ? process.env?.FIRECRAWL_API_KEY : undefined),
-						tavily: searchApiKeys?.tavily || (typeof process !== "undefined" ? process.env?.TAVILY_API_KEY : undefined),
-						exa: searchApiKeys?.exa || (typeof process !== "undefined" ? process.env?.EXA_SEARCH_API_KEY : undefined),
-						brave: searchApiKeys?.brave || (typeof process !== "undefined" ? process.env?.BRAVE_SEARCH_API_KEY : undefined),
+						firecrawl: searchApiKeys?.firecrawl || undefined,
+						tavily: searchApiKeys?.tavily || undefined,
+						exa: searchApiKeys?.exa || undefined,
+						brave: searchApiKeys?.brave || undefined,
 					};
 
 					const parallelModelConfigs = (clientModelConfigs || [])

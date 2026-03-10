@@ -8,7 +8,7 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { validateServerFetchUrl } from "@/lib/url-validation";
+import { validateServerFetchUrlAsync } from "@/lib/url-validation";
 
 export const Route = createFileRoute("/api/detect-models")({
 	server: {
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/detect-models")({
 
 				// SSRF protection: block internal/metadata endpoints
 				try {
-					validateServerFetchUrl(baseUrl);
+					await validateServerFetchUrlAsync(baseUrl);
 				} catch (err) {
 					return new Response(
 						JSON.stringify({ error: err instanceof Error ? err.message : "Invalid baseUrl" }),
@@ -44,6 +44,16 @@ export const Route = createFileRoute("/api/detect-models")({
 				}
 
 				try {
+					// Skip localhost detection when running in Cloudflare worker (can't reach user's machine)
+					const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|::1)(:|\/|$)/i.test(baseUrl);
+					const isWorkerRuntime = typeof globalThis.caches !== "undefined" && typeof (globalThis as any).process === "undefined";
+					if (isLocalhost && isWorkerRuntime) {
+						return new Response(
+							JSON.stringify({ models: [], note: "Local provider detection unavailable from worker runtime" }),
+							{ status: 200, headers: { "Content-Type": "application/json" } },
+						);
+					}
+
 					let modelsUrl: string;
 					if (provider === "ollama") {
 						const clean = baseUrl.replace(/\/v1\/?$/, "");

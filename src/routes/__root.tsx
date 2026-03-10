@@ -4,13 +4,12 @@ import {
 	createRootRouteWithContext,
 	HeadContent,
 	Scripts,
-	useLocation,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useRef } from "react";
 import Header from "../components/Header";
 
-import ConvexProvider from "../integrations/convex/provider";
+import ConvexAuthProvider from "../integrations/convex/auth-provider";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import { detectAndUpdateLocalModels, getModelStore } from "../lib/model-store";
@@ -60,11 +59,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-	const location = useLocation();
 	const initializedRef = useRef(false);
-
-	// Hide header on home page for clean chat experience
-	const showHeader = location.pathname !== "/";
 
 	// Initialize model configurations on app startup
 	// Uses the unified model store (model-store.ts) as single source of truth
@@ -111,10 +106,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				<ConvexProvider>
-					{showHeader && <Header />}
+				<ConvexAuthProvider>
+					<Header />
 					{children}
-				</ConvexProvider>
+				</ConvexAuthProvider>
 				<Scripts />
 			</body>
 		</html>

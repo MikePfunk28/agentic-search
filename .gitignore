@@ -35,6 +35,7 @@ claude-flow.cmd
 DeepSeek OCR Compressio.txt
 .vscode/settings.json
 dist/*
+.agentic-search/
 
 .env (2).local
 tanstack-router-8a5edab282632443.txt

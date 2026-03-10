@@ -3,6 +3,12 @@
  *
  * Validates URLs before server-side fetches to prevent SSRF attacks.
  * Uses exact hostname checks — no regex.
+ *
+ * Two layers:
+ *  1. validateServerFetchUrl  — synchronous, checks literal hostname strings
+ *  2. validateServerFetchUrlAsync — async, additionally resolves DNS and
+ *     rejects hostnames that map to private/loopback/link-local addresses.
+ *     Always prefer the async variant on the server side.
  */
 
 /**
@@ -173,4 +179,88 @@ export function validateServerFetchUrl(url: string): void {
 	}
 
 	// All other public domains are allowed (custom providers)
+}
+
+/**
+ * Check whether a resolved IP address is internal (private, loopback,
+ * link-local, or cloud metadata). This is intentionally strict: any
+ * address that isn't clearly public gets rejected.
+ */
+function isInternalIP(ip: string): boolean {
+	// Check private IPv4 ranges (10/8, 172.16/12, 192.168/16, etc.)
+	if (isPrivateIPv4(ip)) return true;
+
+	// Check blocked cloud metadata IPs
+	if (BLOCKED_HOSTS.has(ip)) return true;
+
+	// Check loopback
+	if (LOCAL_HOSTS.has(ip)) return true;
+
+	// Check private IPv6 (fd00::/8, fe80::/10)
+	if (isPrivateIPv6(ip)) return true;
+
+	// IPv6 loopback
+	const bare = ip.startsWith("[") ? ip.slice(1, -1) : ip;
+	if (bare === "::1" || bare === "0:0:0:0:0:0:0:1") return true;
+
+	return false;
+}
+
+/**
+ * Resolve hostname to IP via Node.js dns module.
+ * Returns null when dns is unavailable (e.g. Cloudflare Workers, where
+ * the runtime already blocks private IPs at the network layer).
+ */
+async function resolveDns(hostname: string): Promise<{ address: string; family: number }[] | null> {
+	try {
+		// Dynamic import so the module loads in non-Node runtimes without crashing
+		const dns = await import("node:dns/promises");
+		// Use lookup (OS resolver) rather than resolve4/resolve6 to cover
+		// /etc/hosts, mDNS, and other non-standard resolution paths.
+		const results = await dns.lookup(hostname, { all: true });
+		return results;
+	} catch {
+		// dns module not available or lookup failure — fall through
+		return null;
+	}
+}
+
+/**
+ * Async SSRF validation — the preferred server-side guard.
+ *
+ * 1. Runs all synchronous hostname checks from validateServerFetchUrl.
+ * 2. Resolves DNS and rejects hostnames that map to private/internal IPs.
+ *
+ * Always use this instead of the sync version when in an async context.
+ */
+export async function validateServerFetchUrlAsync(url: string): Promise<void> {
+	// Run the synchronous pre-flight checks first
+	validateServerFetchUrl(url);
+
+	const parsed = new URL(url);
+	const hostname = parsed.hostname.toLowerCase();
+
+	// Skip DNS resolution for known-safe cloud hosts — they are well-known
+	// public endpoints and resolving them would add unnecessary latency.
+	if (KNOWN_CLOUD_HOSTS.has(hostname)) {
+		return;
+	}
+
+	// Skip DNS resolution for explicit localhost — these are intentionally
+	// allowed for local model providers (Ollama, LM Studio, etc.)
+	if (LOCAL_HOSTS.has(hostname)) {
+		return;
+	}
+
+	// Resolve DNS and check every returned address
+	const resolved = await resolveDns(hostname);
+	if (resolved && resolved.length > 0) {
+		for (const entry of resolved) {
+			if (isInternalIP(entry.address)) {
+				throw new Error(
+					`Blocked: hostname "${hostname}" resolves to internal address ${entry.address}`,
+				);
+			}
+		}
+	}
 }

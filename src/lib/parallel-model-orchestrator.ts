@@ -1,17 +1,21 @@
 /**
  * Parallel Model Orchestrator
- * 
+ *
  * Runs multiple models in parallel to compare/contrast responses.
  * Uses prompt chaining to refine outputs through multiple reasoning steps.
  * Supports ANY model provider (OpenAI, Anthropic, Google, Ollama, LM Studio, Azure)
  */
 
-import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
 import type { ModelConfig } from "./model-config";
-import { validateServerFetchUrl } from "./url-validation";
+import {
+	buildEvidenceVerificationPrompt,
+	type SearchEvidenceBundle,
+} from "./search/evidence";
+import { validateServerFetchUrlAsync } from "./url-validation";
 
 export interface ParallelModelConfig {
 	name: string;
@@ -27,6 +31,11 @@ export interface ModelResponse {
 	processingTime: number;
 	reasoning?: string[];
 	role?: "validator" | "reasoner" | "synthesizer" | "orchestrator";
+	verdict?: "supported" | "mixed" | "insufficient" | "error";
+	supportedResultIds?: string[];
+	agreedClaims?: string[];
+	contradictions?: string[];
+	openQuestions?: string[];
 }
 
 /** Details about how consensus was reached across parallel model responses */
@@ -52,6 +61,9 @@ export interface ParallelPromptResult {
 	confidenceScore: number;
 	totalTokens: number;
 	totalTime: number;
+	verificationMode?: "raw_query" | "evidence";
+	supportedResultIds?: string[];
+	evidenceCoverage?: number;
 }
 
 /**
@@ -72,7 +84,8 @@ export class ParallelModelOrchestrator {
 			this.modelConfigs.set(parallelConfig.name, parallelConfig.config);
 		}
 		// Default concurrency to number of configs, capped at 8 to avoid resource exhaustion
-		this.maxConcurrency = maxConcurrency ?? Math.min(modelsToUse.length || 4, 8);
+		this.maxConcurrency =
+			maxConcurrency ?? Math.min(modelsToUse.length || 4, 8);
 	}
 
 	/**
@@ -81,7 +94,16 @@ export class ParallelModelOrchestrator {
 	 * and pings local providers to verify they're running.
 	 */
 	async checkModelHealth(config: ModelConfig): Promise<boolean> {
-		const cloudProviders = ["openai", "anthropic", "google", "azure_openai", "deepseek", "moonshot", "kimi", "openrouter"];
+		const cloudProviders = [
+			"openai",
+			"anthropic",
+			"google",
+			"azure_openai",
+			"deepseek",
+			"moonshot",
+			"kimi",
+			"openrouter",
+		];
 		const localProviders = ["ollama", "lm_studio", "vllm", "gguf", "onnx"];
 
 		if (cloudProviders.includes(config.provider)) {
@@ -96,18 +118,19 @@ export class ParallelModelOrchestrator {
 		// Local providers: ping the endpoint (with SSRF validation)
 		try {
 			const baseUrl = (config.baseUrl || "").replace(/\/v1\/?$/, "");
-			validateServerFetchUrl(baseUrl);
+			await validateServerFetchUrlAsync(baseUrl);
 			const response = await fetch(`${baseUrl}/api/tags`, {
 				signal: AbortSignal.timeout(3000),
 			});
 			return response.ok;
 		} catch {
 			try {
-				const v1Url = config.baseUrl?.endsWith("/v1")
+				if (!config.baseUrl) return false;
+				const v1Url = config.baseUrl.endsWith("/v1")
 					? `${config.baseUrl}/models`
 					: `${config.baseUrl}/v1/models`;
-				validateServerFetchUrl(v1Url!);
-				const res = await fetch(v1Url!, { signal: AbortSignal.timeout(3000) });
+				await validateServerFetchUrlAsync(v1Url);
+				const res = await fetch(v1Url, { signal: AbortSignal.timeout(3000) });
 				return res.ok;
 			} catch {
 				return false;
@@ -175,8 +198,12 @@ export class ParallelModelOrchestrator {
 			})),
 		);
 
-		const healthyModels = healthChecks.filter((h) => h.healthy).map((h) => h.config);
-		const skippedModels = healthChecks.filter((h) => !h.healthy).map((h) => h.config);
+		const healthyModels = healthChecks
+			.filter((h) => h.healthy)
+			.map((h) => h.config);
+		const skippedModels = healthChecks
+			.filter((h) => !h.healthy)
+			.map((h) => h.config);
 
 		if (skippedModels.length > 0) {
 			console.warn(
@@ -186,7 +213,9 @@ export class ParallelModelOrchestrator {
 		}
 
 		if (healthyModels.length === 0) {
-			console.error("[ParallelOrchestrator] No healthy models available for parallel execution");
+			console.error(
+				"[ParallelOrchestrator] No healthy models available for parallel execution",
+			);
 			const emptyAnalysis: ConsensusAnalysis = {
 				text: "",
 				agreementScore: 0,
@@ -218,19 +247,19 @@ export class ParallelModelOrchestrator {
 
 		// Build intelligent consensus
 		const consensusAnalysis = this.buildConsensus(responses, healthyModels);
-		const confidenceScore = this.calculateOverallConfidence(responses, consensusAnalysis);
-
-		const totalTokens = responses.reduce(
-			(sum, r) => sum + r.tokenCount,
-			0,
+		const confidenceScore = this.calculateOverallConfidence(
+			responses,
+			consensusAnalysis,
 		);
+
+		const totalTokens = responses.reduce((sum, r) => sum + r.tokenCount, 0);
 		const totalTime = Date.now() - startTime;
 
 		console.log(
 			`[ParallelOrchestrator] Consensus: strategy=${consensusAnalysis.strategy}, ` +
-			`agreement=${(consensusAnalysis.agreementScore * 100).toFixed(0)}%, ` +
-			`agreed=${consensusAnalysis.agreedClaims.length} claims, ` +
-			`contradictions=${consensusAnalysis.contradictions.length}`,
+				`agreement=${(consensusAnalysis.agreementScore * 100).toFixed(0)}%, ` +
+				`agreed=${consensusAnalysis.agreedClaims.length} claims, ` +
+				`contradictions=${consensusAnalysis.contradictions.length}`,
 		);
 
 		return {
@@ -240,6 +269,105 @@ export class ParallelModelOrchestrator {
 			confidenceScore,
 			totalTokens,
 			totalTime,
+			verificationMode: "raw_query",
+		};
+	}
+
+	async runEvidenceVerification(
+		query: string,
+		evidence: SearchEvidenceBundle,
+		models: ParallelModelConfig[] = DEFAULT_PARALLEL_MODELS,
+	): Promise<ParallelPromptResult> {
+		const startTime = Date.now();
+
+		const healthChecks = await Promise.all(
+			models.map(async (config) => ({
+				config,
+				healthy: await this.checkModelHealth(config.config),
+			})),
+		);
+
+		const healthyModels = healthChecks
+			.filter((check) => check.healthy)
+			.map((check) => check.config);
+		const skippedModels = healthChecks
+			.filter((check) => !check.healthy)
+			.map((check) => check.config);
+
+		if (skippedModels.length > 0) {
+			console.warn(
+				`[ParallelOrchestrator] Skipping ${skippedModels.length} unreachable model(s):`,
+				skippedModels.map((model) => model.name),
+			);
+		}
+
+		if (healthyModels.length === 0) {
+			const emptyAnalysis: ConsensusAnalysis = {
+				text: "",
+				agreementScore: 0,
+				agreedClaims: [],
+				contradictions: [],
+				strategy: "none",
+				modelWeights: {},
+			};
+			return {
+				responses: [],
+				consensus: null,
+				consensusAnalysis: emptyAnalysis,
+				confidenceScore: 0,
+				totalTokens: 0,
+				totalTime: Date.now() - startTime,
+				verificationMode: "evidence",
+				supportedResultIds: [],
+				evidenceCoverage: 0,
+			};
+		}
+
+		console.log(
+			`[ParallelOrchestrator] Executing evidence-grounded verification across ${healthyModels.length} model(s)`,
+		);
+
+		const responses = await this.executeWithConcurrency(
+			healthyModels,
+			(config) => this.executeEvidenceModel(query, evidence, config),
+			this.maxConcurrency,
+		);
+
+		const consensusAnalysis = this.buildConsensus(responses, healthyModels);
+		const confidenceScore = this.calculateOverallConfidence(
+			responses,
+			consensusAnalysis,
+		);
+		const supportedResultIds = [
+			...new Set(
+				responses.flatMap((response) => response.supportedResultIds || []),
+			),
+		];
+		const evidenceCoverage =
+			evidence.items.length > 0
+				? supportedResultIds.length / evidence.items.length
+				: 0;
+		const totalTokens = responses.reduce(
+			(sum, response) => sum + response.tokenCount,
+			0,
+		);
+		const totalTime = Date.now() - startTime;
+
+		console.log(
+			`[ParallelOrchestrator] Evidence verification: agreement=${(consensusAnalysis.agreementScore * 100).toFixed(0)}%, ` +
+				`coverage=${(evidenceCoverage * 100).toFixed(0)}%, supported=${supportedResultIds.length}`,
+		);
+
+		return {
+			responses,
+			consensus: consensusAnalysis.text || null,
+			consensusAnalysis,
+			confidenceScore,
+			totalTokens,
+			totalTime,
+			verificationMode: "evidence",
+			supportedResultIds,
+			evidenceCoverage,
 		};
 	}
 
@@ -252,12 +380,13 @@ export class ParallelModelOrchestrator {
 		fn: (item: T) => Promise<R>,
 		limit: number,
 	): Promise<R[]> {
-		const results: R[] = [];
+		const results: R[] = new Array(items.length);
 		const executing: Set<Promise<void>> = new Set();
 
-		for (const item of items) {
-			const promise = fn(item).then((result) => {
-				results.push(result);
+		for (let idx = 0; idx < items.length; idx++) {
+			const currentIdx = idx;
+			const promise = fn(items[currentIdx]).then((result) => {
+				results[currentIdx] = result;
 			});
 			const wrappedPromise = promise.then(() => {
 				executing.delete(wrappedPromise);
@@ -292,10 +421,7 @@ export class ParallelModelOrchestrator {
 			currentPrompt = `Previous analysis: ${response.response}\n\nBuild upon this analysis to provide deeper insights.`;
 		}
 
-		const totalTokens = responses.reduce(
-			(sum, r) => sum + r.tokenCount,
-			0,
-		);
+		const totalTokens = responses.reduce((sum, r) => sum + r.tokenCount, 0);
 		const totalTime = Date.now() - startTime;
 
 		const consensusAnalysis: ConsensusAnalysis = {
@@ -304,14 +430,19 @@ export class ParallelModelOrchestrator {
 			agreedClaims: [],
 			contradictions: [],
 			strategy: "unanimous",
-			modelWeights: Object.fromEntries(responses.map((r, i) => [r.modelName, 1 / responses.length])),
+			modelWeights: Object.fromEntries(
+				responses.map((r, _i) => [r.modelName, 1 / responses.length]),
+			),
 		};
 
 		return {
 			responses,
 			consensus: responses[responses.length - 1]?.response || null,
 			consensusAnalysis,
-			confidenceScore: this.calculateOverallConfidence(responses, consensusAnalysis),
+			confidenceScore: this.calculateOverallConfidence(
+				responses,
+				consensusAnalysis,
+			),
 			totalTokens,
 			totalTime,
 		};
@@ -329,7 +460,7 @@ export class ParallelModelOrchestrator {
 
 		try {
 			const modelInstance = this.createModelInstance(config);
-			
+
 			const result = await generateText({
 				model: modelInstance,
 				prompt,
@@ -340,7 +471,10 @@ export class ParallelModelOrchestrator {
 			const processingTime = Date.now() - startTime;
 
 			// Calculate confidence based on response length and coherence
-			const confidence = this.estimateConfidence(result.text, parallelConfig.role);
+			const confidence = this.estimateConfidence(
+				result.text,
+				parallelConfig.role,
+			);
 
 			return {
 				modelName: parallelConfig.name,
@@ -364,6 +498,51 @@ export class ParallelModelOrchestrator {
 		}
 	}
 
+	private async executeEvidenceModel(
+		query: string,
+		evidence: SearchEvidenceBundle,
+		parallelConfig: ParallelModelConfig,
+	): Promise<ModelResponse> {
+		const prompt = buildEvidenceVerificationPrompt(
+			query,
+			evidence,
+			parallelConfig.role,
+		);
+		const baseResponse = await this.executeModel(prompt, parallelConfig);
+		if (baseResponse.response.startsWith("Error:")) {
+			return {
+				...baseResponse,
+				verdict: "error",
+				supportedResultIds: [],
+				agreedClaims: [],
+				contradictions: [],
+				openQuestions: ["Model failed to respond"],
+			};
+		}
+
+		const parsed = this.parseEvidenceResponse(baseResponse.response);
+		if (!parsed) {
+			return {
+				...baseResponse,
+				verdict: "insufficient",
+				supportedResultIds: [],
+				agreedClaims: this.extractClaims(baseResponse.response),
+				contradictions: [],
+				openQuestions: ["Model returned unstructured verification output"],
+			};
+		}
+
+		return {
+			...baseResponse,
+			response: parsed.answer || baseResponse.response,
+			verdict: parsed.verdict,
+			supportedResultIds: parsed.supportedResultIds,
+			agreedClaims: parsed.agreedClaims.map((claim) => claim.claim),
+			contradictions: parsed.contradictions.map((claim) => claim.claim),
+			openQuestions: parsed.openQuestions,
+		};
+	}
+
 	// ── Intelligent Consensus Engine ──────────────────────────────────────
 
 	/**
@@ -379,10 +558,17 @@ export class ParallelModelOrchestrator {
 	 */
 	private buildConsensus(
 		responses: ModelResponse[],
-		models: ParallelModelConfig[],
+		_models: ParallelModelConfig[],
 	): ConsensusAnalysis {
 		if (responses.length === 0) {
-			return { text: "", agreementScore: 0, agreedClaims: [], contradictions: [], strategy: "none", modelWeights: {} };
+			return {
+				text: "",
+				agreementScore: 0,
+				agreedClaims: [],
+				contradictions: [],
+				strategy: "none",
+				modelWeights: {},
+			};
 		}
 
 		if (responses.length === 1) {
@@ -421,7 +607,11 @@ export class ParallelModelOrchestrator {
 		// 2. Extract claims per model
 		const modelClaims: Map<string, string[]> = new Map();
 		for (const r of responses) {
-			modelClaims.set(r.modelName, this.extractClaims(r.response));
+			const claims =
+				r.agreedClaims && r.agreedClaims.length > 0
+					? r.agreedClaims
+					: this.extractClaims(r.response);
+			modelClaims.set(r.modelName, claims);
 		}
 
 		// 3. Pairwise claim agreement – a claim is "agreed" if a similar claim
@@ -445,7 +635,10 @@ export class ParallelModelOrchestrator {
 				if (seen.has(j)) continue;
 				// Skip same-model duplicate matching
 				if (allClaims[j].model === allClaims[i].model) continue;
-				const sim = this.claimSimilarity(allClaims[i].claim, allClaims[j].claim);
+				const sim = this.claimSimilarity(
+					allClaims[i].claim,
+					allClaims[j].claim,
+				);
 				if (sim >= 0.4) {
 					supportingModels.add(allClaims[j].model);
 					cluster.push(j);
@@ -469,13 +662,22 @@ export class ParallelModelOrchestrator {
 			}
 		}
 		// Keep contradictions list manageable
-		const cappedContradictions = contradictions.slice(0, 10);
+		const structuredContradictions = responses.flatMap(
+			(response) => response.contradictions || [],
+		);
+		const cappedContradictions = [
+			...new Set([...contradictions, ...structuredContradictions]),
+		].slice(0, 10);
 
 		// 5. Agreement score
 		const totalClaims = new Set(allClaims.map((_, i) => i)).size;
-		const agreementScore = totalClaims > 0
-			? Math.min(1, agreedClaims.length / Math.max(1, totalClaims / responses.length))
-			: 0;
+		const agreementScore =
+			totalClaims > 0
+				? Math.min(
+						1,
+						agreedClaims.length / Math.max(1, totalClaims / responses.length),
+					)
+				: 0;
 
 		// 6. Pick strategy
 		let strategy: ConsensusAnalysis["strategy"];
@@ -500,7 +702,10 @@ export class ParallelModelOrchestrator {
 			let bestScore = 0;
 			for (const r of responses) {
 				const s = modelWeights[r.modelName] ?? 0;
-				if (s > bestScore) { bestScore = s; best = r; }
+				if (s > bestScore) {
+					bestScore = s;
+					best = r;
+				}
 			}
 			text = best.response;
 		} else {
@@ -553,7 +758,8 @@ export class ParallelModelOrchestrator {
 		const similarity = this.claimSimilarity(a, b);
 		if (similarity < 0.25) return false; // Too different to be contradictory
 
-		const negations = /\b(not|no|never|none|neither|nor|isn't|aren't|wasn't|weren't|don't|doesn't|didn't|won't|wouldn't|can't|cannot|shouldn't|couldn't)\b/i;
+		const negations =
+			/\b(not|no|never|none|neither|nor|isn't|aren't|wasn't|weren't|don't|doesn't|didn't|won't|wouldn't|can't|cannot|shouldn't|couldn't)\b/i;
 		const aNeg = negations.test(a);
 		const bNeg = negations.test(b);
 
@@ -580,7 +786,7 @@ export class ParallelModelOrchestrator {
 		// Weighted average confidence (use consensus model weights)
 		let weightedConf = 0;
 		for (const r of responses) {
-			const w = consensus.modelWeights[r.modelName] ?? (1 / responses.length);
+			const w = consensus.modelWeights[r.modelName] ?? 1 / responses.length;
 			weightedConf += r.confidence * w;
 		}
 
@@ -588,7 +794,10 @@ export class ParallelModelOrchestrator {
 		const agreementBonus = consensus.agreementScore * 0.15;
 
 		// Contradiction penalty: each contradiction reduces confidence
-		const contradictionPenalty = Math.min(0.2, consensus.contradictions.length * 0.04);
+		const contradictionPenalty = Math.min(
+			0.2,
+			consensus.contradictions.length * 0.04,
+		);
 
 		// Strategy bonus: unanimous > majority > weighted > best-single
 		const strategyBonus: Record<string, number> = {
@@ -599,7 +808,11 @@ export class ParallelModelOrchestrator {
 			none: -0.1,
 		};
 
-		const raw = weightedConf + agreementBonus - contradictionPenalty + (strategyBonus[consensus.strategy] ?? 0);
+		const raw =
+			weightedConf +
+			agreementBonus -
+			contradictionPenalty +
+			(strategyBonus[consensus.strategy] ?? 0);
 		return Math.max(0, Math.min(1, raw));
 	}
 
@@ -630,24 +843,91 @@ export class ParallelModelOrchestrator {
 		// Role-specific adjustments
 		if (role === "validator" && response.includes("validated"))
 			confidence += 0.1;
-		if (role === "reasoner" && response.includes("because"))
-			confidence += 0.1;
-		if (role === "orchestrator" && response.includes("step"))
-			confidence += 0.1;
+		if (role === "reasoner" && response.includes("because")) confidence += 0.1;
+		if (role === "orchestrator" && response.includes("step")) confidence += 0.1;
 
 		return Math.max(0, Math.min(1, confidence));
 	}
 
-	/**
-	 * Calculate variance of an array of numbers
-	 */
-	private calculateVariance(numbers: number[]): number {
-		if (numbers.length === 0) return 0;
+	private parseEvidenceResponse(text: string): {
+		answer: string;
+		verdict: "supported" | "mixed" | "insufficient";
+		supportedResultIds: string[];
+		agreedClaims: Array<{ claim: string; resultIds: string[] }>;
+		contradictions: Array<{ claim: string; resultIds: string[] }>;
+		openQuestions: string[];
+	} | null {
+		const jsonText = this.extractJsonObject(text);
+		if (!jsonText) return null;
 
-		const mean = numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
-		const squaredDiffs = numbers.map((n) => Math.pow(n - mean, 2));
-		return (
-			squaredDiffs.reduce((sum, diff) => sum + diff, 0) / numbers.length
-		);
+		try {
+			const parsed = JSON.parse(jsonText);
+			const verdict =
+				parsed?.verdict === "supported" ||
+				parsed?.verdict === "mixed" ||
+				parsed?.verdict === "insufficient"
+					? parsed.verdict
+					: "insufficient";
+			const supportedResultIds = Array.isArray(parsed?.supportedResultIds)
+				? parsed.supportedResultIds.filter(
+						(id: unknown): id is string => typeof id === "string",
+					)
+				: [];
+			const agreedClaims = Array.isArray(parsed?.agreedClaims)
+				? parsed.agreedClaims
+						.map((claim: unknown) => this.normalizeClaimObject(claim))
+						.filter(Boolean)
+				: [];
+			const contradictions = Array.isArray(parsed?.contradictions)
+				? parsed.contradictions
+						.map((claim: unknown) => this.normalizeClaimObject(claim))
+						.filter(Boolean)
+				: [];
+			const openQuestions = Array.isArray(parsed?.openQuestions)
+				? parsed.openQuestions.filter(
+						(item: unknown): item is string => typeof item === "string",
+					)
+				: [];
+
+			return {
+				answer: typeof parsed?.answer === "string" ? parsed.answer.trim() : "",
+				verdict,
+				supportedResultIds,
+				agreedClaims,
+				contradictions,
+				openQuestions,
+			};
+		} catch {
+			return null;
+		}
+	}
+
+	private normalizeClaimObject(
+		claim: unknown,
+	): { claim: string; resultIds: string[] } | null {
+		if (!claim || typeof claim !== "object") return null;
+		const normalizedClaim = claim as {
+			claim?: unknown;
+			resultIds?: unknown;
+		};
+		if (typeof normalizedClaim.claim !== "string") return null;
+
+		return {
+			claim: normalizedClaim.claim.trim(),
+			resultIds: Array.isArray(normalizedClaim.resultIds)
+				? normalizedClaim.resultIds.filter(
+						(id: unknown): id is string => typeof id === "string",
+					)
+				: [],
+		};
+	}
+
+	private extractJsonObject(text: string): string | null {
+		const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+		const candidate = fenced?.[1] || text;
+		const start = candidate.indexOf("{");
+		const end = candidate.lastIndexOf("}");
+		if (start === -1 || end === -1 || end <= start) return null;
+		return candidate.slice(start, end + 1);
 	}
 }

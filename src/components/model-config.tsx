@@ -74,20 +74,22 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
     setTestResult(null);
 
     try {
-      // For local providers, test by listing models
+      // For local providers, test via server-side proxy to avoid browser localhost blocking
       if (selectedProvider === 'ollama' || selectedProvider === 'lm_studio') {
         const url = baseURL || (selectedProvider === 'ollama' ? 'http://localhost:11434' : 'http://localhost:1234');
-        const endpoint = selectedProvider === 'ollama' ? '/api/tags' : '/v1/models';
 
-        const response = await fetch(`${url}${endpoint}`, {
-          method: 'GET',
-          signal: AbortSignal.timeout(5000),
+        const response = await fetch('/api/detect-models', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: selectedProvider === 'lm_studio' ? 'lmstudio' : selectedProvider, baseUrl: url, apiKey: apiKey || undefined }),
+          signal: AbortSignal.timeout(10000),
         });
 
-        if (response.ok) {
-          setTestResult({ success: true, message: 'Connection successful!' });
+        const data = await response.json();
+        if (response.ok && !data.error) {
+          setTestResult({ success: true, message: `Connection successful! Found ${data.models?.length ?? 0} model(s).` });
         } else {
-          setTestResult({ success: false, message: `Connection failed: ${response.statusText}` });
+          setTestResult({ success: false, message: `Connection failed: ${data.error || response.statusText}` });
         }
       } else {
         // For cloud providers, verify API key format

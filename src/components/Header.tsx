@@ -8,9 +8,12 @@ import {
 	History,
 	Download,
 	GitCompare,
+	User,
+	BarChart3,
 } from "lucide-react";
 import { useState } from "react";
 import { SettingsModal } from "./SettingsModal";
+import AuthButton from "./AuthButton";
 
 /**
  * Renders the application header with controls and a slide-in left navigation menu.
@@ -43,16 +46,21 @@ export default function Header() {
 					</h1>
 				</div>
 
-				{/* Quick Settings Button */}
-				<button
-					type="button"
-					onClick={() => setShowSettings(true)}
-					className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors"
-					aria-label="Configure API Keys"
-				>
-					<Key size={18} />
-					<span className="font-medium">Configure Models</span>
-				</button>
+				<div className="flex items-center gap-3">
+					{/* Quick Settings Button */}
+					<button
+						type="button"
+						onClick={() => setShowSettings(true)}
+						className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors"
+						aria-label="Configure API Keys"
+					>
+						<Key size={18} />
+						<span className="font-medium">Configure Models</span>
+					</button>
+
+					{/* Auth Button */}
+					<AuthButton />
+				</div>
 			</header>
 
 			{/* Settings Modal */}
@@ -129,6 +137,32 @@ export default function Header() {
 					>
 						<Download size={20} />
 						<span className="font-medium">Export Datasets</span>
+					</Link>
+
+					<Link
+						to="/profile"
+						onClick={() => setIsOpen(false)}
+						className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+						activeProps={{
+							className:
+								"flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2",
+						}}
+					>
+						<User size={20} />
+						<span className="font-medium">Profile</span>
+					</Link>
+
+					<Link
+						to="/analytics"
+						onClick={() => setIsOpen(false)}
+						className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+						activeProps={{
+							className:
+								"flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2",
+						}}
+					>
+						<BarChart3 size={20} />
+						<span className="font-medium">Analytics</span>
 					</Link>
 
 					<Link

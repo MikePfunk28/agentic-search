@@ -8,16 +8,28 @@ import {
 	ExternalLink,
 	FileText,
 	Star,
+	ThumbsUp,
 	TrendingUp,
+	Volume2,
+	VolumeX,
 	Zap,
 } from "lucide-react";
+import { useState } from "react";
 import type { OCRResult, SearchResult } from "../lib/types";
+import { useSpeechSynthesis } from "../hooks/useSpeech";
 
 interface ResultsListProps {
 	results: SearchResult[];
 	ocrResults?: OCRResult[];
 	tokenSavings?: number;
 	isLoading?: boolean;
+	ragMetadata?: {
+		level?: string;
+		chunkCount?: number;
+		latencyMs?: number;
+		tokensUsed?: number;
+	};
+	onRateRag?: (rating: number, preferredSource: "rag" | "web" | "merged", feedback?: string) => void;
 }
 
 export function ResultsList({
@@ -25,6 +37,8 @@ export function ResultsList({
 	ocrResults,
 	tokenSavings,
 	isLoading = false,
+	ragMetadata,
+	onRateRag,
 }: ResultsListProps) {
 	if (isLoading) {
 		return (
@@ -104,16 +118,18 @@ export function ResultsList({
 				</div>
 			)}
 
-			{/* Results Count */}
+			{/* Results Count + Read All */}
 			<div className="mb-4 flex items-center justify-between">
 				<p className="text-sm text-gray-600">
 					Found{" "}
 					<span className="font-semibold text-gray-900">{results.length}</span>{" "}
 					results
 				</p>
-				<div className="flex items-center gap-2 text-sm text-gray-600">
-					<Star className="w-4 h-4 text-yellow-500" />
-					<span>Sorted by ADD Quality Score</span>
+				<div className="flex items-center gap-3">
+					<div className="flex items-center gap-2 text-sm text-gray-600">
+						<Star className="w-4 h-4 text-yellow-500" />
+						<span>Sorted by ADD Quality Score</span>
+					</div>
 				</div>
 			</div>
 
@@ -123,12 +139,27 @@ export function ResultsList({
 					<ResultCard key={result.id} result={result} rank={index + 1} />
 				))}
 			</div>
+
+			{/* RAG Rating Widget */}
+			{ragMetadata && ragMetadata.level && ragMetadata.level !== "none" && onRateRag && (
+				<RagRatingWidget ragMetadata={ragMetadata} onRate={onRateRag} />
+			)}
 		</div>
 	);
 }
 
 function ResultCard({ result, rank }: { result: SearchResult; rank: number }) {
 	const hasHighScore = result.addScore && result.addScore > 0.7;
+	const { supported: ttsSupported, speaking, speak, stop } = useSpeechSynthesis();
+
+	const handleReadAloud = () => {
+		if (speaking) {
+			stop();
+		} else {
+			const text = `${result.title}. ${result.snippet}`;
+			speak(text);
+		}
+	};
 
 	return (
 		<div
@@ -165,6 +196,20 @@ function ResultCard({ result, rank }: { result: SearchResult; rank: number }) {
 						<span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
 							{result.source}
 						</span>
+
+						{/* Read Aloud Button */}
+						{ttsSupported && (
+							<button
+								type="button"
+								onClick={handleReadAloud}
+								className={`p-1 rounded-full transition-colors duration-200
+									${speaking ? "bg-primary-100 text-primary-700 hover:bg-primary-200" : "text-gray-400 hover:text-primary-600 hover:bg-gray-100"}`}
+								title={speaking ? "Stop reading" : "Read aloud"}
+								aria-label={speaking ? "Stop reading" : "Read aloud"}
+							>
+								{speaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+							</button>
+						)}
 					</div>
 
 					{/* Title */}
@@ -214,6 +259,96 @@ function ResultCard({ result, rank }: { result: SearchResult; rank: number }) {
 					</div>
 				</div>
 			)}
+		</div>
+	);
+}
+
+/** Inline rating widget shown when RAG results are blended into the search. */
+function RagRatingWidget({
+	ragMetadata,
+	onRate,
+}: {
+	ragMetadata: { level?: string; chunkCount?: number; latencyMs?: number; tokensUsed?: number };
+	onRate: (rating: number, preferredSource: "rag" | "web" | "merged", feedback?: string) => void;
+}) {
+	const [rating, setRating] = useState(0);
+	const [preferred, setPreferred] = useState<"rag" | "web" | "merged" | null>(null);
+	const [submitted, setSubmitted] = useState(false);
+
+	const handleSubmit = () => {
+		if (rating > 0 && preferred) {
+			onRate(rating, preferred);
+			setSubmitted(true);
+		}
+	};
+
+	if (submitted) {
+		return (
+			<div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl text-center">
+				<ThumbsUp className="w-5 h-5 text-green-600 mx-auto mb-2" />
+				<p className="text-sm font-medium text-green-900">Thanks for your feedback!</p>
+				<p className="text-xs text-green-700 mt-1">
+					This helps improve RAG quality scoring.
+				</p>
+			</div>
+		);
+	}
+
+	return (
+		<div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
+			<div className="flex items-center gap-2">
+				<Star className="w-4 h-4 text-yellow-500" />
+				<h4 className="text-sm font-semibold text-gray-900">
+					Rate This Search ({ragMetadata.chunkCount} KB chunks blended, {ragMetadata.level} mode)
+				</h4>
+			</div>
+
+			{/* Star rating */}
+			<div className="flex items-center gap-1">
+				{[1, 2, 3, 4, 5].map((v) => (
+					<button
+						key={v}
+						type="button"
+						onClick={() => setRating(v)}
+						className="p-0.5 transition-colors"
+						aria-label={`Rate ${v} stars`}
+					>
+						<Star
+							className={`w-5 h-5 ${v <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+						/>
+					</button>
+				))}
+				<span className="ml-2 text-xs text-gray-500">{rating > 0 ? `${rating}/5` : "Rate quality"}</span>
+			</div>
+
+			{/* Preferred source */}
+			<div className="flex items-center gap-2">
+				<span className="text-xs text-gray-600">Best source:</span>
+				{(["rag", "web", "merged"] as const).map((src) => (
+					<button
+						key={src}
+						type="button"
+						onClick={() => setPreferred(src)}
+						className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+							preferred === src
+								? "bg-primary-100 border-primary-400 text-primary-800 font-medium"
+								: "bg-white border-gray-300 text-gray-600 hover:border-gray-400"
+						}`}
+					>
+						{src === "rag" ? "Knowledge Base" : src === "web" ? "Web Search" : "Merged"}
+					</button>
+				))}
+			</div>
+
+			<button
+				type="button"
+				onClick={handleSubmit}
+				disabled={rating === 0 || !preferred}
+				className="px-4 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700
+						   disabled:bg-gray-300 disabled:text-gray-500 rounded-lg transition-colors"
+			>
+				Submit Rating
+			</button>
 		</div>
 	);
 }

@@ -4,7 +4,7 @@
  * Uses the unified model store (src/lib/model-store.ts) as single source of truth.
  */
 
-import { X, Key, Plus, Trash2, Eye, EyeOff, RefreshCw, Wifi, WifiOff, Loader2, Check, Globe } from "lucide-react";
+import { X, Key, Plus, Trash2, Eye, EyeOff, RefreshCw, Wifi, WifiOff, Loader2, Check, Globe, BookOpen, Star } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import {
 	getModelStore,
@@ -19,8 +19,13 @@ import {
 	isModelActive,
 	updateActiveModelRole,
 	migrateFromOldStorage,
+	getRagLevel,
+	setRagLevel,
+	getRagEmbeddingConfig,
+	setRagEmbeddingConfig,
 	type ModelStore,
 	type CustomProvider,
+	type RagLevel,
 } from "../lib/model-store";
 
 interface SettingsModalProps {
@@ -28,7 +33,7 @@ interface SettingsModalProps {
 	onClose: () => void;
 }
 
-type TabId = "local" | "cloud" | "search-keys";
+type TabId = "local" | "cloud" | "search-keys" | "knowledge-base";
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 	const [store, setStoreState] = useState<ModelStore>(getModelStore());
@@ -46,6 +51,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 	const [detectingCustom, setDetectingCustom] = useState(false);
 	const [customDetectedModels, setCustomDetectedModels] = useState<string[]>([]);
 	const [customSelectedModel, setCustomSelectedModel] = useState<string>("");
+
+	// RAG / Knowledge Base state
+	const [currentRagLevel, setCurrentRagLevel] = useState<RagLevel>(getRagLevel());
+	const [ragEmbedding, setRagEmbedding] = useState(getRagEmbeddingConfig());
 
 	// Refresh store from localStorage
 	const refreshStore = useCallback(() => {
@@ -257,6 +266,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 						{ id: "local" as TabId, icon: Wifi, label: "Local Models" },
 						{ id: "cloud" as TabId, icon: Globe, label: "Cloud / Custom" },
 						{ id: "search-keys" as TabId, icon: Key, label: "Search APIs" },
+						{ id: "knowledge-base" as TabId, icon: BookOpen, label: "Knowledge Base" },
 					]).map((tab) => (
 						<button
 							key={tab.id}
@@ -278,12 +288,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 					<div className="mb-6 rounded-lg border border-slate-700 bg-slate-950/60 p-4">
 						<div className="text-sm font-medium text-white">Quick Start</div>
 						<div className="mt-2 space-y-1 text-xs text-gray-300">
-							<p>1. Add at least one Search API key to enable real web search.</p>
-							<p>2. Add zero or more local or cloud models for planning, validation, and synthesis.</p>
-							<p>3. Select multiple models in the header to run them in parallel across different providers.</p>
+							<p>1. Search works out of the box with free providers (DuckDuckGo, Wikipedia, Semantic Scholar, arXiv).</p>
+							<p>2. Add your own API keys in Search APIs tab to unlock premium providers (Tavily, Exa, Firecrawl, Brave).</p>
+							<p>3. Add local or cloud models for AI-powered planning, validation, and synthesis.</p>
 						</div>
 						<p className="mt-2 text-xs text-gray-500">
-							Models are optional. Search sources are required for live web results.
+							Models are optional. Free search providers are always active.
 						</p>
 					</div>
 
@@ -689,31 +699,95 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 					{/* === SEARCH API KEYS TAB === */}
 					{activeTab === "search-keys" && (
 						<div className="space-y-6">
+							{/* Free providers — always active */}
+							<div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg space-y-2">
+								<p className="text-sm font-medium text-green-300">Free Search Providers (always active)</p>
+								<div className="grid grid-cols-2 gap-2 text-xs">
+									<div className="flex items-center gap-2 text-green-200">
+										<Check className="w-3 h-3 text-green-500 flex-shrink-0" />
+										DuckDuckGo — Web search
+									</div>
+									<div className="flex items-center gap-2 text-green-200">
+										<Check className="w-3 h-3 text-green-500 flex-shrink-0" />
+										Wikipedia — Encyclopedia
+									</div>
+									<div className="flex items-center gap-2 text-green-200">
+										<Check className="w-3 h-3 text-green-500 flex-shrink-0" />
+										Semantic Scholar — Academic papers
+									</div>
+									<div className="flex items-center gap-2 text-green-200">
+										<Check className="w-3 h-3 text-green-500 flex-shrink-0" />
+										arXiv — Research preprints
+									</div>
+								</div>
+								<p className="text-xs text-green-400/70 mt-1">
+									These run automatically on every search with no API key needed.
+								</p>
+							</div>
+
 							<p className="text-sm text-gray-400">
-								Add API keys for web search providers. At least one is required for real web search, and all configured providers run in parallel for better coverage.
+								Add your own API keys to unlock premium search providers. Each provider has a free tier — click the signup links below to get started. All configured providers run in parallel for better coverage.
 							</p>
 
 							{([
-								{ key: "tavily" as const, label: "Tavily", placeholder: "tvly-...", url: "https://tavily.com", description: "AI-optimized search with built-in extraction" },
-								{ key: "exa" as const, label: "Exa", placeholder: "UUID key", url: "https://exa.ai", description: "Neural search with semantic understanding" },
-								{ key: "firecrawl" as const, label: "Firecrawl", placeholder: "fc-...", url: "https://firecrawl.dev", description: "Search + scrape + markdown extraction" },
-								{ key: "brave" as const, label: "Brave Search", placeholder: "BSA...", url: "https://brave.com/search/api/", description: "Free tier: ~1000 queries/month" },
+								{
+									key: "tavily" as const,
+									label: "Tavily",
+									placeholder: "tvly-...",
+									signupUrl: "https://app.tavily.com/sign-up",
+									docsUrl: "https://tavily.com",
+									description: "AI-optimized search with built-in extraction",
+									freeTier: "1,000 free searches/month",
+								},
+								{
+									key: "exa" as const,
+									label: "Exa",
+									placeholder: "UUID key",
+									signupUrl: "https://dashboard.exa.ai/login",
+									docsUrl: "https://exa.ai",
+									description: "Neural search with semantic understanding",
+									freeTier: "1,000 free searches/month",
+								},
+								{
+									key: "firecrawl" as const,
+									label: "Firecrawl",
+									placeholder: "fc-...",
+									signupUrl: "https://www.firecrawl.dev/signin/signup",
+									docsUrl: "https://firecrawl.dev",
+									description: "Search + scrape + markdown extraction",
+									freeTier: "500 free credits",
+								},
+								{
+									key: "brave" as const,
+									label: "Brave Search",
+									placeholder: "BSA...",
+									signupUrl: "https://brave.com/search/api/",
+									docsUrl: "https://brave.com/search/api/",
+									description: "Fast web search with privacy focus",
+									freeTier: "2,000 free queries/month",
+								},
 							]).map((provider) => {
 								const storeKeyMap = { tavily: "tavilyApiKey", exa: "exaApiKey", firecrawl: "firecrawlApiKey", brave: "braveApiKey" } as const;
 								const value = store[storeKeyMap[provider.key]] || "";
 								return (
-									<div key={provider.key} className="space-y-2">
-										<label className="block text-sm font-medium text-white">
-											{provider.label}
-											<span className="ml-2 text-xs text-gray-500">{provider.description}</span>
-										</label>
+									<div key={provider.key} className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg space-y-2">
+										<div className="flex items-center justify-between">
+											<label className="text-sm font-medium text-white">
+												{provider.label}
+												{value && <span className="ml-2 text-xs text-green-400">Active</span>}
+											</label>
+											<span className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full">
+												{provider.freeTier}
+											</span>
+										</div>
+										<p className="text-xs text-gray-500">{provider.description}</p>
 										<div className="relative">
 											<input
 												type={showKeys[provider.key] ? "text" : "password"}
 												value={value}
 												onChange={(e) => handleSearchKeyChange(provider.key, e.target.value)}
 												placeholder={provider.placeholder}
-												className="w-full px-4 py-2 pr-10 bg-slate-800 border border-slate-700 rounded-lg text-white
+												className="w-full px-4 py-2 pr-10 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm
 														   focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none"
 											/>
 											<button
@@ -724,20 +798,144 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 												{showKeys[provider.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
 											</button>
 										</div>
-										<p className="text-xs text-gray-500">
-											Get a key at{" "}
-											<a href={provider.url} target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300">
-												{provider.url.replace("https://", "")}
+										<div className="flex gap-3 text-xs">
+											<a
+												href={provider.signupUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="text-pink-400 hover:text-pink-300 font-medium"
+											>
+												Get your free API key &rarr;
 											</a>
-											{value ? <span className="ml-2 text-green-400">Configured</span> : null}
-										</p>
+											<a
+												href={provider.docsUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="text-gray-500 hover:text-gray-400"
+											>
+												Docs
+											</a>
+										</div>
 									</div>
 								);
 							})}
 
 							<div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
 								<p className="text-sm text-blue-200">
-									Your keys are stored locally in your browser. When you run a search, this TanStack Start app sends them only to its own server route so the server can call the search providers. If you prefer not to send keys from the browser, configure the same keys in server environment variables instead.
+									Your keys are stored locally in your browser and only sent to this app's server route. They are never shared with third parties or stored on any server.
+								</p>
+							</div>
+						</div>
+					)}
+
+					{/* === KNOWLEDGE BASE TAB === */}
+					{activeTab === "knowledge-base" && (
+						<div className="space-y-6">
+							<p className="text-sm text-gray-400">
+								Configure RAG (Retrieval-Augmented Generation) to enhance search results with your own documents.
+								Choose a level, then create a knowledge base and upload content.
+							</p>
+
+							{/* RAG Level Selector */}
+							<div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg space-y-3">
+								<h3 className="font-medium text-white">RAG Level</h3>
+								<div className="grid grid-cols-2 gap-2">
+									{([
+										{ value: "none" as RagLevel, label: "Off", desc: "Web search only" },
+										{ value: "minimal" as RagLevel, label: "Minimal", desc: "BM25 text search" },
+										{ value: "medium" as RagLevel, label: "Medium", desc: "BM25 + vector embeddings" },
+										{ value: "full" as RagLevel, label: "Full", desc: "BM25 + vector + domain boost" },
+									]).map((opt) => (
+										<button
+											key={opt.value}
+											onClick={() => {
+												setRagLevel(opt.value);
+												setCurrentRagLevel(opt.value);
+											}}
+											className={`p-3 rounded-lg text-left transition-colors border ${
+												currentRagLevel === opt.value
+													? "bg-pink-500/20 border-pink-500/50 text-pink-300"
+													: "bg-slate-800/50 border-slate-700 text-gray-300 hover:bg-slate-700"
+											}`}
+										>
+											<div className="text-sm font-medium">{opt.label}</div>
+											<div className="text-xs text-gray-500 mt-1">{opt.desc}</div>
+										</button>
+									))}
+								</div>
+							</div>
+
+							{/* Embedding Config (medium / full only) */}
+							{(currentRagLevel === "medium" || currentRagLevel === "full") && (
+								<div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg space-y-3">
+									<h3 className="font-medium text-white">Embedding Model</h3>
+									<p className="text-xs text-gray-500">
+										Vector search requires an embedding model. Use your local Ollama or any OpenAI-compatible endpoint.
+									</p>
+									<div className="grid grid-cols-2 gap-3">
+										<div>
+											<label className="block text-xs text-gray-400 mb-1">Provider</label>
+											<select
+												value={ragEmbedding.provider}
+												onChange={(e) => {
+													const provider = e.target.value;
+													setRagEmbeddingConfig(ragEmbedding.model, provider);
+													setRagEmbedding({ model: ragEmbedding.model, provider });
+												}}
+												className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm
+														   focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none"
+											>
+												<option value="ollama">Ollama (local)</option>
+												<option value="openai-compatible">OpenAI-compatible</option>
+											</select>
+										</div>
+										<div>
+											<label className="block text-xs text-gray-400 mb-1">Model Name</label>
+											<input
+												type="text"
+												value={ragEmbedding.model}
+												onChange={(e) => {
+													const model = e.target.value;
+													setRagEmbeddingConfig(model, ragEmbedding.provider);
+													setRagEmbedding({ model, provider: ragEmbedding.provider });
+												}}
+												placeholder="nomic-embed-text"
+												className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm
+														   focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none"
+											/>
+										</div>
+									</div>
+								</div>
+							)}
+
+							{/* Knowledge Base Info */}
+							{currentRagLevel !== "none" && (
+								<div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg space-y-3">
+									<h3 className="font-medium text-white">Knowledge Bases</h3>
+									<p className="text-xs text-gray-500">
+										Knowledge bases are managed from the search interface. Upload documents via the
+										<span className="text-pink-400"> Knowledge Base </span>
+										panel that appears when RAG is enabled. Results from your knowledge base will be
+										blended with web search results and clearly labeled.
+									</p>
+									<div className="flex items-center gap-2 text-xs text-gray-400">
+										<Star className="w-3 h-3 text-yellow-500" />
+										After each search, you can rate whether RAG, web, or merged results were most useful.
+										This data appears in the analytics summary.
+									</div>
+								</div>
+							)}
+
+							{/* Level descriptions */}
+							<div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg space-y-2">
+								<p className="text-sm font-medium text-blue-200">How RAG Levels Work</p>
+								<ul className="text-xs text-blue-300 space-y-1 list-disc list-inside">
+									<li><strong>Minimal</strong> — Fast BM25 keyword search over your uploaded documents.</li>
+									<li><strong>Medium</strong> — Adds vector embedding similarity for semantic matching (requires an embedding model).</li>
+									<li><strong>Full</strong> — Adds domain/topic boosting and knowledge graph traversal for maximum relevance.</li>
+								</ul>
+								<p className="text-xs text-blue-400 mt-2">
+									All levels blend results with web search and are tracked via analytics so you can compare effectiveness.
 								</p>
 							</div>
 						</div>

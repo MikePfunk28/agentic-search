@@ -412,8 +412,13 @@ export class SegmentExecutor {
       .replace(/\/chat\/completions\/?$/, '')
       .replace(/\/models\/?$/, '')
       .replace(/\/+$/, '');
-    const v1Base = normalized.endsWith('/v1') ? normalized : `${normalized}/v1`;
-    return `${v1Base}/chat/completions`;
+    if (normalized.includes('/chat/completions')) return normalized;
+    // Detect existing version segments like /v1, /v4, /v1beta — don't add another /v1
+    const lastSlash = normalized.lastIndexOf('/');
+    const lastSegment = lastSlash >= 0 ? normalized.slice(lastSlash + 1) : '';
+    const hasVersion = lastSegment.length >= 2 && lastSegment[0] === 'v' && lastSegment[1] >= '0' && lastSegment[1] <= '9';
+    if (hasVersion) return `${normalized}/chat/completions`;
+    return `${normalized}/v1/chat/completions`;
   }
 
   /**

@@ -11,10 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ExportRouteImport } from './routes/export'
 import { Route as ComparisonRouteImport } from './routes/comparison'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTestKeyRouteImport } from './routes/api/test-key'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
@@ -38,6 +40,11 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
@@ -56,6 +63,11 @@ const ExportRoute = ExportRouteImport.update({
 const ComparisonRoute = ComparisonRouteImport.update({
   id: '/comparison',
   path: '/comparison',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -121,10 +133,12 @@ const ApiFineTuneOpenaiRoute = ApiFineTuneOpenaiRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/comparison': typeof ComparisonRoute
   '/export': typeof ExportRoute
   '/history': typeof HistoryRoute
   '/mcp': typeof McpRoute
+  '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/api/$': typeof ApiSplatRoute
@@ -141,10 +155,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/comparison': typeof ComparisonRoute
   '/export': typeof ExportRoute
   '/history': typeof HistoryRoute
   '/mcp': typeof McpRoute
+  '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/api/$': typeof ApiSplatRoute
@@ -162,10 +178,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/comparison': typeof ComparisonRoute
   '/export': typeof ExportRoute
   '/history': typeof HistoryRoute
   '/mcp': typeof McpRoute
+  '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/api/$': typeof ApiSplatRoute
@@ -184,10 +202,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analytics'
     | '/comparison'
     | '/export'
     | '/history'
     | '/mcp'
+    | '/profile'
     | '/search'
     | '/settings'
     | '/api/$'
@@ -204,10 +224,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analytics'
     | '/comparison'
     | '/export'
     | '/history'
     | '/mcp'
+    | '/profile'
     | '/search'
     | '/settings'
     | '/api/$'
@@ -224,10 +246,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/analytics'
     | '/comparison'
     | '/export'
     | '/history'
     | '/mcp'
+    | '/profile'
     | '/search'
     | '/settings'
     | '/api/$'
@@ -245,10 +269,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   ComparisonRoute: typeof ComparisonRoute
   ExportRoute: typeof ExportRoute
   HistoryRoute: typeof HistoryRoute
   McpRoute: typeof McpRoute
+  ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   ApiSplatRoute: typeof ApiSplatRoute
@@ -277,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mcp': {
       id: '/mcp'
       path: '/mcp'
@@ -303,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/comparison'
       fullPath: '/comparison'
       preLoaderRoute: typeof ComparisonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -410,10 +450,12 @@ const ApiSearchRouteWithChildren = ApiSearchRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
   ComparisonRoute: ComparisonRoute,
   ExportRoute: ExportRoute,
   HistoryRoute: HistoryRoute,
   McpRoute: McpRoute,
+  ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   ApiSplatRoute: ApiSplatRoute,
