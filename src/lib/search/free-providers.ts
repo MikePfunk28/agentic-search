@@ -108,13 +108,23 @@ export async function searchDuckDuckGo(
 		const title = stripHtml(rawTitle);
 		const snippet = stripHtml(rawSnippet);
 
-		// Skip empty or invalid results
-		if (!title || !decodedUrl || decodedUrl.includes("duckduckgo.com")) continue;
-
-		// Validate URL
+		// Validate URL and extract hostname
+		let parsedUrl: URL;
 		try {
-			new URL(decodedUrl);
+			parsedUrl = new URL(decodedUrl);
 		} catch {
+			// Skip invalid URLs
+			continue;
+		}
+
+		// Skip empty results or DuckDuckGo internal URLs
+		if (
+			!title ||
+			!decodedUrl ||
+			parsedUrl.hostname === "duckduckgo.com" ||
+			parsedUrl.hostname === "www.duckduckgo.com" ||
+			parsedUrl.hostname === "html.duckduckgo.com"
+		) {
 			continue;
 		}
 
