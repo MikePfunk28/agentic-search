@@ -13,6 +13,7 @@
 
 import { calculateDomainAuthority } from "./domain-authority";
 import type { WebSearchResult } from "./types";
+import he from "he";
 
 // ---------------------------------------------------------------------------
 // DuckDuckGo HTML Search
@@ -23,15 +24,9 @@ import type { WebSearchResult } from "./types";
 
 /** Strip HTML tags from text */
 function stripHtml(text: string): string {
-	return text
+	const decoded = he.decode(text);
+	return decoded
 		.replace(/<[^>]+>/g, "")
-		.replace(/&lt;/g, "<")
-		.replace(/&gt;/g, ">")
-		.replace(/&quot;/g, '"')
-		.replace(/&#039;/g, "'")
-		.replace(/&#x27;/g, "'")
-		.replace(/&nbsp;/g, " ")
-		.replace(/&amp;/g, "&")
 		.replace(/\s+/g, " ")
 		.trim();
 }
