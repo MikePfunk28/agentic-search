@@ -30,6 +30,9 @@ export default function SearchComparisonDashboard({ searchIds }: SearchCompariso
 		rightSearchId ? { searchId: rightSearchId } : "skip",
 	);
 
+	const getSearchDate = (search: { createdAt?: number; _creationTime: number }) =>
+		new Date(search.createdAt ?? search._creationTime).toLocaleDateString();
+
 	return (
 		<div className="search-comparison-dashboard">
 			<div className="dashboard-header">
@@ -45,8 +48,8 @@ export default function SearchComparisonDashboard({ searchIds }: SearchCompariso
 				>
 					<option value="">Select first search...</option>
 					{recentSearches?.map((search) => (
-						<option key={search._id} value={search._id}>
-							{search.query} - {new Date(search.timestamp).toLocaleDateString()}
+					<option key={search._id} value={search._id}>
+							{search.query} - {getSearchDate(search)}
 						</option>
 					))}
 				</select>
@@ -60,8 +63,8 @@ export default function SearchComparisonDashboard({ searchIds }: SearchCompariso
 				>
 					<option value="">Select second search...</option>
 					{recentSearches?.map((search) => (
-						<option key={search._id} value={search._id}>
-							{search.query} - {new Date(search.timestamp).toLocaleDateString()}
+					<option key={search._id} value={search._id}>
+							{search.query} - {getSearchDate(search)}
 						</option>
 					))}
 				</select>

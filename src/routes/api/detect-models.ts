@@ -10,10 +10,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { validateServerFetchUrlAsync } from "@/lib/url-validation";
 
+function hasAuthenticatedSession(request: Request): boolean {
+	const authDisabled =
+		typeof process !== "undefined" && process.env?.VITE_DISABLE_AUTH === "true";
+	if (authDisabled) {
+		return true;
+	}
+
+	const cookie = request.headers.get("cookie") || "";
+	return cookie.includes("__session") || cookie.includes("wos-session");
+}
+
 export const Route = createFileRoute("/api/detect-models")({
 	server: {
 		handlers: {
 			POST: async ({ request }) => {
+				if (!hasAuthenticatedSession(request)) {
+					return new Response(
+						JSON.stringify({ error: "Authentication required" }),
+						{ status: 401, headers: { "Content-Type": "application/json" } },
+					);
+				}
+
 				let body: { provider?: string; baseUrl?: string; apiKey?: string };
 				try {
 					body = await request.json();

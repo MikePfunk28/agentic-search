@@ -72,6 +72,98 @@ const STORAGE_KEY = "agentic-search-model-store";
 const DEFAULT_OLLAMA_URL = "http://localhost:11434";
 const DEFAULT_LMSTUDIO_URL = "http://localhost:1234";
 
+interface VolatileSecrets {
+	ollamaApiKey?: string;
+	lmstudioApiKey?: string;
+	customApiKeys: Record<string, string | undefined>;
+	firecrawlApiKey?: string;
+	tavilyApiKey?: string;
+	exaApiKey?: string;
+	braveApiKey?: string;
+}
+
+const volatileSecrets: VolatileSecrets = {
+	customApiKeys: {},
+};
+
+function captureVolatileSecrets(store: ModelStore): void {
+	volatileSecrets.ollamaApiKey = store.ollama?.apiKey;
+	volatileSecrets.lmstudioApiKey = store.lmstudio?.apiKey;
+	volatileSecrets.customApiKeys = Object.fromEntries(
+		store.custom
+			.filter((provider) => !!provider.apiKey)
+			.map((provider) => [provider.id, provider.apiKey]),
+	);
+	volatileSecrets.firecrawlApiKey = store.firecrawlApiKey;
+	volatileSecrets.tavilyApiKey = store.tavilyApiKey;
+	volatileSecrets.exaApiKey = store.exaApiKey;
+	volatileSecrets.braveApiKey = store.braveApiKey;
+}
+
+function stripSecretsForPersistence(store: ModelStore): ModelStore {
+	return {
+		...store,
+		ollama: store.ollama
+			? {
+					...store.ollama,
+					apiKey: undefined,
+				}
+			: store.ollama,
+		lmstudio: store.lmstudio
+			? {
+					...store.lmstudio,
+					apiKey: undefined,
+				}
+			: store.lmstudio,
+		custom: store.custom.map((provider) => ({
+			...provider,
+			apiKey: undefined,
+		})),
+		firecrawlApiKey: undefined,
+		tavilyApiKey: undefined,
+		exaApiKey: undefined,
+		braveApiKey: undefined,
+	};
+}
+
+function hydrateStoreWithVolatileSecrets(store: ModelStore): ModelStore {
+	return {
+		...store,
+		ollama: store.ollama
+			? {
+					...store.ollama,
+					apiKey: volatileSecrets.ollamaApiKey,
+				}
+			: store.ollama,
+		lmstudio: store.lmstudio
+			? {
+					...store.lmstudio,
+					apiKey: volatileSecrets.lmstudioApiKey,
+				}
+			: store.lmstudio,
+		custom: store.custom.map((provider) => ({
+			...provider,
+			apiKey: volatileSecrets.customApiKeys[provider.id],
+		})),
+		firecrawlApiKey: volatileSecrets.firecrawlApiKey,
+		tavilyApiKey: volatileSecrets.tavilyApiKey,
+		exaApiKey: volatileSecrets.exaApiKey,
+		braveApiKey: volatileSecrets.braveApiKey,
+	};
+}
+
+function hasPersistedSecrets(store: ModelStore): boolean {
+	return Boolean(
+		store.ollama?.apiKey ||
+			store.lmstudio?.apiKey ||
+			store.custom.some((provider) => !!provider.apiKey) ||
+			store.firecrawlApiKey ||
+			store.tavilyApiKey ||
+			store.exaApiKey ||
+			store.braveApiKey,
+	);
+}
+
 // --- Store Functions ---
 
 /**
@@ -87,8 +179,16 @@ export function getModelStore(): ModelStore {
 		const raw = localStorage.getItem(STORAGE_KEY);
 		if (!raw) return createDefaultStore();
 
-		const parsed = JSON.parse(raw);
-		return ModelStoreSchema.parse(parsed);
+		const parsed = ModelStoreSchema.parse(JSON.parse(raw));
+		captureVolatileSecrets(parsed);
+		const sanitized = stripSecretsForPersistence(parsed);
+		if (hasPersistedSecrets(parsed)) {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+			console.warn(
+				"[ModelStore] Removed persisted API keys from localStorage; keys are now session-volatile until secure backend storage is used.",
+			);
+		}
+		return hydrateStoreWithVolatileSecrets(sanitized);
 	} catch (error) {
 		console.warn("[ModelStore] Failed to parse stored config, using defaults:", error);
 		return createDefaultStore();
@@ -103,7 +203,11 @@ export function setModelStore(store: ModelStore): void {
 
 	try {
 		const validated = ModelStoreSchema.parse(store);
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(validated));
+		captureVolatileSecrets(validated);
+		localStorage.setItem(
+			STORAGE_KEY,
+			JSON.stringify(stripSecretsForPersistence(validated)),
+		);
 	} catch (error) {
 		console.error("[ModelStore] Failed to save store:", error);
 	}
@@ -479,10 +583,12 @@ export async function detectAndUpdateLocalModels(): Promise<ModelStore> {
  * has no /v1/models listing endpoint.
  */
 const ANTHROPIC_KNOWN_MODELS = [
+	"claude-opus-4-6",
+	"claude-sonnet-4-6",
 	"claude-opus-4-20250514",
 	"claude-sonnet-4-20250514",
 	"claude-haiku-4-5-20251001",
-	"claude-sonnet-4-5-20241022",
+	"claude-sonnet-4-5-20250929",
 ];
 
 /**

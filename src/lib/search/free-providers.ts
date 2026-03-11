@@ -21,19 +21,34 @@ import type { WebSearchResult } from "./types";
 // (api.duckduckgo.com) which only returned encyclopedia abstracts, not web results.
 // ---------------------------------------------------------------------------
 
-/** Strip HTML tags from text */
+/** Strip HTML tags from text — safe against nested/encoded tag injection.
+ * 1. Decode HTML entities first so encoded tags become real tags.
+ * 2. Strip tags in a loop until stable (handles <scr<script>ipt> nesting).
+ * 3. Remove any remaining angle brackets as a final safety net.
+ */
 function stripHtml(text: string): string {
-	return text
-		.replace(/<[^>]+>/g, "")
+	// Step 1: Decode HTML entities to their characters
+	let decoded = text
 		.replace(/&amp;/g, "&")
 		.replace(/&lt;/g, "<")
 		.replace(/&gt;/g, ">")
 		.replace(/&quot;/g, '"')
 		.replace(/&#039;/g, "'")
 		.replace(/&#x27;/g, "'")
-		.replace(/&nbsp;/g, " ")
-		.replace(/\s+/g, " ")
-		.trim();
+		.replace(/&nbsp;/g, " ");
+
+	// Step 2: Strip tags in a loop — a single pass of /<[^>]+>/g can leave
+	// residual tags when tags were nested inside entity-encoded tags.
+	let prev: string;
+	do {
+		prev = decoded;
+		decoded = decoded.replace(/<[^>]+>/g, "");
+	} while (decoded !== prev);
+
+	// Step 3: Remove any remaining < or > so no tag can survive
+	decoded = decoded.replace(/[<>]/g, "");
+
+	return decoded.replace(/\s+/g, " ").trim();
 }
 
 /** Decode DDG redirect URLs (//duckduckgo.com/l/?uddg=ENCODED_URL&...) */
@@ -108,13 +123,20 @@ export async function searchDuckDuckGo(
 		const title = stripHtml(rawTitle);
 		const snippet = stripHtml(rawSnippet);
 
-		// Skip empty or invalid results
-		if (!title || !decodedUrl || decodedUrl.includes("duckduckgo.com")) continue;
-
-		// Validate URL
+		// Validate URL and ignore DuckDuckGo internal pages
+		let parsedUrl: URL;
 		try {
-			new URL(decodedUrl);
+			parsedUrl = new URL(decodedUrl);
 		} catch {
+			continue;
+		}
+		if (
+			!title ||
+			!decodedUrl ||
+			parsedUrl.hostname === "duckduckgo.com" ||
+			parsedUrl.hostname === "www.duckduckgo.com" ||
+			parsedUrl.hostname === "html.duckduckgo.com"
+		) {
 			continue;
 		}
 
@@ -173,8 +195,12 @@ export async function searchWikipedia(
 	query: string,
 	limit = 5,
 ): Promise<WebSearchResult[]> {
+	// Cap Wikipedia to 3 results max — it's a reference supplement, not the
+	// primary search engine.  Without this cap Wikipedia dominates RRF fusion
+	// because every query matches *some* Wikipedia article.
+	const wikiLimit = Math.min(limit, 3);
 	const encoded = encodeURIComponent(query);
-	const searchUrl = `https://en.wikipedia.org/w/rest.php/v1/search/page?q=${encoded}&limit=${Math.min(limit, 10)}`;
+	const searchUrl = `https://en.wikipedia.org/w/rest.php/v1/search/page?q=${encoded}&limit=${wikiLimit}`;
 
 	const response = await fetch(searchUrl, {
 		headers: {
@@ -198,7 +224,7 @@ export async function searchWikipedia(
 
 	// Fetch summaries in parallel for richer snippets
 	const summaryResults = await Promise.all(
-		data.pages.slice(0, limit).map(async (page, index) => {
+		data.pages.slice(0, wikiLimit).map(async (page, index) => {
 			try {
 				const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(page.key)}`;
 				const summaryResp = await fetch(summaryUrl, {
@@ -219,13 +245,13 @@ export async function searchWikipedia(
 					return {
 						id: `wiki-${Date.now()}-${index}`,
 						title: summary.title || page.title,
-						snippet:
-							summary.extract || page.excerpt || page.description || "",
+						snippet: summary.extract || page.excerpt || page.description || "",
 						url: pageUrl,
 						source: "encyclopedia",
 						provider: "wikipedia" as const,
-						publishedDate: summary.timestamp,
-						domainAuthority: 0.92,
+						// Wikipedia revision timestamps are not publication dates and
+						// should not influence freshness scoring for "latest" queries.
+						domainAuthority: 0.7,
 						citationCount: 1,
 						rawScore: Math.max(0.5, 0.85 - index * 0.05),
 					};
@@ -242,7 +268,7 @@ export async function searchWikipedia(
 				url: pageUrl,
 				source: "encyclopedia",
 				provider: "wikipedia" as const,
-				domainAuthority: 0.92,
+				domainAuthority: 0.7,
 				citationCount: 1,
 				rawScore: Math.max(0.45, 0.8 - index * 0.05),
 			};
@@ -253,9 +279,7 @@ export async function searchWikipedia(
 		(r) => r !== null && r.snippet.length > 0,
 	);
 
-	console.log(
-		`[Wikipedia] Returned ${results.length} results for: ${query}`,
-	);
+	console.log(`[Wikipedia] Returned ${results.length} results for: ${query}`);
 	return results;
 }
 
@@ -291,18 +315,30 @@ export async function searchSemanticScholar(
 	const params = new URLSearchParams({
 		query,
 		limit: String(Math.min(limit, 10)),
-		fields:
-			"title,abstract,url,year,citationCount,authors,externalIds",
+		fields: "title,abstract,url,year,citationCount,authors,externalIds",
 	});
 
 	const url = `https://api.semanticscholar.org/graph/v1/paper/search?${params}`;
 
-	const response = await fetch(url, {
+	let response = await fetch(url, {
 		headers: {
 			Accept: "application/json",
 		},
 		signal: AbortSignal.timeout(10000),
 	});
+
+	// Retry once on 429 rate limit — Semantic Scholar allows 100 req/5min
+	if (response.status === 429) {
+		const retryAfter = Number(response.headers.get("Retry-After")) || 2;
+		console.warn(
+			`[SemanticScholar] Rate limited (429), retrying in ${retryAfter}s`,
+		);
+		await new Promise((r) => setTimeout(r, retryAfter * 1000));
+		response = await fetch(url, {
+			headers: { Accept: "application/json" },
+			signal: AbortSignal.timeout(10000),
+		});
+	}
 
 	if (!response.ok) {
 		const errorText = await response.text().catch(() => "");
@@ -335,21 +371,14 @@ export async function searchSemanticScholar(
 					? paper.authors
 							.slice(0, 3)
 							.map((a) => a.name)
-							.join(", ") +
-						(paper.authors.length > 3
-							? ` et al.`
-							: "")
+							.join(", ") + (paper.authors.length > 3 ? ` et al.` : "")
 					: "";
 
 			const snippet = [
-				paper.abstract
-					? paper.abstract.slice(0, 300)
-					: "",
+				paper.abstract ? paper.abstract.slice(0, 300) : "",
 				authorStr ? `Authors: ${authorStr}` : "",
 				paper.year ? `Published: ${paper.year}` : "",
-				paper.citationCount
-					? `Citations: ${paper.citationCount}`
-					: "",
+				paper.citationCount ? `Citations: ${paper.citationCount}` : "",
 			]
 				.filter(Boolean)
 				.join(". ");
@@ -372,9 +401,7 @@ export async function searchSemanticScholar(
 				citationCount: 1,
 				rawScore: Math.min(
 					1.0,
-					(0.80 - index * 0.04) * 0.5 +
-						domainAuthority * 0.35 +
-						citationBoost,
+					(0.8 - index * 0.04) * 0.5 + domainAuthority * 0.35 + citationBoost,
 				),
 			};
 		});
@@ -426,16 +453,12 @@ export async function searchArxiv(
 		const titleMatch = entry.match(/<title[^>]*>([\s\S]*?)<\/title>/);
 		const summaryMatch = entry.match(/<summary[^>]*>([\s\S]*?)<\/summary>/);
 		const idMatch = entry.match(/<id>([\s\S]*?)<\/id>/);
-		const publishedMatch = entry.match(
-			/<published>([\s\S]*?)<\/published>/,
-		);
+		const publishedMatch = entry.match(/<published>([\s\S]*?)<\/published>/);
 
 		// Extract authors
 		const authorMatches = entry.match(/<name>([\s\S]*?)<\/name>/g);
 		const authors = authorMatches
-			? authorMatches
-					.map((m) => m.replace(/<\/?name>/g, "").trim())
-					.slice(0, 3)
+			? authorMatches.map((m) => m.replace(/<\/?name>/g, "").trim()).slice(0, 3)
 			: [];
 
 		if (!titleMatch || !idMatch) continue;
@@ -451,7 +474,8 @@ export async function searchArxiv(
 
 		const authorStr =
 			authors.length > 0
-				? authors.join(", ") + (authorMatches && authorMatches.length > 3 ? " et al." : "")
+				? authors.join(", ") +
+					(authorMatches && authorMatches.length > 3 ? " et al." : "")
 				: "";
 
 		const snippet = [
@@ -479,8 +503,6 @@ export async function searchArxiv(
 		});
 	}
 
-	console.log(
-		`[arXiv] Returned ${results.length} results for: ${query}`,
-	);
+	console.log(`[arXiv] Returned ${results.length} results for: ${query}`);
 	return results;
 }

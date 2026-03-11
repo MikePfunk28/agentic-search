@@ -164,6 +164,12 @@ export async function uploadTrainingFile(
 	return (await response.json()) as OpenAIFileObject;
 }
 
+export async function deleteTrainingFile(fileId: string): Promise<void> {
+	await openAIFetch(`/files/${fileId}`, {
+		method: "DELETE",
+	});
+}
+
 export async function createFineTuneJob(
 	request: OpenAIFineTuneLaunchRequest,
 	trainingFileId: string,

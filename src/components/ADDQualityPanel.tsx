@@ -8,8 +8,18 @@
  * - See reasoning transparency
  */
 
-import { Shield, AlertTriangle, CheckCircle, XCircle, Eye, Settings, TrendingDown, TrendingUp, Info } from "lucide-react";
-import { useState } from "react";
+import {
+	AlertTriangle,
+	CheckCircle,
+	Eye,
+	Info,
+	Settings,
+	Shield,
+	TrendingDown,
+	TrendingUp,
+	XCircle,
+} from "lucide-react";
+import { useState, type ReactElement } from "react";
 import type { SearchResult } from "../lib/types";
 
 interface ADDMetrics {
@@ -53,7 +63,7 @@ export function ADDQualityPanel({ results, addMetrics, onFilterResult, onAdjustT
     onAdjustThreshold?.(newThreshold);
   };
 
-  const getThreatLevel = (score: number): { level: "safe" | "warning" | "danger"; color: string; icon: JSX.Element } => {
+  const getThreatLevel = (score: number): { level: "safe" | "warning" | "danger"; color: string; icon: ReactElement } => {
     if (score >= 0.7) {
       return {
         level: "safe",

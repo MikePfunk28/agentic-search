@@ -32,6 +32,8 @@ export interface SearchProgressStep {
 		models?: string[];
 		resultsFound?: number;
 		usedFallbackCache?: boolean;
+		ragLevel?: string;
+		ragLatencyMs?: number;
 	};
 }
 

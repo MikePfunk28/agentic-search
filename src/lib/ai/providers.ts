@@ -9,7 +9,7 @@
 import { ModelProvider } from "../model-config";
 
 // Re-export so existing imports don't break
-export type { ModelProvider };
+export { ModelProvider };
 
 export interface ModelConfig {
 	provider: ModelProvider;
@@ -205,6 +205,8 @@ export async function listModelsForProvider(
 
 		case "anthropic":
 			return [
+				"claude-opus-4-6",
+				"claude-sonnet-4-6",
 				"claude-sonnet-4-5-20250929",
 				"claude-haiku-4-5-20250929",
 				"claude-opus-4-1-20250805",

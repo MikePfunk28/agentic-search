@@ -4,7 +4,14 @@
  */
 
 import { Loader2, Mic, MicOff, Search, Sparkles } from "lucide-react";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import {
+	type FormEvent,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
+import { useAutocomplete } from "../hooks/useAutocomplete";
 import { useSpeechRecognition } from "../hooks/useSpeech";
 
 interface SearchBarProps {
@@ -19,6 +26,11 @@ export function SearchBar({
 	placeholder = "Search across the web with AI agents...",
 }: SearchBarProps) {
 	const [query, setQuery] = useState("");
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const [selectedIndex, setSelectedIndex] = useState(-1);
+	const { suggestions, recordSearch } = useAutocomplete(query);
+	const suggestionsRef = useRef<HTMLDivElement>(null);
+	const inputRef = useRef<HTMLInputElement>(null);
 	const {
 		supported: micSupported,
 		listening,
@@ -29,6 +41,38 @@ export function SearchBar({
 	} = useSpeechRecognition();
 	const prevTranscriptRef = useRef("");
 	const lastSubmittedVoiceQueryRef = useRef("");
+
+	// Show suggestions when typing, hide when empty
+	useEffect(() => {
+		setShowSuggestions(suggestions.length > 0 && query.trim().length >= 2);
+		setSelectedIndex(-1);
+	}, [suggestions, query]);
+
+	// Close suggestions on outside click
+	useEffect(() => {
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				suggestionsRef.current &&
+				!suggestionsRef.current.contains(e.target as Node) &&
+				inputRef.current &&
+				!inputRef.current.contains(e.target as Node)
+			) {
+				setShowSuggestions(false);
+			}
+		};
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
+
+	const selectSuggestion = useCallback(
+		(suggestion: string) => {
+			setQuery(suggestion);
+			setShowSuggestions(false);
+			recordSearch(suggestion);
+			onSearch(suggestion);
+		},
+		[onSearch, recordSearch],
+	);
 
 	// When speech recognition produces a final transcript, populate the input
 	useEffect(() => {
@@ -55,11 +99,44 @@ export function SearchBar({
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault();
 		if (query.trim() && !isSearching) {
+			setShowSuggestions(false);
+			recordSearch(query.trim());
 			onSearch(query.trim());
 		}
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (showSuggestions && suggestions.length > 0) {
+			if (e.key === "ArrowDown") {
+				e.preventDefault();
+				setSelectedIndex((prev) =>
+					prev < suggestions.length - 1 ? prev + 1 : 0,
+				);
+				return;
+			}
+			if (e.key === "ArrowUp") {
+				e.preventDefault();
+				setSelectedIndex((prev) =>
+					prev > 0 ? prev - 1 : suggestions.length - 1,
+				);
+				return;
+			}
+			if (e.key === "Tab" && selectedIndex >= 0) {
+				e.preventDefault();
+				setQuery(suggestions[selectedIndex]);
+				setShowSuggestions(false);
+				return;
+			}
+			if (e.key === "Enter" && selectedIndex >= 0) {
+				e.preventDefault();
+				selectSuggestion(suggestions[selectedIndex]);
+				return;
+			}
+			if (e.key === "Escape") {
+				setShowSuggestions(false);
+				return;
+			}
+		}
 		if (e.key === "Enter" && !e.shiftKey) {
 			handleSubmit(e);
 		}
@@ -79,12 +156,19 @@ export function SearchBar({
 
 				{/* Input Field */}
 				<input
+					ref={inputRef}
 					type="text"
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
 					onKeyDown={handleKeyDown}
+					onFocus={() => {
+						if (suggestions.length > 0 && query.trim().length >= 2) {
+							setShowSuggestions(true);
+						}
+					}}
 					disabled={isSearching}
 					placeholder={listening ? "Listening..." : placeholder}
+					autoComplete="off"
 					className="w-full pl-12 pr-44 py-4 text-lg border-2 border-gray-300 rounded-xl
                      focus:border-primary-500 focus:ring-4 focus:ring-primary-100
                      disabled:bg-gray-50 disabled:cursor-not-allowed
@@ -137,6 +221,39 @@ export function SearchBar({
 				>
 					{isSearching ? "Searching..." : "Search"}
 				</button>
+
+				{/* Autocomplete Suggestions Dropdown */}
+				{showSuggestions && suggestions.length > 0 && (
+					<div
+						ref={suggestionsRef}
+						className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200
+                         rounded-lg shadow-lg z-50 overflow-hidden"
+					>
+						{suggestions.map((suggestion, index) => {
+							const prefixLen = query.trim().length;
+							const matchedPart = suggestion.slice(0, prefixLen);
+							const completionPart = suggestion.slice(prefixLen);
+
+							return (
+								<button
+									key={suggestion}
+									type="button"
+									onClick={() => selectSuggestion(suggestion)}
+									onMouseEnter={() => setSelectedIndex(index)}
+									className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2
+                             transition-colors duration-100
+                             ${index === selectedIndex ? "bg-primary-50 text-primary-700" : "text-gray-700 hover:bg-gray-50"}`}
+								>
+									<Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+									<span>
+										<span className="font-medium">{matchedPart}</span>
+										<span className="text-gray-500">{completionPart}</span>
+									</span>
+								</button>
+							);
+						})}
+					</div>
+				)}
 			</div>
 
 			{/* Status Message */}

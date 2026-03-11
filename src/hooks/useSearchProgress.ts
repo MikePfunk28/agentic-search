@@ -89,9 +89,9 @@ export function useSearchProgress(
 			if (eventSourceRef.current) {
 				eventSourceRef.current.close();
 			}
-			if (abortControllerRef.current) {
-				abortControllerRef.current.abort();
-			}
+						if (abortControllerRef.current) {
+							abortControllerRef.current.abort();
+						}
 			if (safetyTimeoutRef.current) {
 				clearTimeout(safetyTimeoutRef.current);
 			}
@@ -141,10 +141,9 @@ export function useSearchProgress(
 				error: null,
 			});
 
-			// Create new abort controller
-			abortControllerRef.current = new AbortController();
-			const searchId = `search-${Date.now()}`;
-			searchIdRef.current = searchId;
+						// Create new abort controller
+						abortControllerRef.current = new AbortController();
+						searchIdRef.current = null;
 
 			try {
 				// Get CSRF token from API endpoint
@@ -166,13 +165,12 @@ export function useSearchProgress(
 						"Content-Type": "application/json",
 						"X-CSRF-Token": csrfToken,
 					},
-					body: JSON.stringify({
-						query,
-						scope: initialScope,
-						searchId,
-						modelConfig: clientConfig.modelConfig,
-						modelConfigs: clientConfig.modelConfigs,
-						searchApiKeys: clientConfig.searchApiKeys,
+										body: JSON.stringify({
+											query,
+											scope: initialScope,
+											modelConfig: clientConfig.modelConfig,
+											modelConfigs: clientConfig.modelConfigs,
+											searchApiKeys: clientConfig.searchApiKeys,
 					}),
 					signal: abortControllerRef.current.signal,
 				});
@@ -236,10 +234,16 @@ export function useSearchProgress(
 										}
 									}
 
-									switch (data.type) {
-										case "step":
-											if (data.step.status === "completed") {
-												updateStep(data.step.id, data.step);
+												switch (data.type) {
+													case "connected":
+														if (typeof data.searchId === "string") {
+															searchIdRef.current = data.searchId;
+														}
+														break;
+
+													case "step":
+														if (data.step.status === "completed") {
+															updateStep(data.step.id, data.step);
 											} else {
 												addStep(data.step);
 											}
@@ -249,23 +253,32 @@ export function useSearchProgress(
 											updateStep(data.stepId, data.updates);
 											break;
 
-										case "results":
-											if (
-												data.summary?.query &&
+													case "results":
+														if (
+															data.summary?.query &&
 												Array.isArray(data.results) &&
 												data.results.length > 0
-											) {
-												await researchStorage.storeResults(
-													data.summary.query,
-													data.results,
-													`${data.summary.provider || "web-only"}:${data.summary.modelUsed || "none"}`,
-													{
-														addScore: data.summary.addMetrics?.overallScore,
-														tokensUsed: data.summary.totalTokens,
-														executionTimeMs: data.summary.totalProcessingTime,
-													},
-												);
-											}
+														) {
+															try {
+																await researchStorage.storeResults(
+																	data.summary.query,
+																	data.results,
+																	`${data.summary.provider || "web-only"}:${data.summary.modelUsed || "none"}`,
+																	{
+																		addScore:
+																			data.summary.addMetrics?.overallScore,
+																		tokensUsed: data.summary.totalTokens,
+																		executionTimeMs:
+																			data.summary.totalProcessingTime,
+																	},
+																);
+															} catch (storageError) {
+																console.error(
+																	"[SearchProgress] Failed to persist search results:",
+																	storageError,
+																);
+															}
+														}
 											await Promise.resolve(
 												onResults?.(data.results, data.summary),
 											);

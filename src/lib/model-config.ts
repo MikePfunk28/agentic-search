@@ -12,6 +12,7 @@
  */
 
 import { z } from "zod";
+import { validateServerFetchUrl } from "./url-validation";
 
 // Model provider types
 export enum ModelProvider {
@@ -74,6 +75,10 @@ export function buildModelConfigFromClient(
 		provider = clientConfig.protocol === "anthropic"
 			? ModelProvider.ANTHROPIC
 			: ModelProvider.OPENAI;
+	}
+
+	if (clientConfig.baseUrl) {
+		validateServerFetchUrl(clientConfig.baseUrl);
 	}
 
 	return {

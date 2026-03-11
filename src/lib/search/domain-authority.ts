@@ -6,7 +6,7 @@ const DOMAIN_AUTHORITY_TIERS: Array<{
 	{ pattern: /\.gov(\.[a-z]{2})?$/i, score: 0.95, category: "government" },
 	{ pattern: /\.edu(\.[a-z]{2})?$/i, score: 0.95, category: "education" },
 	{ pattern: /\.ac\.[a-z]{2}$/i, score: 0.93, category: "academic" },
-	{ pattern: /wikipedia\.org$/i, score: 0.92, category: "encyclopedia" },
+	{ pattern: /wikipedia\.org$/i, score: 0.72, category: "encyclopedia" },
 	{ pattern: /arxiv\.org$/i, score: 0.93, category: "academic" },
 	{ pattern: /nature\.com$/i, score: 0.93, category: "academic" },
 	{ pattern: /sciencedirect\.com$/i, score: 0.91, category: "academic" },
@@ -65,15 +65,15 @@ export function calculateDomainAuthority(url: string): number {
 			}
 		}
 
-		let score = 0.5;
+		let score = 0.55;
 		if (parsed.protocol === "https:") score += 0.05;
 		const domainParts = hostname.split(".");
 		const mainDomain = domainParts.slice(-2).join(".");
 		if (mainDomain.length <= 10) score += 0.05;
 		if (domainParts.length > 3) score -= 0.05;
-		if (/\.(com|net|io|dev|co)$/i.test(hostname)) score += 0.03;
+		if (/\.(com|net|io|dev|co)$/i.test(hostname)) score += 0.05;
 
-		return Math.max(0.1, Math.min(0.8, score));
+		return Math.max(0.1, Math.min(0.85, score));
 	} catch {
 		return 0.3;
 	}

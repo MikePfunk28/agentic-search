@@ -10,7 +10,11 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
-import type { ModelConfig } from "./model-config";
+import {
+	ModelProvider,
+	type ModelConfig,
+	ProviderDefaults,
+} from "./model-config";
 import {
 	buildEvidenceVerificationPrompt,
 	type SearchEvidenceBundle,
@@ -75,11 +79,13 @@ export const DEFAULT_PARALLEL_MODELS: ParallelModelConfig[] = [];
 
 export class ParallelModelOrchestrator {
 	private modelConfigs: Map<string, ModelConfig> = new Map();
+	private parallelConfigs: ParallelModelConfig[];
 	private maxConcurrency: number;
 
 	constructor(configs?: ParallelModelConfig[], maxConcurrency?: number) {
 		// Initialize with provided configs or defaults
 		const modelsToUse = configs || DEFAULT_PARALLEL_MODELS;
+		this.parallelConfigs = modelsToUse;
 		for (const parallelConfig of modelsToUse) {
 			this.modelConfigs.set(parallelConfig.name, parallelConfig.config);
 		}
@@ -141,39 +147,45 @@ export class ParallelModelOrchestrator {
 	/**
 	 * Create provider-specific model instance
 	 */
-	private createModelInstance(config: ModelConfig): any {
+	private async createModelInstance(config: ModelConfig): Promise<any> {
+		const resolvedBaseUrl =
+			config.baseUrl || ProviderDefaults[config.provider as ModelProvider]?.baseUrl;
+		if (resolvedBaseUrl) {
+			await validateServerFetchUrlAsync(resolvedBaseUrl);
+		}
+
 		switch (config.provider) {
 			case "openai":
 				return createOpenAI({
-					baseURL: config.baseUrl,
+					baseURL: resolvedBaseUrl,
 					apiKey: config.apiKey,
 				})(config.model);
 			case "anthropic":
 				return createAnthropic({
-					baseURL: config.baseUrl,
+					baseURL: resolvedBaseUrl,
 					apiKey: config.apiKey,
 				})(config.model);
 			case "google":
 				return createGoogleGenerativeAI({
-					baseURL: config.baseUrl,
+					baseURL: resolvedBaseUrl,
 					apiKey: config.apiKey,
 				})(config.model);
 			case "ollama":
 			case "lm_studio":
 				// Use OpenAI-compatible API
 				return createOpenAI({
-					baseURL: config.baseUrl,
+					baseURL: resolvedBaseUrl,
 					apiKey: config.apiKey || "local", // Local models don't need real keys
 				})(config.model);
 			case "azure_openai":
 				return createOpenAI({
-					baseURL: config.baseUrl,
+					baseURL: resolvedBaseUrl,
 					apiKey: config.apiKey,
 				})(config.model);
 			default:
 				// Custom / OpenAI-compatible providers (e.g., Z.AI, vLLM, etc.)
 				return createOpenAI({
-					baseURL: config.baseUrl,
+					baseURL: resolvedBaseUrl,
 					apiKey: config.apiKey,
 				})(config.model);
 		}
@@ -186,13 +198,14 @@ export class ParallelModelOrchestrator {
 	 */
 	async runParallel(
 		prompt: string,
-		models: ParallelModelConfig[] = DEFAULT_PARALLEL_MODELS,
+		models?: ParallelModelConfig[],
 	): Promise<ParallelPromptResult> {
+		const modelsToRun = models ?? this.parallelConfigs;
 		const startTime = Date.now();
 
 		// Pre-check health: filter out unreachable models
 		const healthChecks = await Promise.all(
-			models.map(async (config) => ({
+			modelsToRun.map(async (config) => ({
 				config,
 				healthy: await this.checkModelHealth(config.config),
 			})),
@@ -276,12 +289,13 @@ export class ParallelModelOrchestrator {
 	async runEvidenceVerification(
 		query: string,
 		evidence: SearchEvidenceBundle,
-		models: ParallelModelConfig[] = DEFAULT_PARALLEL_MODELS,
+		models?: ParallelModelConfig[],
 	): Promise<ParallelPromptResult> {
+		const modelsToRun = models ?? this.parallelConfigs;
 		const startTime = Date.now();
 
 		const healthChecks = await Promise.all(
-			models.map(async (config) => ({
+			modelsToRun.map(async (config) => ({
 				config,
 				healthy: await this.checkModelHealth(config.config),
 			})),
@@ -459,7 +473,7 @@ export class ParallelModelOrchestrator {
 		const config = parallelConfig.config;
 
 		try {
-			const modelInstance = this.createModelInstance(config);
+			const modelInstance = await this.createModelInstance(config);
 
 			const result = await generateText({
 				model: modelInstance,
@@ -621,7 +635,8 @@ export class ParallelModelOrchestrator {
 			for (const c of claims) allClaims.push({ claim: c, model });
 		}
 
-		const majorityThreshold = Math.ceil(responses.length / 2);
+		// Strict majority: more than half, so a tie never counts as agreement
+		const majorityThreshold = Math.floor(responses.length / 2) + 1;
 		const agreedClaims: string[] = [];
 		const contradictions: string[] = [];
 		const seen = new Set<number>(); // indices already clustered
@@ -669,19 +684,19 @@ export class ParallelModelOrchestrator {
 			...new Set([...contradictions, ...structuredContradictions]),
 		].slice(0, 10);
 
-		// 5. Agreement score
-		const totalClaims = new Set(allClaims.map((_, i) => i)).size;
+		// 5. Agreement score – ratio of agreed claims to total models
+		// Each agreed claim already required strict majority support above.
+		// Score = how many claims the models agree on relative to the model count.
 		const agreementScore =
-			totalClaims > 0
-				? Math.min(
-						1,
-						agreedClaims.length / Math.max(1, totalClaims / responses.length),
-					)
+			responses.length > 0
+				? Math.min(1, agreedClaims.length / responses.length)
 				: 0;
 
 		// 6. Pick strategy
+		// Unanimous requires perfect agreement (score === 1) AND zero contradictions.
+		// This prevents partial agreement from being promoted to unanimous.
 		let strategy: ConsensusAnalysis["strategy"];
-		if (agreementScore >= 0.9 && cappedContradictions.length === 0) {
+		if (agreementScore === 1 && cappedContradictions.length === 0) {
 			strategy = "unanimous";
 		} else if (agreementScore >= 0.5) {
 			strategy = "majority";

@@ -115,13 +115,15 @@ class SecurityValidator {
 		// Remove control characters
 		let sanitized = input.replace(/[\x00-\x1F\x7F]/g, "");
 
-		// Encode HTML entities
+		// Strip dangerous HTML/script tags but do NOT HTML-encode entities.
+		// HTML encoding belongs at the display layer (React handles that).
+		// Encoding here would double-escape: the LLM sees "&amp;" instead of "&"
+		// and echoes it back, producing visible "&amp;" in the UI.
 		sanitized = sanitized
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;")
-			.replace(/"/g, "&quot;")
-			.replace(/'/g, "&#x27;");
+			.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+			.replace(/<\/?\s*(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta)\b[^>]*>/gi, "")
+			.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
+			.replace(/javascript\s*:/gi, "");
 
 		return sanitized.substring(0, this.maxInputLength);
 	}

@@ -8,7 +8,11 @@ import { AdversarialDifferentialDiscriminator } from "./add-discriminator";
 import { agenticSearch } from "./agentic-search";
 import { ComponentValidationPipeline } from "./component-validation-pipeline";
 import { InterleavedReasoningEngine } from "./interleaved-reasoning-engine";
-import type { ModelConfig } from "./model-config";
+import {
+	ModelProvider,
+	type ModelConfig,
+	ProviderDefaults,
+} from "./model-config";
 import { ParallelModelOrchestrator } from "./parallel-model-orchestrator";
 import { researchStorage } from "./results-storage";
 import { buildSearchEvidence } from "./search/evidence";
@@ -278,9 +282,19 @@ export class UnifiedSearchOrchestrator {
 					);
 
 					try {
-						const baseUrl = (
-							primaryModelConfig.baseUrl || "http://localhost:11434"
-						).replace(/\/_?v1$/, "");
+						const resolvedBaseUrl =
+							primaryModelConfig.baseUrl ||
+							ProviderDefaults[primaryModelConfig.provider as ModelProvider]
+								?.baseUrl ||
+							(primaryModelConfig.provider === "ollama"
+								? "http://localhost:11434/v1"
+								: undefined);
+						if (!resolvedBaseUrl) {
+							throw new Error(
+								`baseUrl is required for interleaved reasoning with provider ${primaryModelConfig.provider}`,
+							);
+						}
+						const baseUrl = resolvedBaseUrl.replace(/\/_?v1$/, "");
 						const reasoningEngine = new InterleavedReasoningEngine(
 							{
 								orchestratorModel: primaryModelConfig.model,

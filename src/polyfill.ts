@@ -3,6 +3,8 @@
  * Node 20+, Cloudflare Workers, and browsers already have File globally.
  * Uses dynamic import to avoid crashing the Cloudflare worker module resolver.
  */
+export {};
+
 if (typeof globalThis.File === "undefined") {
 	try {
 		const { File } = await import("node:buffer");

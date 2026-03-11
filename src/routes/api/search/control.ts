@@ -17,6 +17,31 @@ const searchScopes = new Map<string, SearchScope>();
 const stepApprovals = new Map<string, Set<string>>();
 const stepModifications = new Map<string, Map<string, any>>();
 
+interface StreamSession {
+	push?: (data: any) => void;
+	paused: boolean;
+	stopped: boolean;
+}
+
+const streamGlobal = globalThis as {
+	__agSearchStreamSessions?: Map<string, StreamSession>;
+};
+if (!streamGlobal.__agSearchStreamSessions) {
+	streamGlobal.__agSearchStreamSessions = new Map<string, StreamSession>();
+}
+const streamSessions = streamGlobal.__agSearchStreamSessions;
+
+function updateStreamSession(
+	searchId: string,
+	updates: Partial<Pick<StreamSession, "paused" | "stopped">>,
+	eventType: "paused" | "resumed" | "stopped",
+) {
+	const session = streamSessions.get(searchId);
+	if (!session) return;
+	Object.assign(session, updates);
+	session.push?.({ type: eventType });
+}
+
 export const Route = createFileRoute("/api/search/control")({
 	server: {
 		handlers: {
@@ -38,25 +63,40 @@ export const Route = createFileRoute("/api/search/control")({
 						);
 					}
 
-					switch (action) {
-						case "pause":
-							setSearchPaused(searchId, true);
-							return new Response(
-								JSON.stringify({ success: true, action: "paused" }),
+										switch (action) {
+											case "pause":
+												updateStreamSession(
+													searchId,
+													{ paused: true, stopped: false },
+													"paused",
+												);
+												setSearchPaused(searchId, true);
+												return new Response(
+													JSON.stringify({ success: true, action: "paused" }),
 								{ status: 200, headers: { "Content-Type": "application/json" } }
 							);
 
-						case "resume":
-							setSearchPaused(searchId, false);
-							return new Response(
-								JSON.stringify({ success: true, action: "resumed" }),
+											case "resume":
+												updateStreamSession(
+													searchId,
+													{ paused: false, stopped: false },
+													"resumed",
+												);
+												setSearchPaused(searchId, false);
+												return new Response(
+													JSON.stringify({ success: true, action: "resumed" }),
 								{ status: 200, headers: { "Content-Type": "application/json" } }
 							);
 
-						case "stop":
-							stopSearchHelper(searchId);
-							searchScopes.delete(searchId);
-							stepApprovals.delete(searchId);
+											case "stop":
+												updateStreamSession(
+													searchId,
+													{ paused: false, stopped: true },
+													"stopped",
+												);
+												stopSearchHelper(searchId);
+												searchScopes.delete(searchId);
+												stepApprovals.delete(searchId);
 							stepModifications.delete(searchId);
 							return new Response(
 								JSON.stringify({ success: true, action: "stopped" }),

@@ -4,7 +4,31 @@
  */
 
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
+
+async function requireAuthenticatedUserId(ctx: any, providedUserId?: string) {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) {
+    throw new Error("Unauthorized: Authentication required");
+  }
+  if (providedUserId && providedUserId !== userId) {
+    throw new Error("Unauthorized: userId does not match authenticated user");
+  }
+  return userId;
+}
+
+async function requireKnowledgeBaseForUser(
+  ctx: any,
+  knowledgeBaseId: any,
+  userId: string,
+) {
+  const knowledgeBase = await ctx.db.get(knowledgeBaseId);
+  if (!knowledgeBase || knowledgeBase.userId !== userId) {
+    throw new Error("Unauthorized: knowledge base does not belong to the authenticated user");
+  }
+  return knowledgeBase;
+}
 
 // ── Knowledge Base CRUD ─────────────────────────────────────────────────
 
@@ -18,9 +42,10 @@ export const createKnowledgeBase = mutation({
     embeddingProvider: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx, args.userId);
     const now = Date.now();
     return await ctx.db.insert("ragKnowledgeBases", {
-      userId: args.userId,
+      userId,
       name: args.name,
       description: args.description,
       ragLevel: args.ragLevel,
@@ -39,9 +64,10 @@ export const createKnowledgeBase = mutation({
 export const listKnowledgeBases = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx, args.userId);
     return await ctx.db
       .query("ragKnowledgeBases")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
   },
 });
@@ -49,9 +75,10 @@ export const listKnowledgeBases = query({
 export const getActiveKnowledgeBase = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx, args.userId);
     return await ctx.db
       .query("ragKnowledgeBases")
-      .withIndex("by_user_active", (q) => q.eq("userId", args.userId).eq("isActive", true))
+      .withIndex("by_user_active", (q) => q.eq("userId", userId).eq("isActive", true))
       .first();
   },
 });
@@ -59,6 +86,8 @@ export const getActiveKnowledgeBase = query({
 export const toggleKnowledgeBase = mutation({
   args: { id: v.id("ragKnowledgeBases"), isActive: v.boolean() },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx);
+    await requireKnowledgeBaseForUser(ctx, args.id, userId);
     await ctx.db.patch(args.id, { isActive: args.isActive, updatedAt: Date.now() });
   },
 });
@@ -66,6 +95,8 @@ export const toggleKnowledgeBase = mutation({
 export const deleteKnowledgeBase = mutation({
   args: { id: v.id("ragKnowledgeBases") },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx);
+    await requireKnowledgeBaseForUser(ctx, args.id, userId);
     // Delete all chunks belonging to this KB
     const chunks = await ctx.db
       .query("ragChunks")
@@ -106,12 +137,18 @@ export const storeChunks = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx, args.userId);
+    await requireKnowledgeBaseForUser(ctx, args.knowledgeBaseId, userId);
+    const document = await ctx.db.get(args.documentId);
+    if (document && "userId" in document && document.userId !== userId) {
+      throw new Error("Unauthorized: document does not belong to the authenticated user");
+    }
     const now = Date.now();
     const ids: string[] = [];
 
     for (const chunk of args.chunks) {
       const id = await ctx.db.insert("ragChunks", {
-        userId: args.userId,
+        userId,
         knowledgeBaseId: args.knowledgeBaseId,
         documentId: args.documentId,
         text: chunk.text,
@@ -153,9 +190,11 @@ export const searchChunks = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx, args.userId);
     const limit = args.limit ?? 20;
 
     if (args.knowledgeBaseId) {
+      await requireKnowledgeBaseForUser(ctx, args.knowledgeBaseId, userId);
       return await ctx.db
         .query("ragChunks")
         .withSearchIndex("search_text", (q) =>
@@ -168,7 +207,7 @@ export const searchChunks = query({
     return await ctx.db
       .query("ragChunks")
       .withSearchIndex("search_text", (q) =>
-        q.search("text", args.query).eq("userId", args.userId),
+        q.search("text", args.query).eq("userId", userId),
       )
       .take(limit);
   },
@@ -182,6 +221,8 @@ export const getChunksWithEmbeddings = query({
     knowledgeBaseId: v.id("ragKnowledgeBases"),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx, args.userId);
+    await requireKnowledgeBaseForUser(ctx, args.knowledgeBaseId, userId);
     return await ctx.db
       .query("ragChunks")
       .withIndex("by_knowledge_base", (q) => q.eq("knowledgeBaseId", args.knowledgeBaseId))
@@ -214,8 +255,10 @@ export const logRagAnalytics = mutation({
     ragTokensUsed: v.number(),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx, args.userId);
     return await ctx.db.insert("ragAnalytics", {
       ...args,
+      userId,
       createdAt: Date.now(),
     });
   },
@@ -231,6 +274,11 @@ export const rateRagResult = mutation({
     feedback: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx);
+    const analytics = await ctx.db.get(args.id);
+    if (!analytics || analytics.userId !== userId) {
+      throw new Error("Unauthorized: analytics record does not belong to the authenticated user");
+    }
     await ctx.db.patch(args.id, {
       userRating: args.userRating,
       userPreferredSource: args.userPreferredSource,
@@ -242,9 +290,10 @@ export const rateRagResult = mutation({
 export const getRagAnalyticsSummary = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx, args.userId);
     const events = await ctx.db
       .query("ragAnalytics")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(100);
 
@@ -313,8 +362,10 @@ export const createCrawlJob = mutation({
     maxPages: v.number(),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx, args.userId);
+    await requireKnowledgeBaseForUser(ctx, args.knowledgeBaseId, userId);
     return await ctx.db.insert("ragCrawlJobs", {
-      userId: args.userId,
+      userId,
       knowledgeBaseId: args.knowledgeBaseId,
       seedUrl: args.seedUrl,
       status: "queued",
@@ -330,6 +381,8 @@ export const createCrawlJob = mutation({
 export const listCrawlJobs = query({
   args: { knowledgeBaseId: v.id("ragKnowledgeBases") },
   handler: async (ctx, args) => {
+    const userId = await requireAuthenticatedUserId(ctx);
+    await requireKnowledgeBaseForUser(ctx, args.knowledgeBaseId, userId);
     return await ctx.db
       .query("ragCrawlJobs")
       .withIndex("by_knowledge_base", (q) => q.eq("knowledgeBaseId", args.knowledgeBaseId))

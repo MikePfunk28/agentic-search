@@ -637,6 +637,31 @@ Make queries specific and effective for the intent type.`;
 					const keepIdx =
 						(unique[i].rawScore || 0) >= (unique[j].rawScore || 0) ? i : j;
 					const removeIdx = keepIdx === i ? j : i;
+					const keep = unique[keepIdx];
+					const remove = unique[removeIdx];
+					keep.citationCount =
+						(keep.citationCount || 1) + (remove.citationCount || 1);
+					if (
+						typeof keep.rawScore === "number" ||
+						typeof remove.rawScore === "number"
+					) {
+						keep.rawScore = Math.max(keep.rawScore || 0, remove.rawScore || 0);
+					}
+					if (
+						typeof keep.addScore === "number" ||
+						typeof remove.addScore === "number"
+					) {
+						keep.addScore = Math.max(keep.addScore || 0, remove.addScore || 0);
+					}
+					if (
+						typeof keep.domainAuthority === "number" ||
+						typeof remove.domainAuthority === "number"
+					) {
+						keep.domainAuthority = Math.max(
+							keep.domainAuthority || 0,
+							remove.domainAuthority || 0,
+						);
+					}
 					toRemove.add(removeIdx);
 					duplicatesRemoved++;
 				}

@@ -5,7 +5,30 @@
 
 import { useState } from 'react'
 import { Check, X, Edit2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react'
-import type { QuerySegment } from '../../../convex/lib/search/querySegmentation'
+
+type SegmentType =
+  | 'entity'
+  | 'relation'
+  | 'constraint'
+  | 'intent'
+  | 'context'
+  | 'comparison'
+  | 'synthesis'
+
+type SegmentComplexity = 'tiny' | 'small' | 'medium' | 'large'
+
+interface QuerySegment {
+  id: string
+  text: string
+  type: SegmentType
+  priority: number
+  dependencies: string[]
+  estimatedComplexity: SegmentComplexity
+  assignedTool?: string
+  estimatedTokens?: number
+  recommendedModel?: string
+  toolReasoning?: string
+}
 
 export interface SegmentApprovalUIProps {
   segments: QuerySegment[]

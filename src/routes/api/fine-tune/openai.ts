@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
+import { ZodError, z } from "zod";
 import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
@@ -8,6 +8,7 @@ import {
 	buildOpenAIJsonl,
 	cancelFineTuneJob,
 	createFineTuneJob,
+	deleteTrainingFile,
 	getFineTuneJob,
 	uploadTrainingFile,
 } from "@/lib/openai-fine-tuning";
@@ -131,17 +132,30 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 						launchRequest.datasetName,
 						jsonl,
 					);
-					const job = await createFineTuneJob(
-						{
-							datasetName: launchRequest.datasetName,
-							records: launchRequest.records,
-							format: launchRequest.format!,
-							baseModel: launchRequest.baseModel,
-							suffix: launchRequest.suffix,
-							hyperparameters: launchRequest.hyperparameters,
-						},
-						trainingFile.id,
-					);
+					let job;
+					try {
+						job = await createFineTuneJob(
+							{
+								datasetName: launchRequest.datasetName,
+								records: launchRequest.records,
+								format: launchRequest.format!,
+								baseModel: launchRequest.baseModel,
+								suffix: launchRequest.suffix,
+								hyperparameters: launchRequest.hyperparameters,
+							},
+							trainingFile.id,
+						);
+					} catch (error) {
+						try {
+							await deleteTrainingFile(trainingFile.id);
+						} catch (cleanupError) {
+							console.error(
+								"[FineTune] Failed to cleanup orphaned training file:",
+								cleanupError,
+							);
+						}
+						throw error;
+					}
 
 					return new Response(
 						JSON.stringify({
@@ -162,7 +176,7 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 									: "Failed to launch fine-tuning job",
 						}),
 						{
-							status: 500,
+							status: error instanceof ZodError ? 400 : 500,
 							headers: { "Content-Type": "application/json" },
 						},
 					);

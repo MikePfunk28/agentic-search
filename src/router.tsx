@@ -20,7 +20,7 @@ export const getRouter = () => {
 				</TanstackQuery.Provider>
 			);
 		},
-	});
+	} as any);
 
 	setupRouterSsrQueryIntegration({
 		router,

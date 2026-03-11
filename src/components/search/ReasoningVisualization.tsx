@@ -5,7 +5,40 @@
 
 import { useState } from 'react'
 import { Brain, Zap, Search, Code, FileText, Database, Check, X, Clock, ChevronRight } from 'lucide-react'
-import type { ReasoningStep, ReasoningSession } from '../../../convex/lib/reasoning/interleavedReasoning'
+
+interface ReasoningAction {
+  type: string
+  description: string
+}
+
+interface ReasoningStepResult {
+  success: boolean
+  tokensUsed: number
+  executionTimeMs: number
+  output?: unknown
+}
+
+interface ReasoningStep {
+  id: string
+  stepNumber: number
+  type: 'analysis' | 'planning' | 'action' | 'synthesis' | 'validation' | 'reflection'
+  thinking: string
+  confidence: number
+  dependencies: string[]
+  needsHumanReview: boolean
+  action?: ReasoningAction
+  result?: ReasoningStepResult
+  compressedContext?: string
+}
+
+interface ReasoningSession {
+  originalQuery: string
+  status: string
+  steps: ReasoningStep[]
+  totalTokensUsed: number
+  compressionRatio: number
+  finalAnswer?: string
+}
 
 export interface ReasoningVisualizationProps {
   session: ReasoningSession
