@@ -13,6 +13,7 @@
 
 import { calculateDomainAuthority } from "./domain-authority";
 import type { WebSearchResult } from "./types";
+import he from "he";
 
 // ---------------------------------------------------------------------------
 // DuckDuckGo HTML Search
@@ -22,33 +23,26 @@ import type { WebSearchResult } from "./types";
 // ---------------------------------------------------------------------------
 
 /** Strip HTML tags from text — safe against nested/encoded tag injection.
- * 1. Decode HTML entities first so encoded tags become real tags.
+ * 1. Decode ALL HTML entities via `he` (handles numeric, named, double-encoded).
  * 2. Strip tags in a loop until stable (handles <scr<script>ipt> nesting).
  * 3. Remove any remaining angle brackets as a final safety net.
  */
 function stripHtml(text: string): string {
-	// Step 1: Decode HTML entities to their characters
-	let decoded = text
-		.replace(/&amp;/g, "&")
-		.replace(/&lt;/g, "<")
-		.replace(/&gt;/g, ">")
-		.replace(/&quot;/g, '"')
-		.replace(/&#039;/g, "'")
-		.replace(/&#x27;/g, "'")
-		.replace(/&nbsp;/g, " ");
+	const decoded = he.decode(text);
 
-	// Step 2: Strip tags in a loop — a single pass of /<[^>]+>/g can leave
-	// residual tags when tags were nested inside entity-encoded tags.
+	// Loop: a single pass of /<[^>]+>/g can miss tags nested inside
+	// entity-encoded tags (e.g. <scr<script>ipt> → <script> after one pass).
+	let result = decoded;
 	let prev: string;
 	do {
-		prev = decoded;
-		decoded = decoded.replace(/<[^>]+>/g, "");
-	} while (decoded !== prev);
+		prev = result;
+		result = result.replace(/<[^>]+>/g, "");
+	} while (result !== prev);
 
-	// Step 3: Remove any remaining < or > so no tag can survive
-	decoded = decoded.replace(/[<>]/g, "");
+	// Safety net: remove any remaining < or > so no tag can survive
+	result = result.replace(/[<>]/g, "");
 
-	return decoded.replace(/\s+/g, " ").trim();
+	return result.replace(/\s+/g, " ").trim();
 }
 
 /** Decode DDG redirect URLs (//duckduckgo.com/l/?uddg=ENCODED_URL&...) */
@@ -123,13 +117,16 @@ export async function searchDuckDuckGo(
 		const title = stripHtml(rawTitle);
 		const snippet = stripHtml(rawSnippet);
 
-		// Validate URL and ignore DuckDuckGo internal pages
+		// Validate URL and extract hostname
 		let parsedUrl: URL;
 		try {
 			parsedUrl = new URL(decodedUrl);
 		} catch {
+			// Skip invalid URLs
 			continue;
 		}
+
+		// Skip empty results or DuckDuckGo internal URLs
 		if (
 			!title ||
 			!decodedUrl ||
