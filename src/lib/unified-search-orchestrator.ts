@@ -9,11 +9,17 @@ import { agenticSearch } from "./agentic-search";
 import { ComponentValidationPipeline } from "./component-validation-pipeline";
 import { InterleavedReasoningEngine } from "./interleaved-reasoning-engine";
 import {
-	ModelProvider,
 	type ModelConfig,
+	type ModelProvider,
 	ProviderDefaults,
 } from "./model-config";
+import { observability } from "./observability";
 import { ParallelModelOrchestrator } from "./parallel-model-orchestrator";
+import {
+	type EnhancementOptions,
+	type QueryEnhancement,
+	queryEnhancementPipeline,
+} from "./query-enhancement";
 import { researchStorage } from "./results-storage";
 import { buildSearchEvidence } from "./search/evidence";
 import {
@@ -22,6 +28,7 @@ import {
 	type SearchExecutionSummary,
 } from "./search/execution-policy";
 import { QuerySegmenter, SegmentCoordinator } from "./segment";
+import { SemanticCache } from "./semantic-cache";
 import type { SearchResult } from "./types";
 
 const OPENAI_COMPATIBLE_REASONING_PROVIDERS = new Set([
@@ -39,12 +46,10 @@ const OPENAI_COMPATIBLE_REASONING_PROVIDERS = new Set([
 ]);
 
 export interface UnifiedSearchResult {
-	// Search results
 	results: SearchResult[];
 
 	execution?: SearchExecutionSummary;
 
-	// Parallel model outputs
 	parallelResults?: {
 		models: Array<{
 			model: string;
@@ -63,7 +68,6 @@ export interface UnifiedSearchResult {
 		evidenceCoverage?: number;
 	};
 
-	// Interleaved reasoning steps
 	reasoningSteps?: Array<{
 		step: string;
 		type: "analysis" | "planning" | "execution" | "validation" | "synthesis";
@@ -75,7 +79,6 @@ export interface UnifiedSearchResult {
 		duration: number;
 	}>;
 
-	// Segmentation results (if enabled)
 	segmentation?: {
 		segmentCount: number;
 		segments: Array<{
@@ -96,7 +99,8 @@ export interface UnifiedSearchResult {
 		synthesizedResponse: string;
 	};
 
-	// Quality metrics
+	queryEnhancement?: QueryEnhancement;
+
 	addMetrics: {
 		relevance: number;
 		diversity: number;
@@ -108,14 +112,12 @@ export interface UnifiedSearchResult {
 		recommendation: string;
 	};
 
-	// Component validation
 	validation: {
 		retrieval: { valid: boolean; confidence: number; errors: string[] };
 		reasoning: { valid: boolean; confidence: number; errors: string[] };
 		response: { valid: boolean; confidence: number; errors: string[] };
 	};
 
-	// Metadata
 	strategy: string;
 	reasoning: string[];
 	quality: number;
@@ -131,7 +133,11 @@ export interface SearchOptions {
 	useInterleavedReasoning?: boolean;
 	enableValidation?: boolean;
 	parallelModelConfigs?: ModelConfig[];
-	useSegmentation?: boolean; // Enable query segmentation and coordination
+	useSegmentation?: boolean;
+	useQueryEnhancement?: boolean;
+	queryEnhancementOptions?: EnhancementOptions;
+	useSemanticCache?: boolean;
+	cacheTtl?: number;
 	apiKeys?: {
 		firecrawl?: string;
 		tavily?: string;
@@ -143,10 +149,16 @@ export interface SearchOptions {
 export class UnifiedSearchOrchestrator {
 	private addDiscriminator: AdversarialDifferentialDiscriminator;
 	private validationPipeline: ComponentValidationPipeline;
+	private semanticCache: SemanticCache<UnifiedSearchResult>;
 
 	constructor() {
 		this.addDiscriminator = new AdversarialDifferentialDiscriminator();
 		this.validationPipeline = new ComponentValidationPipeline();
+		this.semanticCache = new SemanticCache<UnifiedSearchResult>({
+			similarityThreshold: 0.88,
+			maxMemoryEntries: 500,
+			defaultTtl: 5 * 60 * 1000,
+		});
 	}
 
 	/**
@@ -164,6 +176,10 @@ export class UnifiedSearchOrchestrator {
 			enableValidation = true,
 			parallelModelConfigs = [],
 			useSegmentation = false,
+			useQueryEnhancement = true,
+			queryEnhancementOptions = {},
+			useSemanticCache = true,
+			cacheTtl = 5 * 60 * 1000,
 		} = options;
 		const executionPolicy = resolveSearchExecutionPolicy({
 			primaryModelConfig,
@@ -175,23 +191,92 @@ export class UnifiedSearchOrchestrator {
 
 		console.log(`[UnifiedSearch] Starting search for: "${query}"`);
 		console.log(
-			`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}, validation=${enableValidation}, segmentation=${useSegmentation}`,
+			`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}, validation=${enableValidation}, segmentation=${useSegmentation}, queryEnhancement=${useQueryEnhancement}, semanticCache=${useSemanticCache}`,
 		);
 		console.log(
 			`[UnifiedSearch] Execution mode: ${executionPolicy.mode} (${executionPolicy.reason})`,
 		);
 
-		// Route to segmented search if enabled (requires a model)
+		let enhancedQuery = query;
+		let queryEnhancement: QueryEnhancement | undefined;
+
+		if (useQueryEnhancement) {
+			console.log("[UnifiedSearch] Phase 0: Enhancing query...");
+			try {
+				queryEnhancement = await queryEnhancementPipeline.enhance(
+					query,
+					queryEnhancementOptions,
+				);
+				enhancedQuery = queryEnhancement.enhancedQuery;
+
+				if (queryEnhancement.corrections.length > 0) {
+					console.log(
+						`[UnifiedSearch] Spelling corrections: ${queryEnhancement.corrections.map((c) => `${c.original}→${c.corrected}`).join(", ")}`,
+					);
+				}
+				if (queryEnhancement.entities.length > 0) {
+					console.log(
+						`[UnifiedSearch] Detected entities: ${queryEnhancement.entities.map((e) => e.text).join(", ")}`,
+					);
+				}
+				if (enhancedQuery !== query) {
+					console.log(`[UnifiedSearch] Enhanced query: "${enhancedQuery}"`);
+				}
+			} catch (error) {
+				console.warn(
+					"[UnifiedSearch] Query enhancement failed, using original:",
+					error,
+				);
+			}
+		}
+
+		if (useSemanticCache) {
+			console.log("[UnifiedSearch] Checking semantic cache...");
+			const cacheResult = await this.semanticCache.get(enhancedQuery);
+			if (cacheResult.hit) {
+				console.log(
+					`[UnifiedSearch] Cache HIT! Similarity: ${(cacheResult.similarity * 100).toFixed(1)}%`,
+				);
+				const cachedResult = cacheResult.entry.value;
+				const cacheHitTime = Date.now() - startTime;
+
+				observability.traceSearch({
+					query,
+					enhancedQuery,
+					provider: cachedResult.provider,
+					model: cachedResult.modelUsed,
+					tokensUsed: cachedResult.totalTokens,
+					processingTimeMs: cacheHitTime,
+					cacheHit: true,
+					resultCount: cachedResult.results.length,
+					qualityScore: cachedResult.addMetrics?.overallScore ?? 0,
+				});
+
+				return {
+					...cachedResult,
+					reasoning: [
+						`Retrieved from semantic cache (${(cacheResult.similarity * 100).toFixed(1)}% similarity)`,
+						...cachedResult.reasoning,
+					],
+					totalProcessingTime: cacheHitTime,
+				};
+			}
+			console.log("[UnifiedSearch] Cache miss - executing fresh search");
+		}
+
 		if (executionPolicy.useSegmentation && primaryModelConfig) {
 			console.log("[UnifiedSearch] Routing to segmented search...");
-			return this.searchWithSegmentation(query, primaryModelConfig, options);
+			return this.searchWithSegmentation(
+				enhancedQuery,
+				primaryModelConfig,
+				options,
+			);
 		}
 
 		try {
-			// Phase 1: Execute base agentic search
 			console.log("[UnifiedSearch] Phase 1: Executing base agentic search...");
 			const baseSearchResult = await agenticSearch.search(
-				query,
+				enhancedQuery,
 				primaryModelConfig,
 				{ searchApiKeys: options.apiKeys },
 			);
@@ -356,29 +441,45 @@ export class UnifiedSearchOrchestrator {
 			);
 			const results = baseSearchResult.results;
 			const qualityScores = baseSearchResult.quality || [];
-			const avgAdd = results.length > 0
-				? results.reduce((s, r) => s + (r.addScore || 0), 0) / results.length
-				: 0;
-			const avgRelevance = qualityScores.length > 0
-				? qualityScores.reduce((s, q) => s + (q.relevance || 0), 0) / qualityScores.length
-				: avgAdd;
-			const avgFreshness = qualityScores.length > 0
-				? qualityScores.reduce((s, q) => s + (q.freshness || 0), 0) / qualityScores.length
-				: 0.5;
-			const avgCredibility = qualityScores.length > 0
-				? qualityScores.reduce((s, q) => s + (q.credibility || 0), 0) / qualityScores.length
-				: 0.5;
+			const avgAdd =
+				results.length > 0
+					? results.reduce((s, r) => s + (r.addScore || 0), 0) / results.length
+					: 0;
+			const avgRelevance =
+				qualityScores.length > 0
+					? qualityScores.reduce((s, q) => s + (q.relevance || 0), 0) /
+						qualityScores.length
+					: avgAdd;
+			const avgFreshness =
+				qualityScores.length > 0
+					? qualityScores.reduce((s, q) => s + (q.freshness || 0), 0) /
+						qualityScores.length
+					: 0.5;
+			const avgCredibility =
+				qualityScores.length > 0
+					? qualityScores.reduce((s, q) => s + (q.credibility || 0), 0) /
+						qualityScores.length
+					: 0.5;
 			// Diversity: measure uniqueness of domains
-			const uniqueDomains = new Set(results.map(r => {
-				try { return new URL(r.url).hostname; } catch { return r.url; }
-			}));
-			const diversityScore = results.length > 0
-				? Math.min(1.0, uniqueDomains.size / Math.max(results.length, 1))
-				: 0;
+			const uniqueDomains = new Set(
+				results.map((r) => {
+					try {
+						return new URL(r.url).hostname;
+					} catch {
+						return r.url;
+					}
+				}),
+			);
+			const diversityScore =
+				results.length > 0
+					? Math.min(1.0, uniqueDomains.size / Math.max(results.length, 1))
+					: 0;
 			// Consistency: all results have required fields
-			const consistencyScore = results.length > 0
-				? results.filter(r => r.url && r.snippet && r.title).length / results.length
-				: 0;
+			const consistencyScore =
+				results.length > 0
+					? results.filter((r) => r.url && r.snippet && r.title).length /
+						results.length
+					: 0;
 
 			// Still run drift analysis from the discriminator for trend tracking
 			this.addDiscriminator.scoreResults(query, results);
@@ -498,6 +599,7 @@ export class UnifiedSearchOrchestrator {
 				},
 				parallelResults,
 				reasoningSteps,
+				queryEnhancement,
 				addMetrics,
 				validation,
 				strategy: baseSearchResult.strategy.primaryQuery,
@@ -520,6 +622,33 @@ export class UnifiedSearchOrchestrator {
 			console.log(
 				`[UnifiedSearch] Quality: ${addMetrics.overallScore.toFixed(2)}, Tokens: ${totalTokens}`,
 			);
+
+			observability.traceSearch({
+				query,
+				enhancedQuery,
+				provider: primaryModelConfig?.provider,
+				model: primaryModelConfig?.model,
+				tokensUsed: totalTokens,
+				processingTimeMs: totalProcessingTime,
+				cacheHit: false,
+				resultCount: result.results.length,
+				qualityScore: addMetrics.overallScore,
+			});
+
+			if (useSemanticCache && result.results.length > 0) {
+				await this.semanticCache.set(
+					enhancedQuery,
+					result,
+					{
+						provider: primaryModelConfig?.provider,
+						model: primaryModelConfig?.model,
+						tokensUsed: totalTokens,
+						quality: addMetrics.overallScore,
+					},
+					cacheTtl,
+				);
+				console.log("[UnifiedSearch] Result cached for future queries");
+			}
 
 			return result;
 		} catch (error) {

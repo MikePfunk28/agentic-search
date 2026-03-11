@@ -583,6 +583,15 @@ async function executeSearchWithProgress(
 					}
 				}
 
+		// log simple analytics for this search
+		await ctx.runMutation((internal as any).searchAnalytics.logSearchAnalytics, {
+			userId: userId || "",
+			query,
+			providers: [...new Set(searchResult.results.map((r:any) => r.provider).filter(Boolean))],
+			resultCount: searchResult.results.length,
+			tokensUsed: searchResult.totalTokens,
+		});
+
 		// ── Merge RAG chunks into results ────────────────────────────────
 		const mergedResults = [...searchResult.results];
 		if (hasRag && ragConfig!.chunks) {

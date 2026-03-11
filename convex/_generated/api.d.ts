@@ -36,6 +36,7 @@ import type * as orchestrator from "../orchestrator.js";
 import type * as rag from "../rag.js";
 import type * as reasoning from "../reasoning.js";
 import type * as search from "../search.js";
+import type * as searchAnalytics from "../searchAnalytics.js";
 import type * as searchHistory from "../searchHistory.js";
 import type * as secureApiKeys from "../secureApiKeys.js";
 import type * as sessionCleanup from "../sessionCleanup.js";
@@ -87,6 +88,7 @@ declare const fullApi: ApiFromModules<{
   rag: typeof rag;
   reasoning: typeof reasoning;
   search: typeof search;
+  searchAnalytics: typeof searchAnalytics;
   searchHistory: typeof searchHistory;
   secureApiKeys: typeof secureApiKeys;
   sessionCleanup: typeof sessionCleanup;

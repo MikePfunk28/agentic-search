@@ -153,6 +153,18 @@ export default defineSchema({
     .index("by_user", ["userId"]),
 
   // Document Storage (Convex + S3 hybrid)
+  // Search analytics for queries executed by users
+  searchAnalytics: defineTable({
+    userId: v.string(),
+    query: v.string(),
+    providers: v.array(v.string()), // which providers returned results
+    resultCount: v.number(),
+    tokensUsed: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_query", ["query"]),
+
   documents: defineTable({
     userId: v.string(),
 
