@@ -16,6 +16,7 @@ import type * as externalApiTracking from "../externalApiTracking.js";
 import type * as http from "../http.js";
 import type * as indexing from "../indexing.js";
 import type * as interactiveSegmentation from "../interactiveSegmentation.js";
+import type * as knowledgeGraph from "../knowledgeGraph.js";
 import type * as lib_indexing_documentIndexing from "../lib/indexing/documentIndexing.js";
 import type * as lib_indexing_documentIndexingActions from "../lib/indexing/documentIndexingActions.js";
 import type * as lib_indexing_documentIndexingQueries from "../lib/indexing/documentIndexingQueries.js";
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   indexing: typeof indexing;
   interactiveSegmentation: typeof interactiveSegmentation;
+  knowledgeGraph: typeof knowledgeGraph;
   "lib/indexing/documentIndexing": typeof lib_indexing_documentIndexing;
   "lib/indexing/documentIndexingActions": typeof lib_indexing_documentIndexingActions;
   "lib/indexing/documentIndexingQueries": typeof lib_indexing_documentIndexingQueries;

@@ -24,6 +24,12 @@ export interface QueryEnhancement {
 	contextAdded: string[];
 	confidence: number;
 	processingTimeMs: number;
+	translation?: {
+		original: string;
+		translated: string;
+		sourceLanguage: string;
+		isTranslated: boolean;
+	};
 }
 
 export interface SpellingCorrection {

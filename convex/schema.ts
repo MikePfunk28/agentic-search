@@ -591,6 +591,69 @@ export default defineSchema({
     .index("by_rag_level", ["ragLevel"])
     .index("by_created", ["createdAt"])
     .index("by_user_created", ["userId", "createdAt"]),
+
+  // ── Knowledge Graph ────────────────────────────────────────────────────
+
+  // Knowledge Graph Entities
+  kgEntities: defineTable({
+    userId: v.string(),
+    text: v.string(),
+    type: v.union(
+      v.literal("person"),
+      v.literal("organization"),
+      v.literal("location"),
+      v.literal("concept"),
+      v.literal("date"),
+      v.literal("product"),
+    ),
+    normalized: v.string(),
+    confidence: v.number(),
+    source: v.object({
+      type: v.union(
+        v.literal("query"),
+        v.literal("document"),
+        v.literal("user"),
+        v.literal("inferred"),
+      ),
+      reference: v.optional(v.string()),
+      position: v.optional(v.object({
+        start: v.number(),
+        end: v.number(),
+      })),
+    }),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_type", ["userId", "type"])
+    .index("by_user_normalized", ["userId", "normalized"])
+    .index("by_created", ["createdAt"]),
+
+  // Knowledge Graph Relationships
+  kgRelationships: defineTable({
+    userId: v.string(),
+    fromEntityId: v.id("kgEntities"),
+    toEntityId: v.id("kgEntities"),
+    type: v.union(
+      v.literal("works_for"),
+      v.literal("located_in"),
+      v.literal("related_to"),
+      v.literal("part_of"),
+      v.literal("created_by"),
+      v.literal("owns"),
+      v.literal("knows"),
+      v.literal("uses"),
+    ),
+    confidence: v.number(),
+    evidence: v.optional(v.array(v.string())),
+    weight: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_from", ["fromEntityId"])
+    .index("by_to", ["toEntityId"])
+    .index("by_user_type", ["userId", "type"])
+    .index("by_from_to", ["fromEntityId", "toEntityId"]),
 })
 
 

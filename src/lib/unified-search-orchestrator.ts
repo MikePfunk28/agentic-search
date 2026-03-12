@@ -13,6 +13,13 @@ import {
 	type ModelProvider,
 	ProviderDefaults,
 } from "./model-config";
+import {
+	type CostEstimate,
+	type CostTracker,
+	costTracker as defaultCostTracker,
+} from "./model-routing";
+import { ModelRouter, type RouterConfig } from "./model-routing/router";
+import type { RoutingDecision } from "./model-routing/types";
 import { observability } from "./observability";
 import { ParallelModelOrchestrator } from "./parallel-model-orchestrator";
 import {
@@ -118,6 +125,10 @@ export interface UnifiedSearchResult {
 		response: { valid: boolean; confidence: number; errors: string[] };
 	};
 
+	routing?: RoutingDecision & {
+		costEstimate?: CostEstimate;
+	};
+
 	strategy: string;
 	reasoning: string[];
 	quality: number;
@@ -150,8 +161,10 @@ export class UnifiedSearchOrchestrator {
 	private addDiscriminator: AdversarialDifferentialDiscriminator;
 	private validationPipeline: ComponentValidationPipeline;
 	private semanticCache: SemanticCache<UnifiedSearchResult>;
+	private modelRouter: ModelRouter;
+	private costTracker: CostTracker;
 
-	constructor() {
+	constructor(routerConfig?: Partial<RouterConfig>) {
 		this.addDiscriminator = new AdversarialDifferentialDiscriminator();
 		this.validationPipeline = new ComponentValidationPipeline();
 		this.semanticCache = new SemanticCache<UnifiedSearchResult>({
@@ -159,6 +172,8 @@ export class UnifiedSearchOrchestrator {
 			maxMemoryEntries: 500,
 			defaultTtl: 5 * 60 * 1000,
 		});
+		this.costTracker = defaultCostTracker;
+		this.modelRouter = new ModelRouter(this.costTracker, routerConfig);
 	}
 
 	/**
@@ -263,6 +278,35 @@ export class UnifiedSearchOrchestrator {
 			}
 			console.log("[UnifiedSearch] Cache miss - executing fresh search");
 		}
+
+		const routingDecision = this.modelRouter.route(
+			enhancedQuery,
+			primaryModelConfig
+				? [primaryModelConfig, ...parallelModelConfigs]
+				: parallelModelConfigs,
+		);
+		const costEstimate = this.costTracker.estimateCost(
+			enhancedQuery,
+			routingDecision.model,
+			routingDecision.provider,
+		);
+
+		console.log(
+			`[UnifiedSearch] Model routing: ${routingDecision.provider}:${routingDecision.model} (complexity: ${routingDecision.complexity}, confidence: ${(routingDecision.confidence * 100).toFixed(0)}%, estimated cost: $${costEstimate.totalEstimatedCost.toFixed(4)})`,
+		);
+		console.log(`[UnifiedSearch] Routing reason: ${routingDecision.reason}`);
+
+		observability.traceSearch({
+			query,
+			enhancedQuery,
+			provider: routingDecision.provider,
+			model: routingDecision.model,
+			tokensUsed: 0,
+			processingTimeMs: 0,
+			cacheHit: false,
+			resultCount: 0,
+			qualityScore: routingDecision.confidence,
+		});
 
 		if (executionPolicy.useSegmentation && primaryModelConfig) {
 			console.log("[UnifiedSearch] Routing to segmented search...");
@@ -600,6 +644,10 @@ export class UnifiedSearchOrchestrator {
 				parallelResults,
 				reasoningSteps,
 				queryEnhancement,
+				routing: {
+					...routingDecision,
+					costEstimate,
+				},
 				addMetrics,
 				validation,
 				strategy: baseSearchResult.strategy.primaryQuery,

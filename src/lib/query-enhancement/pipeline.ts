@@ -1,3 +1,5 @@
+import type { ModelConfig } from "../model-config";
+import { QueryTranslator } from "../translation/query-translator";
 import {
 	COMMON_MISSPELLINGS,
 	type EnhancementOptions,
@@ -23,6 +25,12 @@ export class QueryEnhancementPipeline {
 		confidenceThreshold: 0.7,
 	};
 
+	private queryTranslator: QueryTranslator | null = null;
+
+	setModelConfig(config: ModelConfig): void {
+		this.queryTranslator = new QueryTranslator({ modelConfig: config });
+	}
+
 	async enhance(
 		query: string,
 		options: EnhancementOptions = {},
@@ -34,6 +42,25 @@ export class QueryEnhancementPipeline {
 		const entities: Entity[] = [];
 		const expansions: QueryExpansion[] = [];
 		const contextAdded: string[] = [];
+		let translation: QueryEnhancement["translation"] | undefined;
+
+		if (opts.enableTranslation && this.queryTranslator) {
+			try {
+				const translatedResult =
+					await this.queryTranslator.translateQuery(enhancedQuery);
+				if (translatedResult.isTranslated) {
+					translation = {
+						original: translatedResult.original,
+						translated: translatedResult.translated,
+						sourceLanguage: translatedResult.sourceLanguage,
+						isTranslated: true,
+					};
+					enhancedQuery = translatedResult.translated;
+				}
+			} catch (error) {
+				console.error("[QueryEnhancementPipeline] Translation failed:", error);
+			}
+		}
 
 		if (opts.enableSpellingCorrection) {
 			const spellResult = this.correctSpelling(enhancedQuery);
@@ -79,6 +106,7 @@ export class QueryEnhancementPipeline {
 			contextAdded,
 			confidence,
 			processingTimeMs: Date.now() - startTime,
+			translation,
 		};
 	}
 
