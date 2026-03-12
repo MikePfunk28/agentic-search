@@ -6,15 +6,11 @@
  * Supports ANY model provider (OpenAI, Anthropic, Google, Ollama, LM Studio, Azure)
  */
 
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import {
-	ModelProvider,
 	type ModelConfig,
-	ProviderDefaults,
 } from "./model-config";
+import { createAIModelInstance } from "./ai/unified-provider";
 import {
 	buildEvidenceVerificationPrompt,
 	type SearchEvidenceBundle,
@@ -145,50 +141,10 @@ export class ParallelModelOrchestrator {
 	}
 
 	/**
-	 * Create provider-specific model instance
+	 * Create provider-specific model instance via unified adapter.
 	 */
 	private async createModelInstance(config: ModelConfig): Promise<any> {
-		const resolvedBaseUrl =
-			config.baseUrl || ProviderDefaults[config.provider as ModelProvider]?.baseUrl;
-		if (resolvedBaseUrl) {
-			await validateServerFetchUrlAsync(resolvedBaseUrl);
-		}
-
-		switch (config.provider) {
-			case "openai":
-				return createOpenAI({
-					baseURL: resolvedBaseUrl,
-					apiKey: config.apiKey,
-				})(config.model);
-			case "anthropic":
-				return createAnthropic({
-					baseURL: resolvedBaseUrl,
-					apiKey: config.apiKey,
-				})(config.model);
-			case "google":
-				return createGoogleGenerativeAI({
-					baseURL: resolvedBaseUrl,
-					apiKey: config.apiKey,
-				})(config.model);
-			case "ollama":
-			case "lm_studio":
-				// Use OpenAI-compatible API
-				return createOpenAI({
-					baseURL: resolvedBaseUrl,
-					apiKey: config.apiKey || "local", // Local models don't need real keys
-				})(config.model);
-			case "azure_openai":
-				return createOpenAI({
-					baseURL: resolvedBaseUrl,
-					apiKey: config.apiKey,
-				})(config.model);
-			default:
-				// Custom / OpenAI-compatible providers (e.g., Z.AI, vLLM, etc.)
-				return createOpenAI({
-					baseURL: resolvedBaseUrl,
-					apiKey: config.apiKey,
-				})(config.model);
-		}
+		return createAIModelInstance(config);
 	}
 
 	/**

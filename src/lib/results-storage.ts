@@ -82,11 +82,34 @@ export interface StoredResearchResult {
 type PersistenceMode = "browser" | "node" | "memory";
 type ErrnoLikeError = Error & { code?: string };
 
+/**
+ * Adapter interface for external persistence backends (e.g. Convex, DynamoDB).
+ * Inject an adapter via ResearchStorage.setPersistenceAdapter() to persist
+ * research results beyond the in-memory/localStorage/node-fs defaults.
+ */
+export interface PersistenceAdapter {
+	save(result: StoredResearchResult): Promise<string>;
+	load(id: string): Promise<StoredResearchResult | null>;
+	list(limit?: number, offset?: number): Promise<StoredResearchResult[]>;
+	search(query: string, limit?: number): Promise<StoredResearchResult[]>;
+	delete(id: string): Promise<boolean>;
+}
+
 export class ResearchStorage {
 	private storage: Map<string, StoredResearchResult> = new Map();
 	private loaded = false;
 	private persistenceMode: PersistenceMode = "memory";
 	private pendingPersist: Promise<void> = Promise.resolve();
+	private adapter: PersistenceAdapter | null = null;
+
+	/**
+	 * Inject an external persistence adapter (e.g. Convex-backed).
+	 * When set, storeResults/findRelevantResults/delete will delegate to it
+	 * in addition to the in-memory cache.
+	 */
+	setPersistenceAdapter(adapter: PersistenceAdapter): void {
+		this.adapter = adapter;
+	}
 
 	private ensureLoadedSync(): void {
 		if (this.loaded) {
@@ -258,6 +281,16 @@ export class ResearchStorage {
 		};
 
 		this.storage.set(id, storedResult);
+
+		// Delegate to external adapter if available
+		if (this.adapter) {
+			try {
+				await this.adapter.save(storedResult);
+			} catch (error) {
+				console.warn("[ResearchStorage] Adapter save failed:", error);
+			}
+		}
+
 		await this.queuePersist();
 
 		return storedResult;
@@ -498,6 +531,24 @@ export class ResearchStorage {
 			return [];
 		}
 
+		// If adapter is available, also search through it for persisted results
+		if (this.adapter) {
+			try {
+				const adapterResults = await this.adapter.search(
+					normalizedQuery,
+					limit,
+				);
+				// Merge adapter results into local cache so scoring logic below works
+				for (const result of adapterResults) {
+					if (!this.storage.has(result.id)) {
+						this.storage.set(result.id, result);
+					}
+				}
+			} catch (error) {
+				console.warn("[ResearchStorage] Adapter search failed:", error);
+			}
+		}
+
 		const queryTerms = normalizedQuery
 			.split(/\s+/)
 			.filter((term) => term.length > 2);
@@ -593,6 +644,50 @@ export class ResearchStorage {
 		this.ensureLoadedSync();
 		this.storage.clear();
 		void this.queuePersist();
+	}
+
+	/**
+	 * Async version of getAllResults that also fetches from the adapter.
+	 */
+	async getAllResultsAsync(): Promise<StoredResearchResult[]> {
+		await this.ensureLoaded();
+
+		if (this.adapter) {
+			try {
+				const adapterResults = await this.adapter.list();
+				for (const result of adapterResults) {
+					if (!this.storage.has(result.id)) {
+						this.storage.set(result.id, result);
+					}
+				}
+			} catch (error) {
+				console.warn("[ResearchStorage] Adapter list failed:", error);
+			}
+		}
+
+		return this.serialize();
+	}
+
+	/**
+	 * Async version of deleteResult that also deletes from the adapter.
+	 */
+	async deleteResultAsync(id: string): Promise<boolean> {
+		await this.ensureLoaded();
+		const deletedLocal = this.storage.delete(id);
+
+		if (this.adapter) {
+			try {
+				await this.adapter.delete(id);
+			} catch (error) {
+				console.warn("[ResearchStorage] Adapter delete failed:", error);
+			}
+		}
+
+		if (deletedLocal) {
+			await this.queuePersist();
+		}
+
+		return deletedLocal;
 	}
 }
 

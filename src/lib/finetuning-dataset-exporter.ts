@@ -11,6 +11,7 @@
  */
 
 import type { SearchResult } from "./types";
+import { isS3Configured, shouldUseS3, uploadDocument } from "./s3-storage";
 
 export interface TrainingExample {
 	id: string;
@@ -461,6 +462,47 @@ export class FineTuningDatasetExporter {
 				feedbackRate,
 				uniqueQueries,
 			},
+		};
+	}
+
+	/**
+	 * Export dataset to S3 if configured and data exceeds size threshold.
+	 * Falls back to returning the data string if S3 is not available.
+	 */
+	async exportToS3(
+		examples: TrainingExample[],
+	): Promise<{
+		s3Url: string | null;
+		data: string;
+		stats: {
+			total: number;
+			exported: number;
+			filtered: number;
+			piiDetected: number;
+		};
+		warnings: string[];
+	}> {
+		const exportResult = await this.export(examples);
+
+		if (!isS3Configured() || !shouldUseS3(exportResult.data.length)) {
+			return { s3Url: null, ...exportResult };
+		}
+
+		const ext =
+			this.config.format === "csv" ? "csv" : "jsonl";
+		const filename = `finetuning-dataset-${Date.now()}.${ext}`;
+		const contentType =
+			this.config.format === "csv" ? "text/csv" : "application/jsonl";
+
+		const upload = await uploadDocument(
+			exportResult.data,
+			filename,
+			contentType,
+		);
+
+		return {
+			s3Url: upload.url,
+			...exportResult,
 		};
 	}
 

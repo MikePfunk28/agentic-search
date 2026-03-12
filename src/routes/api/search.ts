@@ -3,10 +3,22 @@ import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
 } from "@/lib/csrf-protection";
-import { type ModelConfig, ModelConfigManager, buildModelConfigFromClient } from "@/lib/model-config";
-import { getAvailableProviders } from "@/lib/search-providers";
-import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
+import {
+	buildModelConfigFromClient,
+	type ModelConfig,
+	ModelConfigManager,
+} from "@/lib/model-config";
 import { researchStorage } from "@/lib/results-storage";
+import { getAvailableProviders } from "@/lib/search-providers";
+import {
+	checkRateLimit,
+	createSecureErrorResponse,
+	createSecureJsonResponse,
+	getSecurityHeaders,
+	sanitizeSearchQuery,
+	validateRequestBodySize,
+} from "@/lib/security";
+import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
 
 // Cloudflare Workers: read env bindings from .dev.vars / dashboard secrets
 let cfEnv: Record<string, string | undefined> = {};
@@ -20,10 +32,12 @@ try {
 /** Read an env var from any available source.
  *  Priority: cloudflare worker bindings (.dev.vars) > process.env > import.meta.env */
 function getEnvVar(name: string): string | undefined {
-	return cfEnv[name]
-		|| (typeof process !== "undefined" ? process.env?.[name] : undefined)
-		|| (import.meta as any).env?.[name]
-		|| undefined;
+	return (
+		cfEnv[name] ||
+		(typeof process !== "undefined" ? process.env?.[name] : undefined) ||
+		(import.meta as any).env?.[name] ||
+		undefined
+	);
 }
 
 interface SearchResult {
@@ -51,15 +65,15 @@ export const Route = createFileRoute("/api/search")({
 				}
 
 				try {
-                    const {
-                        query,
-                        useParallelModels = true,
-                        useInterleavedReasoning = true,
-                        useSegmentation = false,
-                        modelConfig: clientModelConfig,
-                        modelConfigs: clientModelConfigs,
-                        searchApiKeys,
-                    } = await request.json();
+					const {
+						query,
+						useParallelModels = true,
+						useInterleavedReasoning = true,
+						useSegmentation = false,
+						modelConfig: clientModelConfig,
+						modelConfigs: clientModelConfigs,
+						searchApiKeys,
+					} = await request.json();
 
 					if (!query || typeof query !== "string") {
 						return new Response(
@@ -73,21 +87,38 @@ export const Route = createFileRoute("/api/search")({
 
 					// Build model config from client-provided data, or fall back to server-side
 					let modelConfig: ModelConfig | null = null;
-					if (clientModelConfig && clientModelConfig.provider && clientModelConfig.model) {
+					if (
+						clientModelConfig &&
+						clientModelConfig.provider &&
+						clientModelConfig.model
+					) {
 						modelConfig = buildModelConfigFromClient(clientModelConfig);
-						console.log(`[SearchAPI] Using client model: ${clientModelConfig.provider}:${clientModelConfig.model}`);
-					} else if (Array.isArray(clientModelConfigs) && clientModelConfigs.length > 0) {
-						const firstModel = clientModelConfigs.find((config: any) => config?.provider && config?.model);
+						console.log(
+							`[SearchAPI] Using client model: ${clientModelConfig.provider}:${clientModelConfig.model}`,
+						);
+					} else if (
+						Array.isArray(clientModelConfigs) &&
+						clientModelConfigs.length > 0
+					) {
+						const firstModel = clientModelConfigs.find(
+							(config: any) => config?.provider && config?.model,
+						);
 						if (firstModel) {
 							modelConfig = buildModelConfigFromClient(firstModel);
-							console.log(`[SearchAPI] Using first client model from multi-select: ${firstModel.provider}:${firstModel.model}`);
+							console.log(
+								`[SearchAPI] Using first client model from multi-select: ${firstModel.provider}:${firstModel.model}`,
+							);
 						}
 					} else {
-						console.log("[SearchAPI] No client model config — web search + ADD scoring only");
+						console.log(
+							"[SearchAPI] No client model config — web search + ADD scoring only",
+						);
 					}
 
 					if (!modelConfig) {
-						console.log("[SearchAPI] No model configured, continuing with web-only search");
+						console.log(
+							"[SearchAPI] No model configured, continuing with web-only search",
+						);
 					}
 
 					// BYOK only — paid provider keys come from the user, never from server env vars
@@ -105,21 +136,37 @@ export const Route = createFileRoute("/api/search")({
 					const availableProviders = getAvailableProviders(mergedSearchApiKeys);
 
 					// Execute unified search with all advanced features
-					console.log(`[UnifiedSearch] Starting search for: "${query}" using ${modelConfig?.provider ?? "web-only"}:${modelConfig?.model ?? "none"}`);
-					console.log(`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}, segmentation=${useSegmentation}`);
-					console.log(`[UnifiedSearch] Search providers available: ${availableProviders.join(", ") || "none (env/cache fallback only)"}`);
+					console.log(
+						`[UnifiedSearch] Starting search for: "${query}" using ${modelConfig?.provider ?? "web-only"}:${modelConfig?.model ?? "none"}`,
+					);
+					console.log(
+						`[UnifiedSearch] Options: parallel=${useParallelModels}, reasoning=${useInterleavedReasoning}, segmentation=${useSegmentation}`,
+					);
+					console.log(
+						`[UnifiedSearch] Search providers available: ${availableProviders.join(", ") || "none (env/cache fallback only)"}`,
+					);
 
-                    const searchResult = await unifiedSearchOrchestrator.search(query, modelConfig, {
-                        useParallelModels: useParallelModels && hasMultipleModels,
-                        useInterleavedReasoning,
-                        useSegmentation,
-                        enableValidation: true,
-                        parallelModelConfigs: hasMultipleModels ? parallelModelConfigs : [],
-                        apiKeys: mergedSearchApiKeys || {},
-                    });
+					const searchResult = await unifiedSearchOrchestrator.search(
+						query,
+						modelConfig,
+						{
+							useParallelModels: useParallelModels && hasMultipleModels,
+							useInterleavedReasoning,
+							useSegmentation,
+							enableValidation: true,
+							parallelModelConfigs: hasMultipleModels
+								? parallelModelConfigs
+								: [],
+							apiKeys: mergedSearchApiKeys || {},
+						},
+					);
 
-				console.log(`[UnifiedSearch] Completed search with ${searchResult.results.length} results`);
-				console.log(`[UnifiedSearch] Quality: ${searchResult.addMetrics.overallScore.toFixed(2)}, Tokens: ${searchResult.totalTokens}`);
+					console.log(
+						`[UnifiedSearch] Completed search with ${searchResult.results.length} results`,
+					);
+					console.log(
+						`[UnifiedSearch] Quality: ${searchResult.addMetrics.overallScore.toFixed(2)}, Tokens: ${searchResult.totalTokens}`,
+					);
 					const usedFallbackCache = searchResult.reasoning.some((step) =>
 						step.toLowerCase().includes("cached result"),
 					);
@@ -134,37 +181,38 @@ export const Route = createFileRoute("/api/search")({
 								addScore: searchResult.addMetrics.overallScore,
 								tokensUsed: searchResult.totalTokens,
 								executionTimeMs: searchResult.totalProcessingTime,
-							}
+							},
 						);
 						storageId = storageResult.id;
-						console.log(`[ResearchStorage] Stored search with ID: ${storageResult.id}`);
+						console.log(
+							`[ResearchStorage] Stored search with ID: ${storageResult.id}`,
+						);
 					}
-                    return new Response(
-                        JSON.stringify({
-                            query,
-                            ...searchResult,
-                            totalResults: searchResult.results.length,
-                            storageId,
-                            availableProviders,
-                            usedFallbackCache,
-                        }),
-                        {
-                            status: 200,
-                            headers: { "Content-Type": "application/json" },
-                        },
-                    );
-
-                } catch (error) {
-                    console.error("Search API error:", error);
-                    return new Response(
-                        JSON.stringify({ error: "Failed to process search request" }),
-                        {
-                            status: 500,
-                            headers: { "Content-Type": "application/json" },
-                        },
-                    );
-                }
-            },
-        },
-    },
+					return new Response(
+						JSON.stringify({
+							query,
+							...searchResult,
+							totalResults: searchResult.results.length,
+							storageId,
+							availableProviders,
+							usedFallbackCache,
+						}),
+						{
+							status: 200,
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+				} catch (error) {
+					console.error("Search API error:", error);
+					return new Response(
+						JSON.stringify({ error: "Failed to process search request" }),
+						{
+							status: 500,
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+				}
+			},
+		},
+	},
 });

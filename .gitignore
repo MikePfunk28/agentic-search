@@ -119,3 +119,4 @@ docs/IMPLEMENTATION_HUMAN_IN_THE_LOOP.md
 # Secrets and generated files
 wrangler.toml
 vite.config.timestamp*
+

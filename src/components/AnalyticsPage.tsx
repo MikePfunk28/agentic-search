@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
+import { useAppAuth } from '../hooks/useAppAuth';
 
 interface Summary {
   total: number;
@@ -9,7 +10,7 @@ interface Summary {
 
 export default function AnalyticsPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
-  const user = useQuery(api.auth.getUser);
+  const { user } = useAppAuth();
 
   const result = useQuery(api.searchAnalytics.getAnalyticsSummary, {
     userId: user?._id || '',

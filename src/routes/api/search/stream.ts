@@ -583,14 +583,22 @@ async function executeSearchWithProgress(
 					}
 				}
 
-		// log simple analytics for this search
-		await ctx.runMutation((internal as any).searchAnalytics.logSearchAnalytics, {
-			userId: userId || "",
-			query,
-			providers: [...new Set(searchResult.results.map((r:any) => r.provider).filter(Boolean))],
-			resultCount: searchResult.results.length,
-			tokensUsed: searchResult.totalTokens,
-		});
+		// log simple analytics for this search (fire-and-forget via Convex client)
+		try {
+			const { convexClient } = await import("@/lib/convex");
+			const { api: convexApi } = await import("../../../../convex/_generated/api");
+			if (convexClient) {
+				await convexClient.mutation(convexApi.searchAnalytics.logSearchAnalytics, {
+					userId: "",
+					query,
+					providers: [...new Set(searchResult.results.map((r: any) => r.provider).filter(Boolean))],
+					resultCount: searchResult.results.length,
+					tokensUsed: searchResult.totalTokens,
+				});
+			}
+		} catch (analyticsErr) {
+			console.warn("[StreamSearch] Analytics logging failed (non-fatal):", analyticsErr);
+		}
 
 		// ── Merge RAG chunks into results ────────────────────────────────
 		const mergedResults = [...searchResult.results];

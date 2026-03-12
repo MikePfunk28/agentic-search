@@ -565,6 +565,40 @@ const LANGUAGE_PATTERNS: DetectionPattern[] = [
 			"era",
 			"depois",
 			"sem",
+			"sobre",
+			"você",
+			"são",
+			"não",
+			"então",
+			"também",
+			"ainda",
+			"aqui",
+			"hoje",
+			"quero",
+			"sair",
+			"meu",
+			"posso",
+			"preciso",
+			"poderia",
+			"ajudar",
+			"entender",
+			"funciona",
+			"fora",
+			"tempo",
+			"bonito",
+			"passear",
+			"aproveitar",
+			"ensolarado",
+			"acontecer",
+			"continua",
+			"persistente",
+			"resolver",
+			"dados",
+			"banco",
+			"pesquisar",
+			"criar",
+			"modernos",
+			"recomendadas",
 		]),
 		bigrams: new Set([
 			"os",
@@ -577,6 +611,16 @@ const LANGUAGE_PATTERNS: DetectionPattern[] = [
 			"da",
 			"er",
 			"ar",
+			"ão",
+			"çã",
+			"nh",
+			"lh",
+			"ei",
+			"ou",
+			"ue",
+			"re",
+			"se",
+			"te",
 		]),
 		trigrams: new Set([
 			"que",
@@ -586,9 +630,19 @@ const LANGUAGE_PATTERNS: DetectionPattern[] = [
 			"par",
 			"ent",
 			"ais",
-			"nhos",
-			"nde",
-			"cao",
+			"ção",
+			"ões",
+			"nho",
+			"lho",
+			"são",
+			"não",
+			"est",
+			"nte",
+			"men",
+			"ade",
+			"ido",
+			"ara",
+			"ode",
 		]),
 	},
 	{
@@ -747,7 +801,7 @@ export class LanguageDetector {
 
 		const cleanText = text.toLowerCase().trim();
 		const detectedSets = this.detectCharacterSets(cleanText);
-		const scores = this.calculateLanguageScores(cleanText, detectedSets);
+		const scores = this.calculateLanguageScores(cleanText, detectedSets, cleanText);
 
 		const sortedScores = Object.entries(scores).sort(([, a], [, b]) => b - a);
 
@@ -791,6 +845,7 @@ export class LanguageDetector {
 	private calculateLanguageScores(
 		text: string,
 		charSets: string[],
+		originalText?: string,
 	): Record<string, number> {
 		const scores: Record<string, number> = {};
 		const words = text.split(/\s+/).filter((w) => w.length > 0);
@@ -800,7 +855,7 @@ export class LanguageDetector {
 		for (const pattern of LANGUAGE_PATTERNS) {
 			let score = 0;
 
-			const charSetMatch = this.matchCharacterSets(charSets, pattern);
+			const charSetMatch = this.matchCharacterSets(charSets, pattern, originalText);
 			score += charSetMatch * 40;
 
 			const wordMatches = words.filter((w) =>
@@ -827,6 +882,7 @@ export class LanguageDetector {
 	private matchCharacterSets(
 		detected: string[],
 		pattern: DetectionPattern,
+		text?: string,
 	): number {
 		if (pattern.language === "zh") {
 			return detected.includes("cjk-chinese") &&
@@ -851,6 +907,13 @@ export class LanguageDetector {
 		}
 
 		if (detected.includes("ascii") || detected.includes("latin-extended")) {
+			// Differentiate Latin-based languages by distinctive diacritics
+			if (text) {
+				if (pattern.language === "pt" && /[ãõ]/.test(text)) return 0.8;
+				if (pattern.language === "es" && /[ñ¡¿]/.test(text)) return 0.8;
+				if (pattern.language === "fr" && /[êèùœæ]/.test(text)) return 0.8;
+				if (pattern.language === "de" && /[äöüß]/.test(text)) return 0.8;
+			}
 			return 0.5;
 		}
 
