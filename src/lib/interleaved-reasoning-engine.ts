@@ -120,10 +120,9 @@ class SecurityValidator {
 		// Encoding here would double-escape: the LLM sees "&amp;" instead of "&"
 		// and echoes it back, producing visible "&amp;" in the UI.
 		//
-		// Apply replacements in a loop until the string stabilises. Earlier
-		// replacements can create new matches for later patterns (e.g. nested
-		// or split tokens), so a single pass is not sufficient — CodeQL High
-		// "Incomplete multi-character sanitization".
+		// Apply the multi-character sanitization repeatedly until there are
+		// no more changes, to avoid incomplete removal when earlier replacements
+		// create new matches for later patterns.
 		let previous: string;
 		let iterations = 0;
 		const maxIterations = 10;
@@ -132,10 +131,7 @@ class SecurityValidator {
 			previous = sanitized;
 			sanitized = sanitized
 				.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-				.replace(
-					/<\/?\s*(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta)\b[^>]*>/gi,
-					"",
-				)
+				.replace(/<\/?\s*(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta)\b[^>]*>/gi, "")
 				.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
 				.replace(/javascript\s*:/gi, "");
 			iterations += 1;

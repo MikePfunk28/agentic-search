@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [master]
 
-# Principle of least privilege - read-only by default
 permissions:
   contents: read
 
