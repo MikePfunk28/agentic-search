@@ -130,7 +130,7 @@ class SecurityValidator {
 		do {
 			previous = sanitized;
 			sanitized = sanitized
-				.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+				.replace(/<script\b[^>]*>[\s\S]*?<\/script(?:\s[^>]*)?>/gi, "")
 				.replace(/<\/?\s*(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta)\b[^>]*>/gi, "")
 				.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
 				.replace(/javascript\s*:/gi, "");
