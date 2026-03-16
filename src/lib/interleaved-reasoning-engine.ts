@@ -119,11 +119,23 @@ class SecurityValidator {
 		// HTML encoding belongs at the display layer (React handles that).
 		// Encoding here would double-escape: the LLM sees "&amp;" instead of "&"
 		// and echoes it back, producing visible "&amp;" in the UI.
-		sanitized = sanitized
-			.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-			.replace(/<\/?\s*(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta)\b[^>]*>/gi, "")
-			.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
-			.replace(/javascript\s*:/gi, "");
+		//
+		// Apply the multi-character sanitization repeatedly until there are
+		// no more changes, to avoid incomplete removal when earlier replacements
+		// create new matches for later patterns.
+		let previous: string;
+		let iterations = 0;
+		const maxIterations = 10;
+
+		do {
+			previous = sanitized;
+			sanitized = sanitized
+				.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+				.replace(/<\/?\s*(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta)\b[^>]*>/gi, "")
+				.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
+				.replace(/javascript\s*:/gi, "");
+			iterations += 1;
+		} while (sanitized !== previous && iterations < maxIterations);
 
 		return sanitized.substring(0, this.maxInputLength);
 	}
