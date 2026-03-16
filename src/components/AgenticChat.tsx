@@ -772,11 +772,12 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 											errors: dashboardData.reasoningSteps.flatMap((s) =>
 												s.error ? [s.error] : [],
 											),
-											totalTokens: 0, // Total tokens tracked at search level
-											processingTime: dashboardData.reasoningSteps.reduce(
-												(sum, s) => sum + s.duration,
-												0,
-											),
+											totalTokens: dashboardData.totalTokens ?? 0,
+											processingTime: dashboardData.totalProcessingTime ??
+												dashboardData.reasoningSteps.reduce(
+													(sum, s) => sum + s.duration,
+													0,
+												),
 										}
 									: undefined
 							}

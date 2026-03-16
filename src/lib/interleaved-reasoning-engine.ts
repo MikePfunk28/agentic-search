@@ -137,6 +137,13 @@ class SecurityValidator {
 			iterations += 1;
 		} while (sanitized !== previous && iterations < maxIterations);
 
+		// Final hardening pass: remove any remaining tag delimiters or event handler
+		// prefixes that could still be used for injection.
+		sanitized = sanitized
+			.replace(/[<>]/g, "")
+			.replace(/\bon[a-z0-9_-]*\s*=/gi, "")
+			.replace(/\bjavascript\s*:/gi, "");
+
 		return sanitized.substring(0, this.maxInputLength);
 	}
 }

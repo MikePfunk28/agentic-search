@@ -3,17 +3,13 @@
  * UI for selecting and configuring AI models
  */
 
-import { AlertCircle, Check, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-	detectAvailableProviders,
-	getProviderDisplayName,
-	listModelsForProvider,
-	type ModelProvider,
-} from "../lib/ai/providers";
-import { useAppAuth } from "../hooks/useAppAuth";
+import { useState, useEffect } from "react";
+import { Check, Loader2, AlertCircle } from "lucide-react";
 import type { ModelConfig } from "../lib/model-config";
+import { detectAvailableProviders, listModelsForProvider, getProviderDisplayName, type ModelProvider } from "../lib/ai/providers";
+import { useAppAuth } from "../hooks/useAppAuth";
 import { useSaveModelConfig } from "../lib/model-storage-convex";
+import { saveModelConfig } from "../lib/model-storage";
 
 export interface ModelSettingsProps {
 	onSave?: (config: ModelConfig) => void;
@@ -146,32 +142,38 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 		}
 	};
 
-	const handleSave = async () => {
-		if (!selectedProvider || !selectedModel) return;
+  const handleSave = async () => {
+    if (!selectedProvider || !selectedModel) return;
 
-		const config: ModelConfig = {
-			provider: selectedProvider,
-			model: selectedModel,
-			baseUrl: baseURL || undefined,
-			apiKey: apiKey || undefined,
-			temperature: 0.7,
-			maxTokens: 4096,
-			timeout: 60000,
-			enableStreaming: false,
-		};
+    const config: ModelConfig = {
+      provider: selectedProvider,
+      model: selectedModel,
+      baseUrl: baseURL || undefined,
+      apiKey: apiKey || undefined,
+      temperature: 0.7,
+      maxTokens: 4096,
+      timeout: 60000,
+      enableStreaming: false,
+    };
 
-		// SECURITY: API keys go to Convex server-side storage, NEVER to localStorage
-		if (isAuthenticated) {
-			try {
-				await saveToConvex(`${selectedProvider}-${selectedModel}`, config);
-			} catch (error) {
-				console.error("[ModelSettings] Failed to save config to Convex:", error);
-			}
-		}
-		// Config (with apiKey in memory only) passed to parent for session use
-		// If not authenticated, key lives in React state only — never persisted
-		onSave?.(config);
-	};
+    // Store model settings locally (securely stores API key when possible)
+    try {
+      await saveModelConfig(`${selectedProvider}-${selectedModel}`, config);
+    } catch (error) {
+      console.error("[ModelSettings] Failed to save config locally:", error);
+    }
+
+    // Persist config server-side for logged-in users (Convex secure storage)
+    if (isAuthenticated) {
+      try {
+        await saveToConvex(`${selectedProvider}-${selectedModel}`, config);
+      } catch (error) {
+        console.error("[ModelSettings] Failed to save config to Convex:", error);
+      }
+    }
+
+    onSave?.(config);
+  };
 
 	if (isLoading) {
 		return (
