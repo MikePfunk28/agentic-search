@@ -1,7 +1,6 @@
-import { config } from 'dotenv'
-
-// Load environment variables from .env.local
-config({ path: '.env.local' })
+// NOTE: dotenv is NOT imported here — Vite and TanStack Start already load
+// .env.local automatically in dev mode. Importing dotenv would pull in node:http
+// transitively, which crashes miniflare's workerd runtime.
 
 // NOTE: Do not initialize Sentry in local dev worker runtime.
 // Cloudflare/miniflare cannot resolve some Node module fallbacks used by Sentry.

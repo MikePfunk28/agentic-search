@@ -11,13 +11,17 @@ import {
 	listModelsForProvider,
 	type ModelProvider,
 } from "../lib/ai/providers";
+import { useAppAuth } from "../hooks/useAppAuth";
 import type { ModelConfig } from "../lib/model-config";
+import { useSaveModelConfig } from "../lib/model-storage-convex";
 
 export interface ModelSettingsProps {
 	onSave?: (config: ModelConfig) => void;
 }
 
 export function ModelSettings({ onSave }: ModelSettingsProps) {
+	const { isAuthenticated } = useAppAuth();
+	const saveToConvex = useSaveModelConfig();
 	const [availableProviders, setAvailableProviders] = useState<ModelProvider[]>(
 		[],
 	);
@@ -142,7 +146,7 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 		}
 	};
 
-	const handleSave = () => {
+	const handleSave = async () => {
 		if (!selectedProvider || !selectedModel) return;
 
 		const config: ModelConfig = {
@@ -156,8 +160,16 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 			enableStreaming: false,
 		};
 
-		// Save to localStorage
-		localStorage.setItem("agentic-search-model-config", JSON.stringify(config));
+		// SECURITY: API keys go to Convex server-side storage, NEVER to localStorage
+		if (isAuthenticated) {
+			try {
+				await saveToConvex(`${selectedProvider}-${selectedModel}`, config);
+			} catch (error) {
+				console.error("[ModelSettings] Failed to save config to Convex:", error);
+			}
+		}
+		// Config (with apiKey in memory only) passed to parent for session use
+		// If not authenticated, key lives in React state only — never persisted
 		onSave?.(config);
 	};
 
@@ -277,8 +289,9 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
 								: "Add API key to load available models dynamically"}
 						</p>
 						<p className="mt-1 text-xs text-gray-500">
-							Your API key is stored locally in your browser and never sent to
-							our servers
+							{isAuthenticated
+								? "Your API key is stored securely on our server (Convex)"
+								: "Sign in to persist your API key securely. Otherwise it stays in memory for this session only."}
 						</p>
 					</div>
 				)}

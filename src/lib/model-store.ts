@@ -1,9 +1,10 @@
 /**
  * Unified Model Store
  * Single source of truth for all model configuration.
- * Replaces the 3 separate localStorage keys that never talked to each other.
  *
- * Storage key: 'agentic-search-model-store'
+ * SECURITY: ALL state is in-memory only. NOTHING is written to localStorage.
+ * API keys for authenticated users are stored in Convex (server-side).
+ * Model detection re-runs on every page load so persistence is not needed.
  */
 
 import { z } from "zod";
@@ -73,152 +74,33 @@ export type ModelStore = z.infer<typeof ModelStoreSchema>;
 
 // --- Constants ---
 
-const STORAGE_KEY = "agentic-search-model-store";
-
 const DEFAULT_OLLAMA_URL = "http://localhost:11434";
 const DEFAULT_LMSTUDIO_URL = "http://localhost:1234";
 
-interface VolatileSecrets {
-	ollamaApiKey?: string;
-	lmstudioApiKey?: string;
-	customApiKeys: Record<string, string | undefined>;
-	firecrawlApiKey?: string;
-	tavilyApiKey?: string;
-	exaApiKey?: string;
-	braveApiKey?: string;
-}
+// --- In-Memory Store (no localStorage, no persistence) ---
 
-const volatileSecrets: VolatileSecrets = {
-	customApiKeys: {},
-};
-
-function captureVolatileSecrets(store: ModelStore): void {
-	volatileSecrets.ollamaApiKey = store.ollama?.apiKey;
-	volatileSecrets.lmstudioApiKey = store.lmstudio?.apiKey;
-	volatileSecrets.customApiKeys = Object.fromEntries(
-		store.custom
-			.filter((provider) => !!provider.apiKey)
-			.map((provider) => [provider.id, provider.apiKey]),
-	);
-	volatileSecrets.firecrawlApiKey = store.firecrawlApiKey;
-	volatileSecrets.tavilyApiKey = store.tavilyApiKey;
-	volatileSecrets.exaApiKey = store.exaApiKey;
-	volatileSecrets.braveApiKey = store.braveApiKey;
-}
-
-function stripSecretsForPersistence(store: ModelStore): ModelStore {
-	return {
-		...store,
-		ollama: store.ollama
-			? {
-					...store.ollama,
-					apiKey: undefined,
-				}
-			: store.ollama,
-		lmstudio: store.lmstudio
-			? {
-					...store.lmstudio,
-					apiKey: undefined,
-				}
-			: store.lmstudio,
-		custom: store.custom.map((provider) => ({
-			...provider,
-			apiKey: undefined,
-		})),
-		firecrawlApiKey: undefined,
-		tavilyApiKey: undefined,
-		exaApiKey: undefined,
-		braveApiKey: undefined,
-	};
-}
-
-function hydrateStoreWithVolatileSecrets(store: ModelStore): ModelStore {
-	return {
-		...store,
-		ollama: store.ollama
-			? {
-					...store.ollama,
-					apiKey: volatileSecrets.ollamaApiKey,
-				}
-			: store.ollama,
-		lmstudio: store.lmstudio
-			? {
-					...store.lmstudio,
-					apiKey: volatileSecrets.lmstudioApiKey,
-				}
-			: store.lmstudio,
-		custom: store.custom.map((provider) => ({
-			...provider,
-			apiKey: volatileSecrets.customApiKeys[provider.id],
-		})),
-		firecrawlApiKey: volatileSecrets.firecrawlApiKey,
-		tavilyApiKey: volatileSecrets.tavilyApiKey,
-		exaApiKey: volatileSecrets.exaApiKey,
-		braveApiKey: volatileSecrets.braveApiKey,
-	};
-}
-
-function hasPersistedSecrets(store: ModelStore): boolean {
-	return Boolean(
-		store.ollama?.apiKey ||
-			store.lmstudio?.apiKey ||
-			store.custom.some((provider) => !!provider.apiKey) ||
-			store.firecrawlApiKey ||
-			store.tavilyApiKey ||
-			store.exaApiKey ||
-			store.braveApiKey,
-	);
-}
+let _memoryStore: ModelStore = createDefaultStore();
 
 // --- Store Functions ---
 
 /**
- * Get the current model store from localStorage.
- * Returns a default empty store if nothing is saved.
+ * Get the current model store from memory.
+ * Returns a default empty store if nothing has been set.
+ * SECURITY: No localStorage reads — all state is volatile.
  */
 export function getModelStore(): ModelStore {
-	if (typeof window === "undefined") {
-		return createDefaultStore();
-	}
-
-	try {
-		const raw = localStorage.getItem(STORAGE_KEY);
-		if (!raw) return createDefaultStore();
-
-		const parsed = ModelStoreSchema.parse(JSON.parse(raw));
-		captureVolatileSecrets(parsed);
-		const sanitized = stripSecretsForPersistence(parsed);
-		if (hasPersistedSecrets(parsed)) {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-			console.warn(
-				"[ModelStore] Removed persisted API keys from localStorage; keys are now session-volatile until secure backend storage is used.",
-			);
-		}
-		return hydrateStoreWithVolatileSecrets(sanitized);
-	} catch (error) {
-		console.warn(
-			"[ModelStore] Failed to parse stored config, using defaults:",
-			error,
-		);
-		return createDefaultStore();
-	}
+	return _memoryStore;
 }
 
 /**
- * Save the model store to localStorage.
+ * Save the model store to memory.
+ * SECURITY: No localStorage writes — all state is volatile.
  */
 export function setModelStore(store: ModelStore): void {
-	if (typeof window === "undefined") return;
-
 	try {
-		const validated = ModelStoreSchema.parse(store);
-		captureVolatileSecrets(validated);
-		localStorage.setItem(
-			STORAGE_KEY,
-			JSON.stringify(stripSecretsForPersistence(validated)),
-		);
+		_memoryStore = ModelStoreSchema.parse(store);
 	} catch (error) {
-		console.error("[ModelStore] Failed to save store:", error);
+		console.error("[ModelStore] Failed to validate store:", error);
 	}
 }
 
@@ -880,87 +762,12 @@ export function setRagEmbeddingConfig(model: string, provider: string): void {
 }
 
 /**
- * Migrate data from the old scattered localStorage keys to the unified store.
- * Run once on first load if old keys exist.
+ * Migration stub — localStorage migration is no longer needed.
+ * API keys are now stored in Convex (server-side).
+ * Kept for backward compatibility with callers.
  */
 export function migrateFromOldStorage(): boolean {
-	if (typeof window === "undefined") return false;
-
-	const store = getModelStore();
-	let migrated = false;
-
-	// Migrate from 'agentic-search-api-keys' (dashes - SettingsModal)
-	try {
-		const oldKeys = localStorage.getItem("agentic-search-api-keys");
-		if (oldKeys) {
-			const parsed = JSON.parse(oldKeys);
-			if (parsed.firecrawl?.apiKey && !store.firecrawlApiKey) {
-				store.firecrawlApiKey = parsed.firecrawl.apiKey;
-				migrated = true;
-			}
-			// Migrate cloud API keys as custom providers
-			for (const [provider, config] of Object.entries(parsed)) {
-				const cfg = config as { apiKey?: string; baseUrl?: string };
-				if (provider !== "firecrawl" && provider !== "ollama" && cfg?.apiKey) {
-					const existing = store.custom.find(
-						(c) => c.name.toLowerCase() === provider,
-					);
-					if (!existing) {
-						store.custom.push({
-							id: `migrated-${provider}`,
-							name: provider.charAt(0).toUpperCase() + provider.slice(1),
-							baseUrl: cfg.baseUrl || `https://api.${provider}.com/v1`,
-							apiKey: cfg.apiKey,
-							models: [],
-							selectedModel: null,
-							protocol:
-								provider === "anthropic" ? "anthropic" : "openai-compatible",
-						});
-						migrated = true;
-					}
-				}
-			}
-		}
-	} catch (error) {
-		console.warn("[ModelStore] Migration from old keys failed:", error);
-	}
-
-	// Migrate from 'agentic-search-custom-models' (SettingsModal custom tab)
-	try {
-		const oldModels = localStorage.getItem("agentic-search-custom-models");
-		if (oldModels) {
-			const parsed = JSON.parse(oldModels);
-			if (Array.isArray(parsed)) {
-				for (const model of parsed) {
-					if (model.provider === "ollama" && model.name) {
-						// Add to Ollama detected list if not already there
-						if (!store.ollama) {
-							store.ollama = {
-								baseUrl: model.baseUrl || DEFAULT_OLLAMA_URL,
-								detectedModels: [model.name],
-								selectedModel: model.name,
-							};
-						} else if (!store.ollama.detectedModels.includes(model.name)) {
-							store.ollama.detectedModels.push(model.name);
-						}
-						migrated = true;
-					}
-				}
-			}
-		}
-	} catch (error) {
-		console.warn(
-			"[ModelStore] Migration from old custom models failed:",
-			error,
-		);
-	}
-
-	if (migrated) {
-		setModelStore(store);
-		console.log("[ModelStore] Migrated data from old localStorage keys");
-	}
-
-	return migrated;
+	return false;
 }
 
 // --- Helpers ---

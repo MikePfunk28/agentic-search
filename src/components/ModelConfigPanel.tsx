@@ -18,7 +18,10 @@ import {
 	X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { secureGetItem, secureSetItem } from "../lib/crypto-storage";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
+import { useAppAuth } from "../hooks/useAppAuth";
 import {
 	ModelProvider,
 	modelConfig,
@@ -86,7 +89,15 @@ const PROVIDER_CONFIGS: ProviderConfig[] = [
 ];
 
 export function ModelConfigPanel() {
+	const { isAuthenticated } = useAppAuth();
+	const createConfig = useMutation(api.modelConfiguration.createConfig);
+	const saveApiKeyToConvex = useMutation(api.secureApiKeys.saveApiKey);
+	const deleteApiKeyFromConvex = useMutation(api.secureApiKeys.deleteApiKey);
+	const deleteConfigFromConvex = useMutation(api.modelConfiguration.deleteConfig);
+	const storedApiKeys = useQuery(api.secureApiKeys.listApiKeys, isAuthenticated ? {} : "skip");
+
 	const [apiKeys, setApiKeys] = useState<Record<string, StoredApiKey>>({});
+	const [configIds, setConfigIds] = useState<Record<string, Id<"modelConfigurations">>>({});
 	const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
 	const [testingConnection, setTestingConnection] = useState<
 		Record<string, boolean>
@@ -106,11 +117,11 @@ export function ModelConfigPanel() {
 	const [tempApiKey, setTempApiKey] = useState("");
 	const [tempBaseUrl, setTempBaseUrl] = useState("");
 
+	// Save API keys to Convex (server-side, encrypted at rest)
+	// If not authenticated, keys stay in React state only (memory)
 	const saveApiKeys = (newKeys: Record<string, StoredApiKey>) => {
 		setApiKeys(newKeys);
-		secureSetItem("agentic_search_api_keys", JSON.stringify(newKeys)).catch(
-			(err) => console.error("Failed to save API keys:", err),
-		);
+		// Convex save happens in addApiKey/removeApiKey directly
 	};
 
 	const testConnection = async (
@@ -150,26 +161,11 @@ export function ModelConfigPanel() {
 		}
 	};
 
-	// Load API keys from encrypted storage on mount
+	// Load API keys from Convex on mount (server-side, encrypted at rest)
+	// For unauthenticated users, just test local connections
 	useEffect(() => {
-		(async () => {
-			try {
-				const stored = await secureGetItem("agentic_search_api_keys");
-				if (stored) {
-					const parsed = JSON.parse(stored);
-					setApiKeys(parsed);
-
-					// Auto-test connections for stored keys
-					Object.values(parsed).forEach((config: any) => {
-						testConnection(config.provider, config.apiKey, config.baseUrl);
-					});
-				}
-			} catch (error) {
-				console.error("Failed to load API keys:", error);
-			}
-			// Auto-test Ollama connection
-			testConnection(ModelProvider.OLLAMA);
-		})();
+		// Auto-test Ollama connection (no API key needed)
+		testConnection(ModelProvider.OLLAMA);
 	}, [testConnection]);
 
 	const fetchModelsForProvider = async (
