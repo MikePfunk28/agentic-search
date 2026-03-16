@@ -119,7 +119,7 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
       await secureSetItem(apiKeyRef, apiKey);
     }
 
-    // Store config with only the reference to the API key, NOT the key itself
+    // Full config object including the API key reference (kept in memory / passed to onSave)
     const config: ModelConfig = {
       provider: selectedProvider,
       model: selectedModel,
@@ -131,8 +131,9 @@ export function ModelSettings({ onSave }: ModelSettingsProps) {
       enableStreaming: false,
     };
 
-    // Save sanitized config to localStorage
-    localStorage.setItem('agentic-search-model-config', JSON.stringify(config));
+    // Save sanitized config to localStorage (exclude apiKeyRef so that key references are not persisted in clear text)
+    const { apiKeyRef: _omittedApiKeyRef, ...sanitizedConfig } = config;
+    localStorage.setItem('agentic-search-model-config', JSON.stringify(sanitizedConfig));
     onSave?.(config);
   };
 
