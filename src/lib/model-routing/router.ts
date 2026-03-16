@@ -1,4 +1,5 @@
 import type { ModelConfig } from "../model-config";
+import { AVAILABLE_MODELS } from "../model-config";
 import { observability } from "../observability";
 import { QueryComplexityAnalyzer } from "./complexity";
 import type { CostTracker } from "./cost-tracker";
@@ -54,13 +55,10 @@ export class ModelRouter {
 		this.availableModels = {
 			ollama: availableModels?.ollama ?? [],
 			lm_studio: availableModels?.lm_studio ?? [],
-			openai: availableModels?.openai ?? ["gpt-4o", "gpt-4o-mini"],
-			anthropic: availableModels?.anthropic ?? [
-				"claude-3-5-sonnet",
-				"claude-3-haiku",
-			],
-			google: availableModels?.google ?? ["gemini-2.5-pro", "gemini-2.5-flash"],
-			deepseek: availableModels?.deepseek ?? ["deepseek-chat"],
+			openai: availableModels?.openai ?? [...AVAILABLE_MODELS.OpenAI],
+			anthropic: availableModels?.anthropic ?? [...AVAILABLE_MODELS.Anthropic],
+			google: availableModels?.google ?? [...AVAILABLE_MODELS.Google],
+			deepseek: availableModels?.deepseek ?? [...AVAILABLE_MODELS.DeepSeek],
 		};
 	}
 
@@ -324,15 +322,21 @@ export class ModelRouter {
 		_query: string,
 		analysis: ComplexityAnalysis,
 	): RoutingDecision {
+		// Use first known models from AVAILABLE_MODELS as the safe fallback
+		const fallbackOpenAI = AVAILABLE_MODELS.OpenAI[0];
+		const fallbackAnthropic = AVAILABLE_MODELS.Anthropic[0];
 		return {
-			model: "gpt-4o-mini",
+			model: fallbackOpenAI,
 			provider: "openai",
 			reason:
 				"Fallback to safe default model - no suitable candidates available",
 			estimatedCost: 0.01,
 			confidence: 0.5,
 			complexity: analysis.classification,
-			fallbackChain: ["openai:gpt-4o-mini", "anthropic:claude-3-haiku"],
+			fallbackChain: [
+				`openai:${fallbackOpenAI}`,
+				`anthropic:${fallbackAnthropic}`,
+			],
 			timestamp: Date.now(),
 		};
 	}

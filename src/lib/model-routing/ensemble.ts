@@ -1,3 +1,4 @@
+import { AVAILABLE_MODELS } from "../model-config";
 import type { CostTracker } from "./cost-tracker";
 import type { EnsembleConfig, EnsembleResult } from "./types";
 import { getModelCapabilities } from "./types";
@@ -21,8 +22,8 @@ export class EnsemblePredictor {
 		// costTracker reserved for future cost-based routing
 		this.config = {
 			models: config?.models ?? [
-				{ model: "gpt-4o", provider: "openai" },
-				{ model: "claude-3-5-sonnet", provider: "anthropic" },
+				{ model: AVAILABLE_MODELS.OpenAI[0], provider: "openai" },
+				{ model: AVAILABLE_MODELS.Anthropic[0], provider: "anthropic" },
 			],
 			timeoutMs: config?.timeoutMs ?? this.defaultTimeout,
 			minAgreement: config?.minAgreement ?? 0.6,

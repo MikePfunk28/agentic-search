@@ -21,14 +21,12 @@ if (!VITE_CONVEX_URL) {
 }
 
 if (!VITE_CONVEX_URL) {
-	console.warn(
-		"[convex] VITE_CONVEX_URL is not set. Convex queries will fail until configured in environment variables or wrangler.toml.",
+	throw new Error(
+		"Missing VITE_CONVEX_URL environment variable. Set it in your .env.local or Convex dashboard.",
 	);
 }
 
-export const convexClient = VITE_CONVEX_URL
-	? new ConvexReactClient(VITE_CONVEX_URL)
-	: (null as unknown as ConvexReactClient); // Will fail gracefully on use rather than crash SSR cold start
+export const convexClient = new ConvexReactClient(VITE_CONVEX_URL);
 
 // Export for type-safe usage in components
 export type { ConvexReactClient };

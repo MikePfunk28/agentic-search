@@ -211,13 +211,14 @@ export function setActiveConfig(id: string): boolean {
 
 		stored.activeConfigId = id;
 		stored.updatedAt = Date.now();
-		// Ensure no API keys are included in persisted config
+		// Ensure no API keys or API key references are included in persisted config
 		const sanitizedStored = {
 			...stored,
 			configs: Object.fromEntries(
 				Object.entries(stored.configs).map(([id, config]) => {
-					// Remove apiKey field if present; retain only apiKeyRef
-					const { apiKey, ...rest } = config;
+					// Remove apiKey and apiKeyRef fields if present before persisting
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					const { apiKey, apiKeyRef, ...rest } = config as any;
 					return [id, rest];
 				}),
 			),

@@ -313,19 +313,17 @@ export async function detectAllAvailableModels(): Promise<{
 	const cloudModels: Record<string, DetectedModel[]> = {};
 
 	if (typeof window !== "undefined") {
-		// Check localStorage for saved API keys
-		const savedConfig = localStorage.getItem("agentic-search-model-config");
-		if (savedConfig) {
-			try {
-				const config = JSON.parse(savedConfig);
-				if (config.provider && config.apiKey) {
-					cloudModels[config.provider] = getCloudProviderModels(
-						config.provider,
-					);
-				}
-			} catch (error) {
-				console.error("[ModelDetection] Failed to parse saved config:", error);
+		// Read from unified model store (single source of truth) — never from deprecated localStorage keys
+		try {
+			const { getModelStore } = await import("@/lib/model-store");
+			const store = getModelStore();
+			if (store.activeProvider) {
+				cloudModels[store.activeProvider] = getCloudProviderModels(
+					store.activeProvider as ModelProvider,
+				);
 			}
+		} catch (error) {
+			console.error("[ModelDetection] Failed to read model store:", error);
 		}
 
 		// Check environment variables (Vite exposes them as import.meta.env.VITE_*)
@@ -376,14 +374,12 @@ export async function isProviderAvailable(
 		return models.some((m) => m.modelId === modelId);
 	}
 
-	// For cloud providers, check if API key is configured
+	// For cloud providers, check if API key is configured via unified model store
 	if (typeof window !== "undefined") {
 		try {
-			const savedConfig = localStorage.getItem("agentic-search-model-config");
-			if (!savedConfig) return false;
-
-			const config = JSON.parse(savedConfig);
-			if (config.provider === provider && config.apiKey) {
+			const { getModelStore } = await import("@/lib/model-store");
+			const store = getModelStore();
+			if (store.activeProvider === provider) {
 				return true;
 			}
 		} catch (error) {

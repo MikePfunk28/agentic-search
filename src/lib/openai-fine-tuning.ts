@@ -57,8 +57,15 @@ function getOpenAIBaseUrl(): string {
 }
 
 async function openAIFetch(path: string, init: RequestInit): Promise<Response> {
-	const response = await fetch(`${getOpenAIBaseUrl()}${path}`, {
+	const fullUrl = `${getOpenAIBaseUrl()}${path}`;
+
+	// SSRF protection: validate the constructed URL before fetching
+	const { validateServerFetchUrlAsync } = await import("@/lib/url-validation");
+	await validateServerFetchUrlAsync(fullUrl);
+
+	const response = await fetch(fullUrl, {
 		...init,
+		signal: init.signal ?? AbortSignal.timeout(30000),
 		headers: {
 			Authorization: `Bearer ${ensureOpenAIKey()}`,
 			...(init.headers || {}),

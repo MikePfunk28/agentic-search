@@ -10,6 +10,7 @@ import {
 import { researchStorage } from "@/lib/results-storage";
 import { getAvailableProviders } from "@/lib/search-providers";
 import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
+import { searchRequestSchema } from "@/lib/api-schemas";
 
 // Cloudflare Workers: read env bindings from .dev.vars / dashboard secrets
 let cfEnv: Record<string, string | undefined> = {};
@@ -56,6 +57,18 @@ export const Route = createFileRoute("/api/search")({
 				}
 
 				try {
+					const rawBody = await request.json();
+					const parsed = searchRequestSchema.safeParse(rawBody);
+					if (!parsed.success) {
+						return new Response(
+							JSON.stringify({ error: "Invalid request", details: parsed.error.flatten() }),
+							{
+								status: 400,
+								headers: { "Content-Type": "application/json" },
+							},
+						);
+					}
+
 					const {
 						query,
 						useParallelModels = true,
@@ -64,22 +77,16 @@ export const Route = createFileRoute("/api/search")({
 						modelConfig: clientModelConfig,
 						modelConfigs: clientModelConfigs,
 						searchApiKeys,
-					} = await request.json();
-
-					if (!query || typeof query !== "string") {
-						return new Response(
-							JSON.stringify({ error: "Query parameter is required" }),
-							{
-								status: 400,
-								headers: { "Content-Type": "application/json" },
-							},
-						);
-					}
+					} = parsed.data;
 
 					// Build model config from client-provided data, or fall back to server-side
 					let modelConfig: ModelConfig | null = null;
 					if (clientModelConfig?.provider && clientModelConfig.model) {
-						modelConfig = buildModelConfigFromClient(clientModelConfig);
+							modelConfig = buildModelConfigFromClient({
+								...clientModelConfig,
+								baseUrl: clientModelConfig.baseUrl || "",
+								protocol: clientModelConfig.provider,
+							});
 						console.log(
 							`[SearchAPI] Using client model: ${clientModelConfig.provider}:${clientModelConfig.model}`,
 						);
@@ -91,7 +98,11 @@ export const Route = createFileRoute("/api/search")({
 							(config: any) => config?.provider && config?.model,
 						);
 						if (firstModel) {
-							modelConfig = buildModelConfigFromClient(firstModel);
+								modelConfig = buildModelConfigFromClient({
+									...firstModel,
+									baseUrl: firstModel.baseUrl || "",
+									protocol: firstModel.provider,
+								});
 							console.log(
 								`[SearchAPI] Using first client model from multi-select: ${firstModel.provider}:${firstModel.model}`,
 							);
@@ -109,11 +120,11 @@ export const Route = createFileRoute("/api/search")({
 					}
 
 					// BYOK only — paid provider keys come from the user, never from server env vars
-					const mergedSearchApiKeys = {
-						firecrawl: searchApiKeys?.firecrawl || undefined,
-						tavily: searchApiKeys?.tavily || undefined,
-						exa: searchApiKeys?.exa || undefined,
-						brave: searchApiKeys?.brave || undefined,
+const mergedSearchApiKeys: { firecrawl?: string; tavily?: string; exa?: string; brave?: string } = {
+							firecrawl: (searchApiKeys?.firecrawl as string) || undefined,
+							tavily: (searchApiKeys?.tavily as string) || undefined,
+							exa: (searchApiKeys?.exa as string) || undefined,
+							brave: (searchApiKeys?.brave as string) || undefined,
 					};
 
 					const parallelModelConfigs = (clientModelConfigs || [])

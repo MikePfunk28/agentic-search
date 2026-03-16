@@ -62,6 +62,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 		protocol: "openai-compatible" as "openai-compatible" | "anthropic",
 	});
 	const [detectingCustom, setDetectingCustom] = useState(false);
+	const [customDetectionError, setCustomDetectionError] = useState<string | null>(null);
 	const [customDetectedModels, setCustomDetectedModels] = useState<string[]>(
 		[],
 	);
@@ -185,13 +186,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
 		setDetectingCustom(true);
 		setCustomDetectedModels([]);
+		setCustomDetectionError(null);
 		try {
-			const models = await detectCustomProviderModels(
+			const { models, error } = await detectCustomProviderModels(
 				newProvider.baseUrl,
 				newProvider.apiKey || undefined,
 				newProvider.protocol,
 			);
 			setCustomDetectedModels(models);
+			setCustomDetectionError(error);
 			if (models.length > 0) {
 				setCustomSelectedModel(models[0]);
 			}
@@ -717,6 +720,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 									)}
 									Test Connection &amp; Detect Models
 								</button>
+
+								{/* Detection error */}
+								{customDetectionError && (
+									<p className="text-xs text-red-400 mt-1">{customDetectionError}</p>
+								)}
 
 								{/* Detected models dropdown or manual entry */}
 								{customDetectedModels.length > 0 ? (

@@ -111,7 +111,7 @@ export const Route = createFileRoute("/api/search/progress")({
 						"Content-Type": "text/event-stream",
 						"Cache-Control": "no-cache",
 						Connection: "keep-alive",
-						"Access-Control-Allow-Origin": "*",
+						"Access-Control-Allow-Origin": request.headers.get("origin") || "*",
 					},
 				});
 			},

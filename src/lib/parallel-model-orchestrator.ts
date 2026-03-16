@@ -47,7 +47,7 @@ export interface ConsensusAnalysis {
 	/** Claims where models contradicted each other */
 	contradictions: string[];
 	/** Which strategy produced the consensus */
-	strategy: "unanimous" | "majority" | "weighted" | "best-single" | "none";
+	strategy: "unanimous" | "majority" | "weighted" | "best-single" | "sequential" | "none";
 	/** Per-model contribution weights used */
 	modelWeights: Record<string, number>;
 }
@@ -394,10 +394,10 @@ export class ParallelModelOrchestrator {
 
 		const consensusAnalysis: ConsensusAnalysis = {
 			text: responses[responses.length - 1]?.response || "",
-			agreementScore: 1.0, // Sequential chain produces a single refined result
+			agreementScore: 0,
 			agreedClaims: [],
 			contradictions: [],
-			strategy: "unanimous",
+			strategy: "sequential",
 			modelWeights: Object.fromEntries(
 				responses.map((r, _i) => [r.modelName, 1 / responses.length]),
 			),

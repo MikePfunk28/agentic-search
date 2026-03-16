@@ -19,16 +19,28 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+// Validate required S3 environment variables at module load time
+if (!process.env.AWS_REGION) {
+	throw new Error(
+		"Missing required environment variable: AWS_REGION must be set (e.g. us-east-1)",
+	);
+}
+if (!process.env.AWS_S3_BUCKET) {
+	throw new Error(
+		"Missing required environment variable: AWS_S3_BUCKET must be set",
+	);
+}
+
 // Initialize S3 client with IAM credentials from environment
 const s3Client = new S3Client({
-	region: process.env.AWS_REGION || "us-east-1",
+	region: process.env.AWS_REGION,
 	credentials: {
 		accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
 		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
 	},
 });
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET || "agentic-search-documents";
+const BUCKET_NAME = process.env.AWS_S3_BUCKET;
 
 export interface UploadResult {
 	key: string;
@@ -85,7 +97,7 @@ export async function uploadDocument(
 	// Note: This generates a public URL assuming the bucket is publicly accessible
 	// For private buckets, use getPresignedDownloadUrl() instead
 	// The URL format assumes bucket policy allows public read access
-	const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || "us-east-1"}.amazonaws.com/${key}`;
+	const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
 	return {
 		key,

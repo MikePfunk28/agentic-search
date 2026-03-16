@@ -8,12 +8,10 @@ if (process.env.NODE_ENV === 'production' && process.env.VITE_SENTRY_DSN) {
   const Sentry = await import('@sentry/tanstackstart-react')
   Sentry.init({
     dsn: process.env.VITE_SENTRY_DSN,
-    sendDefaultPii: true,
+    sendDefaultPii: process.env.SENTRY_SEND_DEFAULT_PII === 'true',
     integrations: [
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
     ],
     enableLogs: true,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
   })
 }

@@ -35,6 +35,7 @@ import {
 	type SearchExecutionSummary,
 } from "./search/execution-policy";
 import { QuerySegmenter, SegmentCoordinator } from "./segment";
+import type { CheckpointEngine } from "./search/checkpoint-engine";
 import { SemanticCache } from "./semantic-cache";
 import type { SearchResult } from "./types";
 
@@ -137,6 +138,11 @@ export interface UnifiedSearchResult {
 	provider: string;
 	totalTokens: number;
 	totalProcessingTime: number;
+
+	/** Checkpoint snapshots captured during this search (if checkpointEngine was provided) */
+	checkpoints?: import("./search/checkpoint-engine").CheckpointSnapshot[];
+	/** Session ID for the checkpoint engine (for corrections/rewind) */
+	checkpointSessionId?: string;
 }
 
 export interface SearchOptions {
@@ -155,6 +161,8 @@ export interface SearchOptions {
 		exa?: string;
 		brave?: string;
 	};
+	/** Optional checkpoint engine for pause/rewind/edit support */
+	checkpointEngine?: CheckpointEngine;
 }
 
 export class UnifiedSearchOrchestrator {
@@ -195,6 +203,7 @@ export class UnifiedSearchOrchestrator {
 			queryEnhancementOptions = {},
 			useSemanticCache = true,
 			cacheTtl = 5 * 60 * 1000,
+			checkpointEngine,
 		} = options;
 		const executionPolicy = resolveSearchExecutionPolicy({
 			primaryModelConfig,
@@ -242,6 +251,21 @@ export class UnifiedSearchOrchestrator {
 					"[UnifiedSearch] Query enhancement failed, using original:",
 					error,
 				);
+			}
+		}
+
+		// Checkpoint: Query Understanding
+		if (checkpointEngine) {
+			await checkpointEngine.captureAndMaybePause("query_parsed", {
+				originalQuery: query,
+				enhancedQuery,
+				entities: queryEnhancement?.entities ?? [],
+				corrections: queryEnhancement?.corrections ?? [],
+			});
+			// If the user edited the query at this checkpoint, pick up the change
+			const cp = checkpointEngine.getCheckpoint("query_parsed");
+			if (cp?.edited && typeof cp.data.enhancedQuery === "string") {
+				enhancedQuery = cp.data.enhancedQuery;
 			}
 		}
 
@@ -308,6 +332,29 @@ export class UnifiedSearchOrchestrator {
 			qualityScore: routingDecision.confidence,
 		});
 
+		// Checkpoint: Intent Analysis (routing decision captures intent + complexity)
+		if (checkpointEngine) {
+			await checkpointEngine.captureAndMaybePause("intent_analyzed", {
+				complexity: routingDecision.complexity,
+				confidence: routingDecision.confidence,
+				model: routingDecision.model,
+				provider: routingDecision.provider,
+				reason: routingDecision.reason,
+			});
+		}
+
+		// Checkpoint: Search Strategy
+		if (checkpointEngine) {
+			await checkpointEngine.captureAndMaybePause("strategy_planned", {
+				enhancedQuery,
+				executionMode: executionPolicy.mode,
+				useParallelModels: executionPolicy.useParallelModels,
+				useInterleavedReasoning: executionPolicy.useInterleavedReasoning,
+				useSegmentation: executionPolicy.useSegmentation,
+				modelCount: executionPolicy.modelCount,
+			});
+		}
+
 		if (executionPolicy.useSegmentation && primaryModelConfig) {
 			console.log("[UnifiedSearch] Routing to segmented search...");
 			return this.searchWithSegmentation(
@@ -339,6 +386,19 @@ export class UnifiedSearchOrchestrator {
 						`Falling back to ${cachedResults.length} cached result(s) from prior successful searches.`,
 					);
 				}
+			}
+
+			// Checkpoint: Raw Results Retrieved
+			if (checkpointEngine) {
+				await checkpointEngine.captureAndMaybePause("results_retrieved", {
+					resultCount: baseSearchResult.results.length,
+					results: baseSearchResult.results.map((r) => ({
+						title: r.title,
+						url: r.url,
+						snippet: r.snippet?.slice(0, 200),
+					})),
+					reasoning: baseSearchResult.reasoning,
+				});
 			}
 
 			let parallelResults: UnifiedSearchResult["parallelResults"];
@@ -475,6 +535,19 @@ export class UnifiedSearchOrchestrator {
 				}
 			}
 
+			// Checkpoint: Reasoning Complete
+			if (checkpointEngine && reasoningSteps) {
+				await checkpointEngine.captureAndMaybePause("reasoning_complete", {
+					stepCount: reasoningSteps.length,
+					steps: reasoningSteps.map((s) => ({
+						step: s.step,
+						type: s.type,
+						confidence: s.confidence,
+						isValid: s.isValid,
+					})),
+				});
+			}
+
 			// Phase 4: ADD quality metrics — derived from the per-result scores
 			// that agenticSearch.assessAndRankResults() already computed.
 			// Previously this ran a weaker second-pass scorer (addDiscriminator)
@@ -539,6 +612,19 @@ export class UnifiedSearchOrchestrator {
 				trend: this.addDiscriminator.getMetrics().recentTrend,
 				recommendation: driftAnalysis.recommendation,
 			};
+
+			// Checkpoint: Quality Scored
+			if (checkpointEngine) {
+				await checkpointEngine.captureAndMaybePause("results_scored", {
+					resultCount: results.length,
+					addMetrics: { ...addMetrics },
+					topResults: results.slice(0, 5).map((r) => ({
+						title: r.title,
+						url: r.url,
+						addScore: r.addScore,
+					})),
+				});
+			}
 
 			// Phase 5: Component validation (if enabled)
 			const validation: UnifiedSearchResult["validation"] = {
@@ -612,6 +698,16 @@ export class UnifiedSearchOrchestrator {
 				);
 			}
 
+			// Checkpoint: Final Validation
+			if (checkpointEngine) {
+				await checkpointEngine.captureAndMaybePause("validation_complete", {
+					retrieval: { ...validation.retrieval },
+					reasoning: { ...validation.reasoning },
+					response: { ...validation.response },
+				});
+				checkpointEngine.markComplete();
+			}
+
 			const totalProcessingTime = Date.now() - startTime;
 
 			// Additional protection: high-risk query cross-check
@@ -662,6 +758,8 @@ export class UnifiedSearchOrchestrator {
 				provider: primaryModelConfig?.provider ?? "web-only",
 				totalTokens,
 				totalProcessingTime,
+				checkpoints: checkpointEngine?.getCheckpoints(),
+				checkpointSessionId: checkpointEngine?.getSessionId(),
 			};
 
 			console.log(

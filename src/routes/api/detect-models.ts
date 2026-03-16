@@ -9,6 +9,25 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { validateServerFetchUrlAsync } from "@/lib/url-validation";
+import {
+	validateCsrfRequest,
+	createCsrfErrorResponse,
+} from "@/lib/csrf-protection";
+
+/** Parse cookies properly — match by cookie NAME, not substring of entire header */
+function parseCookies(request: Request): Map<string, string> {
+	const cookieHeader = request.headers.get("cookie") || "";
+	const cookies = new Map<string, string>();
+	for (const pair of cookieHeader.split(";")) {
+		const eqIdx = pair.indexOf("=");
+		if (eqIdx > 0) {
+			const name = pair.slice(0, eqIdx).trim();
+			const value = pair.slice(eqIdx + 1).trim();
+			cookies.set(name, value);
+		}
+	}
+	return cookies;
+}
 
 function hasAuthenticatedSession(request: Request): boolean {
 	const authDisabled =
@@ -17,14 +36,21 @@ function hasAuthenticatedSession(request: Request): boolean {
 		return true;
 	}
 
-	const cookie = request.headers.get("cookie") || "";
-	return cookie.includes("__session") || cookie.includes("wos-session");
+	const cookies = parseCookies(request);
+	const sessionToken = cookies.get("__session") || cookies.get("wos-session");
+	return typeof sessionToken === "string" && sessionToken.length > 0;
 }
 
 export const Route = createFileRoute("/api/detect-models")({
 	server: {
 		handlers: {
 			POST: async ({ request }) => {
+				// CSRF protection: POST requires valid CSRF token
+				const csrfCheck = validateCsrfRequest(request);
+				if (!csrfCheck.valid) {
+					return createCsrfErrorResponse(csrfCheck.error!);
+				}
+
 				if (!hasAuthenticatedSession(request)) {
 					return new Response(
 						JSON.stringify({ error: "Authentication required" }),

@@ -45,6 +45,8 @@ export interface SearchCompletionSummary {
 	availableProviders?: string[];
 	usedFallbackCache?: boolean;
 	storageId?: string;
+	checkpoints?: UnifiedSearchResult["checkpoints"];
+	checkpointSessionId?: UnifiedSearchResult["checkpointSessionId"];
 }
 
 export function useSearchProgress(

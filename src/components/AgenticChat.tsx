@@ -40,6 +40,7 @@ import { ADDQualityPanel } from "./ADDQualityPanel";
 import { ComparisonDashboard } from "./ComparisonDashboard";
 import { EnhancedModelSelector } from "./EnhancedModelSelector";
 import { ResultsList } from "./ResultsList";
+import { SearchCheckpointTimeline } from "./SearchCheckpointTimeline";
 import { SearchProgressPanel } from "./SearchProgressPanel";
 import { SecurityBanner } from "./SecurityBanner";
 import { SettingsModal } from "./SettingsModal";
@@ -180,6 +181,10 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 					parallelResults: summary.parallelResults,
 					reasoningSteps: summary.reasoningSteps,
 					addMetrics: summary.addMetrics,
+					totalProcessingTime: summary.totalProcessingTime,
+					totalTokens: summary.totalTokens,
+					checkpoints: summary.checkpoints,
+					checkpointSessionId: summary.checkpointSessionId,
 				});
 			}
 
@@ -282,6 +287,10 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 		parallelResults?: UnifiedSearchResult["parallelResults"];
 		reasoningSteps?: UnifiedSearchResult["reasoningSteps"];
 		addMetrics?: UnifiedSearchResult["addMetrics"];
+		totalProcessingTime?: number;
+		totalTokens?: number;
+		checkpoints?: UnifiedSearchResult["checkpoints"];
+		checkpointSessionId?: UnifiedSearchResult["checkpointSessionId"];
 	}>({});
 
 	// Wait for CSRF token before allowing interactions
@@ -772,12 +781,14 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 											errors: dashboardData.reasoningSteps.flatMap((s) =>
 												s.error ? [s.error] : [],
 											),
-											totalTokens: dashboardData.totalTokens ?? 0,
-											processingTime: dashboardData.totalProcessingTime ??
-												dashboardData.reasoningSteps.reduce(
+											totalTokens:
+												dashboardData.parallelResults?.models.reduce((sum, m) => sum + m.tokenCount, 0) ?? 0,
+											processingTime:
+												dashboardData.parallelResults?.models.reduce((sum, m) => sum + m.processingTime, 0) ??
+												dashboardData.reasoningSteps?.reduce(
 													(sum, s) => sum + s.duration,
 													0,
-												),
+												) ?? 0,
 										}
 									: undefined
 							}

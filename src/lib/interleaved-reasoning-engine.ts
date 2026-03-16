@@ -14,6 +14,7 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { AdversarialDifferentialDiscriminator } from "./add-discriminator";
+import { sanitizeInput } from "@/lib/security/input-sanitization";
 import type { SearchResult } from "./types";
 
 export interface ReasoningStep {
@@ -112,39 +113,7 @@ class SecurityValidator {
 	}
 
 	sanitize(input: string): string {
-		// Remove control characters
-		let sanitized = input.replace(/[\x00-\x1F\x7F]/g, "");
-
-		// Strip dangerous HTML/script tags but do NOT HTML-encode entities.
-		// HTML encoding belongs at the display layer (React handles that).
-		// Encoding here would double-escape: the LLM sees "&amp;" instead of "&"
-		// and echoes it back, producing visible "&amp;" in the UI.
-		//
-		// Apply the multi-character sanitization repeatedly until there are
-		// no more changes, to avoid incomplete removal when earlier replacements
-		// create new matches for later patterns.
-		let previous: string;
-		let iterations = 0;
-		const maxIterations = 10;
-
-		do {
-			previous = sanitized;
-			sanitized = sanitized
-				.replace(/<script\b[^>]*>[\s\S]*?<\/script(?:\s[^>]*)?>/gi, "")
-				.replace(/<\/?\s*(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta)\b[^>]*>/gi, "")
-				.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
-				.replace(/javascript\s*:/gi, "");
-			iterations += 1;
-		} while (sanitized !== previous && iterations < maxIterations);
-
-		// Final hardening pass: remove any remaining tag delimiters or event handler
-		// prefixes that could still be used for injection.
-		sanitized = sanitized
-			.replace(/[<>]/g, "")
-			.replace(/\bon[a-z0-9_-]*\s*=/gi, "")
-			.replace(/\bjavascript\s*:/gi, "");
-
-		return sanitized.substring(0, this.maxInputLength);
+		return sanitizeInput(input, { maxLength: this.maxInputLength });
 	}
 }
 

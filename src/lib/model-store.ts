@@ -9,6 +9,7 @@
 
 import { z } from "zod";
 import { detectLMStudioModels, detectOllamaModels } from "./ai/model-detection";
+import { AVAILABLE_MODELS } from "./model-config";
 
 // --- Zod Schemas ---
 
@@ -77,6 +78,16 @@ export type ModelStore = z.infer<typeof ModelStoreSchema>;
 const DEFAULT_OLLAMA_URL = "http://localhost:11434";
 const DEFAULT_LMSTUDIO_URL = "http://localhost:1234";
 
+// --- Helpers ---
+
+/**
+ * Normalise a provider base URL so it always ends with exactly /v1.
+ * Prevents double /v1/v1 when the stored URL already includes a /v1 suffix.
+ */
+function normalizeBaseUrl(url: string): string {
+	return url.replace(/\/v1\/?$/, "").replace(/\/+$/, "") + "/v1";
+}
+
 // --- In-Memory Store (no localStorage, no persistence) ---
 
 let _memoryStore: ModelStore = createDefaultStore();
@@ -131,7 +142,7 @@ export function getActiveModelConfig(): {
 		return {
 			provider: "ollama",
 			model: store.activeModel,
-			baseUrl: `${rawUrl.replace(/\/+$/, "")}/v1`,
+			baseUrl: normalizeBaseUrl(rawUrl),
 			apiKey: store.ollama.apiKey,
 			protocol: "openai-compatible",
 		};
@@ -147,7 +158,7 @@ export function getActiveModelConfig(): {
 		return {
 			provider: "lm_studio",
 			model: store.activeModel,
-			baseUrl: `${rawUrl.replace(/\/+$/, "")}/v1`,
+			baseUrl: normalizeBaseUrl(rawUrl),
 			apiKey: store.lmstudio.apiKey,
 			protocol: "openai-compatible",
 		};
@@ -193,7 +204,7 @@ function resolveModelConfig(
 		return {
 			provider: "ollama",
 			model,
-			baseUrl: `${store.ollama.baseUrl}/v1`,
+			baseUrl: normalizeBaseUrl(store.ollama.baseUrl),
 			apiKey: store.ollama.apiKey,
 			protocol: "openai-compatible",
 			role,
@@ -203,7 +214,7 @@ function resolveModelConfig(
 		return {
 			provider: "lm_studio",
 			model,
-			baseUrl: `${store.lmstudio.baseUrl}/v1`,
+			baseUrl: normalizeBaseUrl(store.lmstudio.baseUrl),
 			apiKey: store.lmstudio.apiKey,
 			protocol: "openai-compatible",
 			role,
@@ -440,6 +451,7 @@ export async function detectAndUpdateLocalModels(): Promise<ModelStore> {
 
 		store.ollama = {
 			baseUrl: ollamaBaseUrl,
+			apiKey: store.ollama?.apiKey,
 			detectedModels: modelIds,
 			selectedModel,
 			lastDetected: now,
@@ -472,6 +484,7 @@ export async function detectAndUpdateLocalModels(): Promise<ModelStore> {
 
 		store.lmstudio = {
 			baseUrl: lmstudioBaseUrl,
+			apiKey: store.lmstudio?.apiKey,
 			detectedModels: modelIds,
 			selectedModel,
 			lastDetected: now,
@@ -496,15 +509,9 @@ export async function detectAndUpdateLocalModels(): Promise<ModelStore> {
 /**
  * Well-known Anthropic models returned as a static fallback since Anthropic
  * has no /v1/models listing endpoint.
+ * Single source of truth: src/lib/model-config.ts AVAILABLE_MODELS.Anthropic
  */
-const ANTHROPIC_KNOWN_MODELS = [
-	"claude-opus-4-6",
-	"claude-sonnet-4-6",
-	"claude-opus-4-20250514",
-	"claude-sonnet-4-20250514",
-	"claude-haiku-4-5-20251001",
-	"claude-sonnet-4-5-20250929",
-];
+const ANTHROPIC_KNOWN_MODELS: string[] = [...AVAILABLE_MODELS.Anthropic];
 
 /**
  * Detect models for a custom provider.
@@ -516,12 +523,12 @@ export async function detectCustomProviderModels(
 	baseUrl: string,
 	apiKey?: string,
 	protocol: "openai-compatible" | "anthropic" = "openai-compatible",
-): Promise<string[]> {
+): Promise<{ models: string[]; error: string | null }> {
 	// Ensure the URL is absolute — strip any accidental markdown link syntax
 	const cleanedUrl = baseUrl.replace(/^\[/, "").replace(/\].*$/, "").trim();
 	if (!/^https?:\/\//i.test(cleanedUrl)) {
 		console.warn("[ModelStore] Invalid provider URL (not absolute):", baseUrl);
-		return [];
+		return { models: [], error: "Invalid provider URL: must be an absolute http/https URL" };
 	}
 	baseUrl = cleanedUrl;
 
@@ -530,7 +537,7 @@ export async function detectCustomProviderModels(
 	if (protocol === "anthropic") {
 		if (!apiKey) {
 			console.warn("[ModelStore] Anthropic requires an API key");
-			return ANTHROPIC_KNOWN_MODELS; // Return list anyway so user can pick
+			return { models: ANTHROPIC_KNOWN_MODELS, error: null }; // Return list anyway so user can pick
 		}
 		try {
 			const cleanBase = baseUrl.replace(/\/+$/, "");
@@ -546,22 +553,23 @@ export async function detectCustomProviderModels(
 					max_tokens: 1,
 					messages: [{ role: "user", content: "hi" }],
 				}),
-				signal: AbortSignal.timeout(8000),
+				signal: AbortSignal.timeout(10000),
 			});
 			// Any response (even 400 for bad model) means the key/URL works
 			if (response.ok || response.status === 400 || response.status === 429) {
 				console.log("[ModelStore] Anthropic API key validated successfully");
-				return ANTHROPIC_KNOWN_MODELS;
+				return { models: ANTHROPIC_KNOWN_MODELS, error: null };
 			}
-			if (response.status === 401) {
-				console.warn("[ModelStore] Anthropic API key is invalid (401)");
-				return [];
+			if (response.status === 401 || response.status === 403) {
+				console.warn("[ModelStore] Anthropic API key is invalid (401/403)");
+				return { models: [], error: "Invalid API key or unauthorized" };
 			}
 			console.warn("[ModelStore] Anthropic returned status", response.status);
-			return ANTHROPIC_KNOWN_MODELS;
+			return { models: ANTHROPIC_KNOWN_MODELS, error: `Failed to detect models: HTTP ${response.status}` };
 		} catch (error) {
 			console.warn("[ModelStore] Failed to validate Anthropic key:", error);
-			return ANTHROPIC_KNOWN_MODELS; // Return models anyway, let user try
+			const classified = classifyDetectionError(error);
+			return { models: ANTHROPIC_KNOWN_MODELS, error: classified }; // Return models anyway, let user try
 		}
 	}
 
@@ -581,13 +589,16 @@ export async function detectCustomProviderModels(
 					baseUrl,
 					...(apiKey ? { apiKey } : {}),
 				}),
-				signal: AbortSignal.timeout(8000),
+				signal: AbortSignal.timeout(10000),
 			});
 			if (response.ok) {
 				const data = await response.json();
-				return data.models || [];
+				return { models: data.models || [], error: null };
 			}
-			return [];
+			if (response.status === 401 || response.status === 403) {
+				return { models: [], error: "Invalid API key or unauthorized" };
+			}
+			return { models: [], error: `Failed to detect models: HTTP ${response.status}` };
 		}
 
 		const headers: Record<string, string> = {
@@ -606,34 +617,58 @@ export async function detectCustomProviderModels(
 		response = await fetch(modelsUrl, {
 			method: "GET",
 			headers,
-			signal: AbortSignal.timeout(5000),
+			signal: AbortSignal.timeout(10000),
 		});
 
 		if (!response.ok) {
 			console.warn("[ModelStore] Custom provider returned", response.status);
-			return [];
+			if (response.status === 401 || response.status === 403) {
+				return { models: [], error: "Invalid API key or unauthorized" };
+			}
+			return { models: [], error: `Failed to detect models: HTTP ${response.status}` };
 		}
 
 		const data = await response.json();
 		// OpenAI-compatible format: { data: [{ id: "model-name" }] }
 		if (data.data && Array.isArray(data.data)) {
-			return data.data.map((m: { id: string }) => m.id);
+			return { models: data.data.map((m: { id: string }) => m.id), error: null };
 		}
 		// Some providers return { models: [{ name: "model-name" }] }
 		if (data.models && Array.isArray(data.models)) {
-			return data.models.map(
-				(m: { name?: string; id?: string }) => m.name || m.id || "",
-			);
+			return {
+				models: data.models.map(
+					(m: { name?: string; id?: string }) => m.name || m.id || "",
+				),
+				error: null,
+			};
 		}
 
-		return [];
+		return { models: [], error: null };
 	} catch (error) {
+		const classified = classifyDetectionError(error);
 		console.warn(
 			"[ModelStore] Failed to detect models from custom provider:",
-			error,
+			classified,
 		);
-		return [];
+		return { models: [], error: classified };
 	}
+}
+
+/**
+ * Classify a fetch/network error into a user-readable message.
+ */
+function classifyDetectionError(error: unknown): string {
+	if (error instanceof DOMException && error.name === "TimeoutError") {
+		return "Detection timed out";
+	}
+	if (error instanceof Error) {
+		const msg = error.message.toLowerCase();
+		if (msg.includes("timeout") || msg.includes("timed out")) {
+			return "Detection timed out";
+		}
+		return `Failed to detect models: ${error.message}`;
+	}
+	return `Failed to detect models: ${String(error)}`;
 }
 
 /**

@@ -1,3 +1,5 @@
+import { AVAILABLE_MODELS } from "../model-config";
+
 export type QueryComplexity = "simple" | "moderate" | "complex";
 
 export interface ComplexityAnalysis {
@@ -255,13 +257,22 @@ export function getModelCapabilities(
 	};
 }
 
+// Model ID helpers — pick stable entries from the single source of truth
+const _openaiFirst = AVAILABLE_MODELS.OpenAI[0]; // highest-priority OpenAI model
+const _openaiMini = AVAILABLE_MODELS.OpenAI[1]; // second OpenAI model (lighter)
+const _anthropicFirst = AVAILABLE_MODELS.Anthropic[0]; // highest-priority Anthropic model
+const _anthropicHaiku = AVAILABLE_MODELS.Anthropic.find((m) =>
+	m.includes("haiku"),
+) ?? AVAILABLE_MODELS.Anthropic[AVAILABLE_MODELS.Anthropic.length - 1];
+const _googleFirst = AVAILABLE_MODELS.Google[0]; // highest-priority Google model
+
 export const FALLBACK_CHAINS: Record<QueryComplexity, FallbackChain> = {
 	simple: {
 		models: [
 			{ model: "*", provider: "ollama", priority: 1 },
 			{ model: "*", provider: "lm_studio", priority: 2 },
-			{ model: "gpt-4o-mini", provider: "openai", priority: 3 },
-			{ model: "claude-haiku-4.5", provider: "anthropic", priority: 4 },
+			{ model: _openaiMini, provider: "openai", priority: 3 },
+			{ model: _anthropicHaiku, provider: "anthropic", priority: 4 },
 		],
 		current: 0,
 		history: [],
@@ -269,19 +280,19 @@ export const FALLBACK_CHAINS: Record<QueryComplexity, FallbackChain> = {
 	moderate: {
 		models: [
 			{ model: "*", provider: "ollama", priority: 1 },
-			{ model: "gpt-4o-mini", provider: "openai", priority: 2 },
-			{ model: "claude-3-5-sonnet", provider: "anthropic", priority: 3 },
-			{ model: "gpt-4o", provider: "openai", priority: 4 },
+			{ model: _openaiMini, provider: "openai", priority: 2 },
+			{ model: _anthropicFirst, provider: "anthropic", priority: 3 },
+			{ model: _openaiFirst, provider: "openai", priority: 4 },
 		],
 		current: 0,
 		history: [],
 	},
 	complex: {
 		models: [
-			{ model: "claude-sonnet-4.5", provider: "anthropic", priority: 1 },
-			{ model: "gpt-4o", provider: "openai", priority: 2 },
-			{ model: "gemini-2.5-pro", provider: "google", priority: 3 },
-			{ model: "claude-3-5-sonnet", provider: "anthropic", priority: 4 },
+			{ model: _anthropicFirst, provider: "anthropic", priority: 1 },
+			{ model: _openaiFirst, provider: "openai", priority: 2 },
+			{ model: _googleFirst, provider: "google", priority: 3 },
+			{ model: _anthropicFirst, provider: "anthropic", priority: 4 },
 		],
 		current: 0,
 		history: [],

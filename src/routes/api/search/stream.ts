@@ -659,6 +659,8 @@ async function executeSearchWithProgress(
 			addMetrics: searchResult.addMetrics,
 			parallelResults: searchResult.parallelResults,
 			reasoningSteps: searchResult.reasoningSteps,
+			checkpoints: searchResult.checkpoints,
+			checkpointSessionId: searchResult.checkpointSessionId,
 			availableProviders,
 			usedFallbackCache,
 			storageId,

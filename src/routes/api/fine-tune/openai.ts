@@ -53,9 +53,16 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 					typeof process !== "undefined" &&
 					process.env?.VITE_DISABLE_AUTH === "true";
 				if (!authDisabled) {
-					const cookie = request.headers.get("cookie") || "";
-					const hasSession =
-						cookie.includes("__session") || cookie.includes("wos-session");
+					const cookieHeader = request.headers.get("cookie") || "";
+					const cookies = new Map<string, string>();
+					for (const pair of cookieHeader.split(";")) {
+						const eqIdx = pair.indexOf("=");
+						if (eqIdx > 0) {
+							cookies.set(pair.slice(0, eqIdx).trim(), pair.slice(eqIdx + 1).trim());
+						}
+					}
+					const sessionToken = cookies.get("__session") || cookies.get("wos-session");
+					const hasSession = typeof sessionToken === "string" && sessionToken.length > 0;
 					if (!hasSession) {
 						return new Response(
 							JSON.stringify({ error: "Authentication required" }),
@@ -106,9 +113,16 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 					typeof process !== "undefined" &&
 					process.env?.VITE_DISABLE_AUTH === "true";
 				if (!postAuthDisabled) {
-					const cookie = request.headers.get("cookie") || "";
-					const hasSession =
-						cookie.includes("__session") || cookie.includes("wos-session");
+					const cookieHeader = request.headers.get("cookie") || "";
+					const cookies = new Map<string, string>();
+					for (const pair of cookieHeader.split(";")) {
+						const eqIdx = pair.indexOf("=");
+						if (eqIdx > 0) {
+							cookies.set(pair.slice(0, eqIdx).trim(), pair.slice(eqIdx + 1).trim());
+						}
+					}
+					const sessionToken = cookies.get("__session") || cookies.get("wos-session");
+					const hasSession = typeof sessionToken === "string" && sessionToken.length > 0;
 					if (!hasSession) {
 						return new Response(
 							JSON.stringify({ error: "Authentication required" }),

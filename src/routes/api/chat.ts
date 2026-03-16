@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createFileRoute } from "@tanstack/react-router";
@@ -8,6 +8,7 @@ import {
 	validateCsrfRequest,
 } from "@/lib/csrf-protection";
 import { ModelConfigManager, ModelProvider } from "@/lib/model-config";
+import { chatRequestSchema } from "@/lib/api-schemas";
 
 const SYSTEM_PROMPT = `You are an intelligent AI assistant with access to agentic search capabilities. You can help users with:
 
@@ -33,21 +34,24 @@ export const Route = createFileRoute("/api/chat")({
 				}
 
 				try {
-					const {
-						messages,
-						modelProvider = "ollama",
-						model: requestedModel,
-					} = await request.json();
-
-					if (!messages || !Array.isArray(messages)) {
+					const rawBody = await request.json();
+					const parsed = chatRequestSchema.safeParse(rawBody);
+					if (!parsed.success) {
 						return new Response(
-							JSON.stringify({ error: "Messages array is required" }),
+							JSON.stringify({ error: "Invalid request", details: parsed.error.issues }),
 							{
 								status: 400,
 								headers: { "Content-Type": "application/json" },
 							},
 						);
 					}
+
+					// Keep messages as the raw body value so the AI SDK receives the
+					// full UIMessage shape (including `parts`) that the client sends.
+					// Zod validated the minimum required fields (role + content present,
+					// array non-empty); the rest of the message shape is passed through.
+					const messages = (rawBody as any).messages;
+					const { modelProvider = "ollama", model: requestedModel } = parsed.data;
 
 					// Get model configuration
 					const modelManager = new ModelConfigManager();
@@ -89,12 +93,16 @@ export const Route = createFileRoute("/api/chat")({
 
 					// Create dynamic model instance based on provider
 					let model:
-						| ReturnType<typeof anthropic>
+						| ReturnType<ReturnType<typeof createAnthropic>>
 						| ReturnType<ReturnType<typeof createOpenAI>>;
 					switch (modelConfig.provider) {
-						case ModelProvider.ANTHROPIC:
-							model = anthropic(modelConfig.model);
+						case ModelProvider.ANTHROPIC: {
+							const anthropicProvider = createAnthropic({
+								apiKey: modelConfig.apiKey || process.env.ANTHROPIC_API_KEY,
+							});
+							model = anthropicProvider(modelConfig.model);
 							break;
+						}
 						case ModelProvider.OPENAI: {
 							// Use createOpenAI for proper configuration
 							const openaiProvider = createOpenAI({

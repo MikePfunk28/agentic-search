@@ -6,7 +6,7 @@
  * This file re-exports it for backward compatibility.
  */
 
-import { ModelProvider } from "../model-config";
+import { AVAILABLE_MODELS, ModelProvider } from "../model-config";
 
 // Re-export so existing imports don't break
 export { ModelProvider };
@@ -168,8 +168,8 @@ export async function listModelsForProvider(
 					console.error("[Providers] Failed to fetch OpenAI models:", error);
 				}
 			}
-			// Fallback to defaults
-			return ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"];
+			// Fallback to defaults from single source of truth
+			return [...AVAILABLE_MODELS.OpenAI];
 		}
 
 		case "deepseek": {
@@ -192,8 +192,8 @@ export async function listModelsForProvider(
 					console.error("[Providers] Failed to fetch DeepSeek models:", error);
 				}
 			}
-			// Fallback to defaults
-			return ["deepseek-chat", "deepseek-coder", "deepseek-reasoner"];
+			// Fallback to defaults from single source of truth
+			return [...AVAILABLE_MODELS.DeepSeek];
 		}
 
 		case "moonshot": {
@@ -216,8 +216,8 @@ export async function listModelsForProvider(
 					console.error("[Providers] Failed to fetch Moonshot models:", error);
 				}
 			}
-			// Fallback to defaults
-			return ["moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"];
+			// Fallback to defaults from single source of truth
+			return [...AVAILABLE_MODELS.Moonshot];
 		}
 
 		case "kimi": {
@@ -242,33 +242,20 @@ export async function listModelsForProvider(
 					console.error("[Providers] Failed to fetch Kimi models:", error);
 				}
 			}
-			// Fallback to defaults
-			return ["kimi-k2-chat", "kimi-k2-long"];
+			// Fallback to defaults from single source of truth
+			return [...AVAILABLE_MODELS.Kimi];
 		}
 
 		case "anthropic":
-			return [
-				"claude-opus-4-6",
-				"claude-sonnet-4-6",
-				"claude-sonnet-4-5-20250929",
-				"claude-haiku-4-5-20250929",
-				"claude-opus-4-1-20250805",
-				"claude-3-5-sonnet-20241022",
-				"claude-3-5-haiku-20241022",
-			];
+			// Static list — Anthropic has no /v1/models endpoint
+			return [...AVAILABLE_MODELS.Anthropic];
 
 		case "google":
-			return [
-				"gemini-2.5-pro",
-				"gemini-2.5-flash",
-				"gemini-2.0-flash-exp",
-				"gemini-1.5-pro",
-				"gemini-1.5-flash",
-			];
+			return [...AVAILABLE_MODELS.Google];
 
 		case "azure_openai":
-			// Azure models depend on deployment names
-			return ["gpt-4", "gpt-4-turbo", "gpt-35-turbo"];
+			// Azure models depend on deployment names; use OpenAI list as a reasonable default
+			return [...AVAILABLE_MODELS.OpenAI];
 
 		default:
 			return [];
