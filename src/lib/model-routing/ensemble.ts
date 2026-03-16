@@ -10,16 +10,15 @@ type ModelExecutor = (
 
 export class EnsemblePredictor {
 	private config: EnsembleConfig;
-	private costTracker: CostTracker;
 	private executor: ModelExecutor | null = null;
 	private defaultTimeout = 5000;
 
 	constructor(
-		costTracker: CostTracker,
+		_costTracker: CostTracker,
 		config?: Partial<EnsembleConfig>,
 		executor?: ModelExecutor,
 	) {
-		this.costTracker = costTracker;
+		// costTracker reserved for future cost-based routing
 		this.config = {
 			models: config?.models ?? [
 				{ model: "gpt-4o", provider: "openai" },
@@ -66,7 +65,7 @@ export class EnsemblePredictor {
 				});
 
 				const result = await Promise.race([
-					this.executor!(query, model, provider),
+					this.executor?.(query, model, provider),
 					timeoutPromise,
 				]);
 
@@ -79,7 +78,7 @@ export class EnsemblePredictor {
 					confidence: result.confidence,
 					latency,
 				};
-			} catch (error) {
+			} catch (_error) {
 				const latency = Date.now() - startTime;
 				return {
 					model,

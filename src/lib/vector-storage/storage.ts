@@ -512,14 +512,13 @@ export class VectorStorage {
 		if (this.useLanceDB && this.db) {
 			const tables = await this.db.tableNames();
 			if (tables.includes(this.tableName)) {
-				const allDocs = await this.table!.search(
-					new Array(this.config.dimension).fill(0),
-				)
+				const allDocs = await this.table
+					?.search(new Array(this.config.dimension).fill(0))
 					.limit(Number.MAX_SAFE_INTEGER)
 					.toArray();
 				for (const doc of allDocs) {
 					if (doc.id !== "placeholder") {
-						await this.table!.delete(`id = "${doc.id}"`);
+						await this.table?.delete(`id = "${doc.id}"`);
 					}
 				}
 			}

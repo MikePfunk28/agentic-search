@@ -3,7 +3,7 @@
  * Explains quality validation and security features
  */
 
-import { Shield, Lock, Eye } from "lucide-react";
+import { Eye, Lock, Shield } from "lucide-react";
 import { useState } from "react";
 
 export function SecurityBanner() {
@@ -40,9 +40,9 @@ export function SecurityBanner() {
 									<strong>Quality Scoring:</strong>
 									<p className="text-green-200 mt-1">
 										Every search result is scored for relevance, diversity,
-										freshness, and source consistency before being included
-										in the response. Low-quality or suspicious content is
-										flagged and filtered automatically.
+										freshness, and source consistency before being included in
+										the response. Low-quality or suspicious content is flagged
+										and filtered automatically.
 									</p>
 								</div>
 							</div>
@@ -52,9 +52,9 @@ export function SecurityBanner() {
 								<div>
 									<strong>Your Keys, Your Control:</strong>
 									<p className="text-green-200 mt-1">
-										API keys are stored locally in your browser and never
-										sent to our servers. All model calls go directly from
-										your browser to your chosen provider.
+										API keys are stored locally in your browser and never sent
+										to our servers. All model calls go directly from your
+										browser to your chosen provider.
 									</p>
 								</div>
 							</div>

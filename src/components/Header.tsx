@@ -1,19 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import {
-	Home,
-	Menu,
-	Settings,
-	X,
-	Key,
-	History,
+	BarChart3,
 	Download,
 	GitCompare,
+	History,
+	Home,
+	Key,
+	Menu,
+	Settings,
 	User,
-	BarChart3,
+	X,
 } from "lucide-react";
 import { useState } from "react";
-import { SettingsModal } from "./SettingsModal";
 import AuthButton from "./AuthButton";
+import { SettingsModal } from "./SettingsModal";
 
 /**
  * Renders the application header with controls and a slide-in left navigation menu.
@@ -179,9 +179,9 @@ export default function Header() {
 					</Link>
 				</nav>
 
-                <div className="p-4 border-t border-gray-700 bg-gray-800 flex flex-col gap-2">
-                    <div className="text-sm text-gray-400">Secure Agentic Search</div>
-                </div>
+				<div className="p-4 border-t border-gray-700 bg-gray-800 flex flex-col gap-2">
+					<div className="text-sm text-gray-400">Secure Agentic Search</div>
+				</div>
 			</aside>
 		</>
 	);

@@ -50,9 +50,13 @@ export type ModelConfig = z.infer<typeof ModelConfigSchema>;
  * Build a ModelConfig from client-provided model store data.
  * Used by server-side API endpoints to accept config from the browser's unified model store.
  */
-export function buildModelConfigFromClient(
-	clientConfig: { provider: string; model: string; baseUrl: string; apiKey?: string; protocol: string }
-): ModelConfig {
+export function buildModelConfigFromClient(clientConfig: {
+	provider: string;
+	model: string;
+	baseUrl: string;
+	apiKey?: string;
+	protocol: string;
+}): ModelConfig {
 	// Map known provider strings to enum values
 	const providerMap: Record<string, ModelProvider> = {
 		ollama: ModelProvider.OLLAMA,
@@ -72,9 +76,10 @@ export function buildModelConfigFromClient(
 	// For custom providers, determine by protocol
 	let provider = providerMap[clientConfig.provider.toLowerCase()];
 	if (!provider) {
-		provider = clientConfig.protocol === "anthropic"
-			? ModelProvider.ANTHROPIC
-			: ModelProvider.OPENAI;
+		provider =
+			clientConfig.protocol === "anthropic"
+				? ModelProvider.ANTHROPIC
+				: ModelProvider.OPENAI;
 	}
 
 	if (clientConfig.baseUrl) {
@@ -104,7 +109,7 @@ export const AVAILABLE_MODELS = {
 		"gpt-5-nano",
 		"o3-deep-research",
 		"o4-mini-deep-research",
-		"gpt-4o"
+		"gpt-4o",
 	],
 	Anthropic: [
 		"claude-sonnet-4.5",
@@ -115,7 +120,7 @@ export const AVAILABLE_MODELS = {
 		"claude-3.7-sonnet",
 		"claude-3.7-sonnet:thinking",
 		"claude-3.5-sonnet",
-		"claude-3.5-haiku"
+		"claude-3.5-haiku",
 	],
 	Google: [
 		"gemini-2.5-pro",
@@ -123,7 +128,7 @@ export const AVAILABLE_MODELS = {
 		"gemini-2.5-flash",
 		"gemini-2.5-flash-lite",
 		"gemini-2.5-flash-image",
-		"gemma-3-4b-it"
+		"gemma-3-4b-it",
 	],
 	DeepSeek: [
 		"deepseek-v3.2-exp",
@@ -133,19 +138,12 @@ export const AVAILABLE_MODELS = {
 		"deepseek-r1-distill-qwen-14b",
 		"deepseek-prover-v2",
 		"deepseek-chat",
-		"deepseek-coder"
+		"deepseek-coder",
 	],
-	Moonshot: [
-		"moonshot-v1-8k",
-		"moonshot-v1-32k",
-		"moonshot-v1-128k"
-	],
-	Kimi: [
-		"kimi-k2-chat",
-		"kimi-k2-long"
-	],
-	OpenRouter: [],  // Dynamic - fetches from API
-	Ollama: [],  // Auto-detected from running instance, never hardcoded
+	Moonshot: ["moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"],
+	Kimi: ["kimi-k2-chat", "kimi-k2-long"],
+	OpenRouter: [], // Dynamic - fetches from API
+	Ollama: [], // Auto-detected from running instance, never hardcoded
 	LMStudio: [],
 	vLLM: [],
 	GGUF: [],
@@ -155,7 +153,8 @@ export const AVAILABLE_MODELS = {
 // Export type for type-safe model selection
 export type AvailableModels = typeof AVAILABLE_MODELS;
 export type ModelProviderName = keyof AvailableModels;
-export type ModelForProvider<T extends ModelProviderName> = AvailableModels[T][number];
+export type ModelForProvider<T extends ModelProviderName> =
+	AvailableModels[T][number];
 
 // Provider-specific default configurations
 export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
@@ -251,29 +250,6 @@ export class ModelConfigManager {
 		// No default provider — model is optional.
 		// If the user hasn't configured a provider via env vars,
 		// the search runs in web-only mode (deterministic intent + web APIs).
-	}
-	
-	/**
-	 * Initialize with default Ollama configuration
-	 */
-	private initializeDefaults(): void {
-		try {
-			const defaults = ProviderDefaults[ModelProvider.OLLAMA];
-			const config: ModelConfig = {
-				provider: ModelProvider.OLLAMA,
-				baseUrl: defaults.baseUrl || "http://localhost:11434/v1",
-				model: defaults.model || "", // Will be overridden by client-sent config
-				temperature: defaults.temperature || 0.7,
-				maxTokens: defaults.maxTokens || 32000,
-				timeout: 60000,
-				enableStreaming: false,
-			};
-			this.addConfig("ollama", config);
-			this.setActiveConfig("ollama");
-			console.log("[ModelConfig] Initialized with default Ollama configuration (model auto-detected from client)");
-		} catch (error) {
-			console.error("Failed to initialize default configuration:", error);
-		}
 	}
 
 	/**
@@ -438,7 +414,7 @@ export class ModelConfigManager {
 				headers["x-api-key"] = config.apiKey;
 				headers["anthropic-version"] = "2023-06-01";
 			} else {
-				headers["Authorization"] = `Bearer ${config.apiKey}`;
+				headers.Authorization = `Bearer ${config.apiKey}`;
 			}
 		}
 
@@ -558,7 +534,7 @@ export class ModelConfigManager {
 		}
 
 		try {
-			const fs = await import("fs/promises");
+			const fs = await import("node:fs/promises");
 			const content = await fs.readFile(filePath, "utf-8");
 			const data = JSON.parse(content);
 
@@ -597,60 +573,80 @@ export class ModelConfigManager {
 	 * Fetch available models dynamically from provider API
 	 * This replaces hardcoded model lists with real-time detection
 	 */
-	async fetchAvailableModels(provider: ModelProvider, config: Partial<ModelConfig>): Promise<string[]> {
+	async fetchAvailableModels(
+		provider: ModelProvider,
+		config: Partial<ModelConfig>,
+	): Promise<string[]> {
 		try {
 			const baseUrl = config.baseUrl || ProviderDefaults[provider].baseUrl;
 			const apiKey = config.apiKey;
 
 			// Handle local providers with /models endpoint
-			if (provider === ModelProvider.OLLAMA || provider === ModelProvider.LM_STUDIO) {
-				const modelsUrl = baseUrl?.replace('/v1', '') + '/api/tags';
+			if (
+				provider === ModelProvider.OLLAMA ||
+				provider === ModelProvider.LM_STUDIO
+			) {
+				const modelsUrl = `${baseUrl?.replace("/v1", "")}/api/tags`;
 				const response = await fetch(modelsUrl, {
-					method: 'GET',
+					method: "GET",
 					signal: AbortSignal.timeout(5000),
 				});
 
 				if (response.ok) {
-					const data = await response.json() as { models: Array<{ name: string }> };
-					return data.models.map(m => m.name);
+					const data = (await response.json()) as {
+						models: Array<{ name: string }>;
+					};
+					return data.models.map((m) => m.name);
 				}
 			}
 
 			// Handle vLLM, GGUF, ONNX (OpenAI-compatible /v1/models)
-			if (provider === ModelProvider.VLLM || provider === ModelProvider.GGUF || provider === ModelProvider.ONNX) {
+			if (
+				provider === ModelProvider.VLLM ||
+				provider === ModelProvider.GGUF ||
+				provider === ModelProvider.ONNX
+			) {
 				const modelsUrl = `${baseUrl}/models`;
 				const response = await fetch(modelsUrl, {
-					method: 'GET',
+					method: "GET",
 					signal: AbortSignal.timeout(5000),
 				});
 
 				if (response.ok) {
-					const data = await response.json() as { data: Array<{ id: string }> };
-					return data.data.map(m => m.id);
+					const data = (await response.json()) as {
+						data: Array<{ id: string }>;
+					};
+					return data.data.map((m) => m.id);
 				}
 			}
 
 			// Handle cloud providers with /v1/models endpoint
-			if (provider === ModelProvider.OPENAI || provider === ModelProvider.DEEPSEEK ||
-				provider === ModelProvider.MOONSHOT || provider === ModelProvider.KIMI) {
+			if (
+				provider === ModelProvider.OPENAI ||
+				provider === ModelProvider.DEEPSEEK ||
+				provider === ModelProvider.MOONSHOT ||
+				provider === ModelProvider.KIMI
+			) {
 				const modelsUrl = `${baseUrl}/models`;
 				const headers: Record<string, string> = {
-					'Content-Type': 'application/json',
+					"Content-Type": "application/json",
 				};
 
 				if (apiKey) {
-					headers['Authorization'] = `Bearer ${apiKey}`;
+					headers.Authorization = `Bearer ${apiKey}`;
 				}
 
 				const response = await fetch(modelsUrl, {
-					method: 'GET',
+					method: "GET",
 					headers,
 					signal: AbortSignal.timeout(5000),
 				});
 
 				if (response.ok) {
-					const data = await response.json() as { data: Array<{ id: string }> };
-					return data.data.map(m => m.id);
+					const data = (await response.json()) as {
+						data: Array<{ id: string }>;
+					};
+					return data.data.map((m) => m.id);
 				}
 			}
 
@@ -665,11 +661,15 @@ export class ModelConfigManager {
 			}
 
 			// Fall back to static list if API call fails
-			console.warn(`[ModelConfig] Could not fetch models for ${provider}, using defaults`);
+			console.warn(
+				`[ModelConfig] Could not fetch models for ${provider}, using defaults`,
+			);
 			return [];
-
 		} catch (error) {
-			console.warn(`[ModelConfig] Error fetching models for ${provider}:`, error);
+			console.warn(
+				`[ModelConfig] Error fetching models for ${provider}:`,
+				error,
+			);
 			return [];
 		}
 	}
@@ -678,9 +678,13 @@ export class ModelConfigManager {
 	 * Detect newly available local models
 	 * Returns models that weren't in the previous list
 	 */
-	async detectNewModels(provider: ModelProvider, config: Partial<ModelConfig>, previousModels: string[] = []): Promise<string[]> {
+	async detectNewModels(
+		provider: ModelProvider,
+		config: Partial<ModelConfig>,
+		previousModels: string[] = [],
+	): Promise<string[]> {
 		const currentModels = await this.fetchAvailableModels(provider, config);
-		return currentModels.filter(model => !previousModels.includes(model));
+		return currentModels.filter((model) => !previousModels.includes(model));
 	}
 }
 

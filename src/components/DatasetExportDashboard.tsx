@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
+import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -80,9 +80,7 @@ function getStatusTone(status?: string): string {
 	}
 }
 
-function parseHyperparameterValue(
-	value: string,
-): number | "auto" | undefined {
+function parseHyperparameterValue(value: string): number | "auto" | undefined {
 	const trimmed = value.trim();
 	if (!trimmed) {
 		return undefined;
@@ -128,7 +126,7 @@ export default function DatasetExportDashboard() {
 					minQuality,
 					eventTypes,
 					limit,
-			  }
+				}
 			: "skip",
 	);
 	const datasets = useQuery(api.usageTracking.listDatasets, {});
@@ -138,7 +136,9 @@ export default function DatasetExportDashboard() {
 
 	const toggleEventType = (type: UsageEventType) => {
 		setEventTypes((prev) =>
-			prev.includes(type) ? prev.filter((item) => item !== type) : [...prev, type],
+			prev.includes(type)
+				? prev.filter((item) => item !== type)
+				: [...prev, type],
 		);
 	};
 
@@ -152,8 +152,9 @@ export default function DatasetExportDashboard() {
 		: "";
 
 	const openAIJobs =
-		datasets?.filter((dataset) => dataset.provider === "openai" && dataset.jobId) ??
-		[];
+		datasets?.filter(
+			(dataset) => dataset.provider === "openai" && dataset.jobId,
+		) ?? [];
 
 	useEffect(() => {
 		if (!openAIJobs.length) {
@@ -187,7 +188,9 @@ export default function DatasetExportDashboard() {
 					);
 					const payload = (await response.json()) as OpenAIJobResponse;
 					if (!response.ok || !payload.job) {
-						throw new Error(payload.error || "Failed to fetch OpenAI job status.");
+						throw new Error(
+							payload.error || "Failed to fetch OpenAI job status.",
+						);
 					}
 
 					await syncFineTuningJob({
@@ -198,7 +201,10 @@ export default function DatasetExportDashboard() {
 						lastCheckedAt: Date.now(),
 					});
 				} catch (error) {
-					console.error("Failed to synchronize OpenAI fine-tune status:", error);
+					console.error(
+						"Failed to synchronize OpenAI fine-tune status:",
+						error,
+					);
 				}
 			}
 		};
@@ -272,7 +278,9 @@ export default function DatasetExportDashboard() {
 			return;
 		}
 		if (exportData.count < 10) {
-			setLaunchError("OpenAI fine-tuning is not useful with fewer than 10 examples.");
+			setLaunchError(
+				"OpenAI fine-tuning is not useful with fewer than 10 examples.",
+			);
 			return;
 		}
 
@@ -317,7 +325,9 @@ export default function DatasetExportDashboard() {
 
 			const payload = (await response.json()) as OpenAIJobResponse;
 			if (!response.ok || !payload.job) {
-				throw new Error(payload.error || "Failed to launch OpenAI fine-tuning.");
+				throw new Error(
+					payload.error || "Failed to launch OpenAI fine-tuning.",
+				);
 			}
 
 			await linkFineTuningJob({
@@ -337,7 +347,9 @@ export default function DatasetExportDashboard() {
 		} catch (error) {
 			console.error("Failed to launch OpenAI fine-tune:", error);
 			setLaunchError(
-				error instanceof Error ? error.message : "Failed to launch OpenAI fine-tuning.",
+				error instanceof Error
+					? error.message
+					: "Failed to launch OpenAI fine-tuning.",
 			);
 		} finally {
 			setLaunchingFineTune(false);
@@ -382,7 +394,9 @@ export default function DatasetExportDashboard() {
 		} catch (error) {
 			console.error("Failed to cancel OpenAI fine-tune:", error);
 			setLaunchError(
-				error instanceof Error ? error.message : "Failed to cancel OpenAI fine-tune.",
+				error instanceof Error
+					? error.message
+					: "Failed to cancel OpenAI fine-tune.",
 			);
 		} finally {
 			setCancellingJobId(null);
@@ -394,7 +408,8 @@ export default function DatasetExportDashboard() {
 			<div className="dashboard-header">
 				<h2>Training Data Export</h2>
 				<p className="dashboard-subtitle">
-					Export reward signals, then launch an OpenAI supervised fine-tune directly from this TanStack Start app.
+					Export reward signals, then launch an OpenAI supervised fine-tune
+					directly from this TanStack Start app.
 				</p>
 			</div>
 
@@ -434,7 +449,9 @@ export default function DatasetExportDashboard() {
 							<div className="stat-icon">⭐</div>
 							<div className="stat-content">
 								<span className="stat-label">Avg Quality</span>
-								<span className="stat-value">{stats.avgQuality.toFixed(2)}</span>
+								<span className="stat-value">
+									{stats.avgQuality.toFixed(2)}
+								</span>
 							</div>
 						</div>
 						<div className="stat-card">
@@ -478,7 +495,9 @@ export default function DatasetExportDashboard() {
 							>
 								<div className="format-icon">🤖</div>
 								<div className="format-name">OpenAI JSONL</div>
-								<div className="format-desc">Best choice for automated launch</div>
+								<div className="format-desc">
+									Best choice for automated launch
+								</div>
 							</button>
 							<button
 								onClick={() => setFormat("anthropic_jsonl")}
@@ -494,7 +513,9 @@ export default function DatasetExportDashboard() {
 							>
 								<div className="format-icon">📋</div>
 								<div className="format-name">Generic JSON</div>
-								<div className="format-desc">Full metadata for offline analysis</div>
+								<div className="format-desc">
+									Full metadata for offline analysis
+								</div>
 							</button>
 						</div>
 					</div>
@@ -518,7 +539,8 @@ export default function DatasetExportDashboard() {
 							<span>100%</span>
 						</div>
 						<div className="quality-hint">
-							Higher thresholds bias the dataset toward better reward signals and fewer noisy traces.
+							Higher thresholds bias the dataset toward better reward signals
+							and fewer noisy traces.
 						</div>
 					</div>
 
@@ -623,7 +645,9 @@ export default function DatasetExportDashboard() {
 			<div className="export-preview">
 				<h3>OpenAI Automated Fine-Tuning</h3>
 				<p className="dashboard-subtitle">
-					This uploads the current export to OpenAI as a `fine-tune` file and creates a supervised fine-tuning job. The TanStack Start server must have `OPENAI_API_KEY` configured.
+					This uploads the current export to OpenAI as a `fine-tune` file and
+					creates a supervised fine-tuning job. The TanStack Start server must
+					have `OPENAI_API_KEY` configured.
 				</p>
 
 				<div className="config-form">
@@ -694,7 +718,9 @@ export default function DatasetExportDashboard() {
 							className="btn btn-export"
 							disabled={launchingFineTune || !exportData}
 						>
-							{launchingFineTune ? "Launching..." : "🚀 Launch OpenAI Fine-Tune"}
+							{launchingFineTune
+								? "Launching..."
+								: "🚀 Launch OpenAI Fine-Tune"}
 						</button>
 					</div>
 				</div>
@@ -711,7 +737,9 @@ export default function DatasetExportDashboard() {
 									<div className="job-header-right">
 										<span className="dataset-format">{dataset.format}</span>
 										{dataset.status ? (
-											<span className={`status-pill ${getStatusTone(dataset.status)}`}>
+											<span
+												className={`status-pill ${getStatusTone(dataset.status)}`}
+											>
 												{dataset.status}
 											</span>
 										) : null}
@@ -721,11 +749,13 @@ export default function DatasetExportDashboard() {
 								<div className="dataset-details">
 									<span>📊 {dataset.eventCount} examples</span>
 									<span>
-										⭐ Avg quality: {(dataset.metadata?.avgQuality ?? 0).toFixed(2)}
+										⭐ Avg quality:{" "}
+										{(dataset.metadata?.avgQuality ?? 0).toFixed(2)}
 									</span>
 									{dataset.metadata?.approvedSearchCount ? (
 										<span>
-											✅ {dataset.metadata.approvedSearchCount} approved searches
+											✅ {dataset.metadata.approvedSearchCount} approved
+											searches
 										</span>
 									) : null}
 									{dataset.metadata?.usageEventCount ? (

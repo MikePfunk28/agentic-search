@@ -1,8 +1,8 @@
 /**
  * Fine-Tuning Dataset Export System
- * 
+ *
  * Exports logged searches with user feedback for model fine-tuning.
- * 
+ *
  * Security features:
  * - PII detection and removal
  * - User consent tracking
@@ -10,8 +10,8 @@
  * - Secure export formats
  */
 
-import type { SearchResult } from "./types";
 import { isS3Configured, shouldUseS3, uploadDocument } from "./s3-storage";
+import type { SearchResult } from "./types";
 
 export interface TrainingExample {
 	id: string;
@@ -225,7 +225,9 @@ export class FineTuningDatasetExporter {
 					if (this.config.includePIIFiltered) {
 						// Remove PII
 						const cleanedQuery = this.piiDetector.remove(ex.query).cleaned;
-						const cleanedResponse = this.piiDetector.remove(ex.response).cleaned;
+						const cleanedResponse = this.piiDetector.remove(
+							ex.response,
+						).cleaned;
 
 						return {
 							...ex,
@@ -291,7 +293,8 @@ export class FineTuningDatasetExporter {
 					messages: [
 						{
 							role: "system",
-							content: "You are a helpful search assistant that provides accurate, well-sourced answers.",
+							content:
+								"You are a helpful search assistant that provides accurate, well-sourced answers.",
 						},
 						{ role: "user", content: ex.query },
 						{ role: "assistant", content: ex.response },
@@ -469,9 +472,7 @@ export class FineTuningDatasetExporter {
 	 * Export dataset to S3 if configured and data exceeds size threshold.
 	 * Falls back to returning the data string if S3 is not available.
 	 */
-	async exportToS3(
-		examples: TrainingExample[],
-	): Promise<{
+	async exportToS3(examples: TrainingExample[]): Promise<{
 		s3Url: string | null;
 		data: string;
 		stats: {
@@ -488,8 +489,7 @@ export class FineTuningDatasetExporter {
 			return { s3Url: null, ...exportResult };
 		}
 
-		const ext =
-			this.config.format === "csv" ? "csv" : "jsonl";
+		const ext = this.config.format === "csv" ? "csv" : "jsonl";
 		const filename = `finetuning-dataset-${Date.now()}.${ext}`;
 		const contentType =
 			this.config.format === "csv" ? "text/csv" : "application/jsonl";

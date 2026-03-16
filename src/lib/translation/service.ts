@@ -142,7 +142,7 @@ export class TranslationService {
 			};
 
 			if (this.modelConfig.apiKey) {
-				headers["Authorization"] = `Bearer ${this.modelConfig.apiKey}`;
+				headers.Authorization = `Bearer ${this.modelConfig.apiKey}`;
 			}
 
 			const baseUrl = this.modelConfig.baseUrl || "https://api.openai.com/v1";

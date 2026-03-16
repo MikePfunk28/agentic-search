@@ -88,7 +88,9 @@ export const Route = createFileRoute("/api/chat")({
 					}
 
 					// Create dynamic model instance based on provider
-					let model;
+					let model:
+						| ReturnType<typeof anthropic>
+						| ReturnType<ReturnType<typeof createOpenAI>>;
 					switch (modelConfig.provider) {
 						case ModelProvider.ANTHROPIC:
 							model = anthropic(modelConfig.model);

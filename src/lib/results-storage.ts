@@ -141,7 +141,10 @@ export class ResearchStorage {
 		}
 
 		// Skip Node.js file persistence in browser or Cloudflare worker (no fs available)
-		if (typeof window !== "undefined" || typeof globalThis.caches !== "undefined") {
+		if (
+			typeof window !== "undefined" ||
+			typeof globalThis.caches !== "undefined"
+		) {
 			this.ensureLoadedSync();
 			return;
 		}

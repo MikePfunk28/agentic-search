@@ -54,6 +54,6 @@ export interface QueryVector {
 	timestamp: number;
 }
 
-const DEFAULT_SIMILARITY_THRESHOLD = 0.85;
-const DEFAULT_MAX_MEMORY_ENTRIES = 1000;
-const DEFAULT_TTL = 5 * 60 * 1000;
+const _DEFAULT_SIMILARITY_THRESHOLD = 0.85;
+const _DEFAULT_MAX_MEMORY_ENTRIES = 1000;
+const _DEFAULT_TTL = 5 * 60 * 1000;

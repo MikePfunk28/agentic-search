@@ -1,9 +1,9 @@
 /**
  * Interleaved Reasoning Engine
- * 
+ *
  * Uses the user's active model as orchestrator to coordinate step-by-step reasoning.
  * Each step is validated before proceeding to the next.
- * 
+ *
  * Security features:
  * - Input sanitization
  * - Rate limiting
@@ -11,8 +11,8 @@
  * - Error containment
  */
 
-import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
 import { AdversarialDifferentialDiscriminator } from "./add-discriminator";
 import type { SearchResult } from "./types";
 
@@ -81,9 +81,9 @@ class SecurityValidator {
 		/\bexec\b/i,
 		/\beval\b/i,
 		/<script/i,
+		/<(img|svg|iframe)\b/i,
 		/javascript:/i,
-		/onerror=/i,
-		/onclick=/i,
+		/on\w+\s*=\s*/i, // catch event handlers like onerror, onload, onclick, etc.
 	];
 
 	validate(input: string): { valid: boolean; errors: string[] } {
@@ -119,11 +119,27 @@ class SecurityValidator {
 		// HTML encoding belongs at the display layer (React handles that).
 		// Encoding here would double-escape: the LLM sees "&amp;" instead of "&"
 		// and echoes it back, producing visible "&amp;" in the UI.
-		sanitized = sanitized
-			.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-			.replace(/<\/?\s*(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta)\b[^>]*>/gi, "")
-			.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
-			.replace(/javascript\s*:/gi, "");
+		//
+		// Apply replacements in a loop until the string stabilises. Earlier
+		// replacements can create new matches for later patterns (e.g. nested
+		// or split tokens), so a single pass is not sufficient — CodeQL High
+		// "Incomplete multi-character sanitization".
+		let previous: string;
+		let iterations = 0;
+		const maxIterations = 10;
+
+		do {
+			previous = sanitized;
+			sanitized = sanitized
+				.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+				.replace(
+					/<\/?\s*(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta)\b[^>]*>/gi,
+					"",
+				)
+				.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
+				.replace(/javascript\s*:/gi, "");
+			iterations += 1;
+		} while (sanitized !== previous && iterations < maxIterations);
 
 		return sanitized.substring(0, this.maxInputLength);
 	}
@@ -163,7 +179,6 @@ export class InterleavedReasoningEngine {
 	private apiKey: string;
 	private securityValidator: SecurityValidator;
 	private rateLimiter: RateLimiter;
-	private discriminator: AdversarialDifferentialDiscriminator;
 
 	constructor(
 		config: Partial<ReasoningConfig> = {},
@@ -189,7 +204,9 @@ export class InterleavedReasoningEngine {
 			? normalizedBaseUrl.replace(/\/v\d+$/, "")
 			: normalizedBaseUrl.replace(/\/v1\/?$/, "");
 
-		const apiBaseUrl = hasVersionPath ? normalizedBaseUrl : `${this.baseUrl}/v1`;
+		const apiBaseUrl = hasVersionPath
+			? normalizedBaseUrl
+			: `${this.baseUrl}/v1`;
 		this.apiKey = apiKey || "ollama";
 		this.client = createOpenAI({
 			baseURL: apiBaseUrl,
@@ -197,7 +214,7 @@ export class InterleavedReasoningEngine {
 		});
 		this.securityValidator = new SecurityValidator();
 		this.rateLimiter = new RateLimiter();
-		this.discriminator = new AdversarialDifferentialDiscriminator();
+		// AdversarialDifferentialDiscriminator available for future quality scoring
 	}
 
 	/**
@@ -205,7 +222,10 @@ export class InterleavedReasoningEngine {
 	 */
 	async reason(
 		query: string,
-		context?: { searchResults?: SearchResult[]; previousSteps?: ReasoningStep[] },
+		context?: {
+			searchResults?: SearchResult[];
+			previousSteps?: ReasoningStep[];
+		},
 	): Promise<ReasoningResult> {
 		const startTime = Date.now();
 		const steps: ReasoningStep[] = [];
@@ -235,6 +255,38 @@ export class InterleavedReasoningEngine {
 			errors.push(
 				`Rate limit exceeded. ${this.rateLimiter.getRemainingRequests()} requests remaining.`,
 			);
+			return {
+				steps: [],
+				finalOutput: "",
+				overallConfidence: 0,
+				success: false,
+				errors,
+				totalTokens: 0,
+				processingTime: Date.now() - startTime,
+			};
+		}
+
+		// Require a configured model — fail fast if none is set.
+		// Model config always comes from the user's settings, never from defaults.
+		if (!this.config.orchestratorModel) {
+			errors.push(
+				"No orchestrator model configured. Please set a model in your AI settings before using reasoning.",
+			);
+			return {
+				steps: [],
+				finalOutput: "",
+				overallConfidence: 0,
+				success: false,
+				errors,
+				totalTokens: 0,
+				processingTime: Date.now() - startTime,
+			};
+		}
+
+		// Ensure the orchestrator model endpoint is reachable before running heavy reasoning.
+		const health = await this.healthCheck();
+		if (!health.orchestratorAvailable) {
+			errors.push("Orchestrator model is not available for reasoning.");
 			return {
 				steps: [],
 				finalOutput: "",
@@ -319,7 +371,10 @@ export class InterleavedReasoningEngine {
 	private async executeStep(
 		type: ReasoningStep["type"],
 		input: string,
-		context?: { searchResults?: SearchResult[]; previousSteps?: ReasoningStep[] },
+		context?: {
+			searchResults?: SearchResult[];
+			previousSteps?: ReasoningStep[];
+		},
 	): Promise<ReasoningStep> {
 		const stepId = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 		const timestamp = Date.now();
@@ -328,7 +383,12 @@ export class InterleavedReasoningEngine {
 			// Per-step timeout — generous enough for slower models
 			const timeoutPromise = new Promise<never>((_, reject) =>
 				setTimeout(
-					() => reject(new Error(`Step '${type}' timed out after ${this.config.stepTimeoutMs}ms`)),
+					() =>
+						reject(
+							new Error(
+								`Step '${type}' timed out after ${this.config.stepTimeoutMs}ms`,
+							),
+						),
 					this.config.stepTimeoutMs,
 				),
 			);
@@ -386,7 +446,10 @@ export class InterleavedReasoningEngine {
 	private async validateStepOutput(
 		output: string,
 		type: ReasoningStep["type"],
-		context?: { searchResults?: SearchResult[]; previousSteps?: ReasoningStep[] },
+		context?: {
+			searchResults?: SearchResult[];
+			previousSteps?: ReasoningStep[];
+		},
 	): Promise<{ valid: boolean; confidence: number; errors: string[] }> {
 		const errors: string[] = [];
 		let confidence = 0.7; // Base confidence
@@ -410,12 +473,14 @@ export class InterleavedReasoningEngine {
 		};
 		const minLen = minLengths[type] || 10;
 		if (output.length < minLen) {
-			errors.push(`Output too short for ${type} step (${output.length} < ${minLen} chars)`);
+			errors.push(
+				`Output too short for ${type} step (${output.length} < ${minLen} chars)`,
+			);
 			confidence -= 0.3;
 		}
 
 		// Structural quality checks (not keyword-dependent)
-		const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 5);
+		const sentences = output.split(/[.!?]+/).filter((s) => s.trim().length > 5);
 		if (sentences.length < 2 && type !== "validation") {
 			confidence -= 0.1; // Single-sentence output is usually low quality
 		}
@@ -432,11 +497,16 @@ export class InterleavedReasoningEngine {
 		}
 
 		// Query relevance — check if output relates to the search context
-		if (context?.searchResults && context.searchResults.length > 0 && type === "execution") {
+		if (
+			context?.searchResults &&
+			context.searchResults.length > 0 &&
+			type === "execution"
+		) {
 			// Execution step should reference actual search content
 			const outputLower = output.toLowerCase();
-			const hasRelevantContent = context.searchResults.some(r =>
-				r.title && outputLower.includes(r.title.toLowerCase().split(" ")[0])
+			const hasRelevantContent = context.searchResults.some(
+				(r) =>
+					r.title && outputLower.includes(r.title.toLowerCase().split(" ")[0]),
 			);
 			if (!hasRelevantContent && output.length > 100) {
 				confidence -= 0.05; // Minor penalty, not a hard fail
@@ -444,7 +514,11 @@ export class InterleavedReasoningEngine {
 		}
 
 		// Validator model cross-check (only if we have a validator model configured and confidence is marginal)
-		if (this.config.validatorModel && confidence >= this.config.minConfidenceThreshold && confidence < 0.8) {
+		if (
+			this.config.validatorModel &&
+			confidence >= this.config.minConfidenceThreshold &&
+			confidence < 0.8
+		) {
 			try {
 				const validatorCheck = await generateText({
 					model: this.client(this.config.validatorModel),
@@ -454,7 +528,7 @@ export class InterleavedReasoningEngine {
 				});
 
 				const rating = parseInt(validatorCheck.text.trim(), 10);
-				if (!isNaN(rating) && rating >= 1 && rating <= 10) {
+				if (!Number.isNaN(rating) && rating >= 1 && rating <= 10) {
 					const validatorConfidence = rating / 10;
 					// Blend validator rating with existing confidence
 					confidence = confidence * 0.7 + validatorConfidence * 0.3;
@@ -464,7 +538,8 @@ export class InterleavedReasoningEngine {
 			}
 		}
 
-		const valid = confidence >= this.config.minConfidenceThreshold && errors.length === 0;
+		const valid =
+			confidence >= this.config.minConfidenceThreshold && errors.length === 0;
 
 		return { valid, confidence, errors };
 	}
@@ -484,9 +559,9 @@ export class InterleavedReasoningEngine {
 				? steps.reduce((sum, step) => sum + step.confidence, 0) / steps.length
 				: 0;
 
-		const finalOutput =
-			steps.length > 0 ? steps[steps.length - 1].output : "";
+		const finalOutput = steps.length > 0 ? steps[steps.length - 1].output : "";
 
+		const processingTime = Math.max(1, Date.now() - startTime);
 		return {
 			steps,
 			finalOutput,
@@ -494,7 +569,7 @@ export class InterleavedReasoningEngine {
 			success,
 			errors,
 			totalTokens,
-			processingTime: Date.now() - startTime,
+			processingTime,
 		};
 	}
 
@@ -543,12 +618,10 @@ export class InterleavedReasoningEngine {
 
 			return {
 				healthy: true,
-				orchestratorAvailable: models.includes(
-					this.config.orchestratorModel,
-				),
+				orchestratorAvailable: models.includes(this.config.orchestratorModel),
 				validatorAvailable: models.includes(this.config.validatorModel),
 			};
-		} catch (error) {
+		} catch (_error) {
 			return {
 				healthy: false,
 				orchestratorAvailable: false,

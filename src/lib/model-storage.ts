@@ -64,7 +64,7 @@ export async function saveModelConfig(
 			// SECURITY: Do not store unencrypted API keys
 			throw new Error(
 				"Secure storage not available. API keys cannot be stored securely. " +
-				"Please use a modern browser with Web Crypto API support, or use Convex secure storage instead."
+					"Please use a modern browser with Web Crypto API support, or use Convex secure storage instead.",
 			);
 		}
 
@@ -95,8 +95,12 @@ export async function loadModelConfig(id: string): Promise<ModelConfig | null> {
 				apiKey = (await secureGetItem(storedConfig.apiKeyRef)) || undefined;
 			} else {
 				// SECURITY: Refuse to load unencrypted keys
-				console.error("Secure storage not available. Cannot load API keys securely.");
-				throw new Error("Secure storage required to load API keys. Please use a modern browser.");
+				console.error(
+					"Secure storage not available. Cannot load API keys securely.",
+				);
+				throw new Error(
+					"Secure storage required to load API keys. Please use a modern browser.",
+				);
 			}
 		}
 
@@ -302,7 +306,7 @@ function createDefaultStorage(): StoredConfig {
  * Migrate storage from old version to new version
  * Handles migration to encrypted API key storage
  */
-async function migrateStorage(old: StoredConfig): Promise<StoredConfig> {
+async function _migrateStorage(old: StoredConfig): Promise<StoredConfig> {
 	console.log(
 		`Migrating storage from version ${old.version} to ${STORAGE_VERSION}`,
 	);
@@ -392,7 +396,7 @@ export function isStorageAvailable(): boolean {
 		localStorage.setItem(test, test);
 		localStorage.removeItem(test);
 		return true;
-	} catch (error) {
+	} catch (_error) {
 		return false;
 	}
 }

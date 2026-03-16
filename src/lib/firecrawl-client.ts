@@ -357,9 +357,7 @@ export function createFirecrawlClient(
 	const apiKey = config?.apiKey;
 
 	if (!apiKey) {
-		throw new Error(
-			"Firecrawl API key is required. Pass apiKey in config.",
-		);
+		throw new Error("Firecrawl API key is required. Pass apiKey in config.");
 	}
 
 	return new FirecrawlClient({

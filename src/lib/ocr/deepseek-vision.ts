@@ -10,7 +10,7 @@
 
 import { generateText } from "ai";
 import { createAIModelInstance } from "../ai/unified-provider";
-import { ModelProvider, type ModelConfig } from "../model-config";
+import { type ModelConfig, ModelProvider } from "../model-config";
 
 /**
  * Configuration for vision-based OCR extraction.
@@ -71,9 +71,7 @@ export async function extractTextFromImage(
 	// Validate that cloud providers have an API key
 	const localProviders = ["ollama", "lm_studio", "vllm", "gguf", "onnx"];
 	if (!localProviders.includes(config.provider) && !config.apiKey) {
-		throw new Error(
-			`API key required for ${config.provider} vision OCR`,
-		);
+		throw new Error(`API key required for ${config.provider} vision OCR`);
 	}
 
 	// Build the ModelConfig for the unified provider

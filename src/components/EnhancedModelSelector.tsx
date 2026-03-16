@@ -4,14 +4,14 @@
  * No hardcoded model lists.
  */
 
-import { Check, Sparkles, Wifi, Globe } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { Check, Globe, Sparkles, Wifi } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import {
 	detectAndUpdateLocalModels,
 	getModelStore,
+	type ModelStore,
 	setActiveModel,
 	toggleActiveModel,
-	type ModelStore,
 } from "../lib/model-store";
 
 interface ModelOption {
@@ -47,7 +47,10 @@ export function EnhancedModelSelector({
 			detectAndUpdateLocalModels()
 				.then(() => setStore(getModelStore()))
 				.catch((error) => {
-					console.warn("[EnhancedModelSelector] Failed to refresh local models:", error);
+					console.warn(
+						"[EnhancedModelSelector] Failed to refresh local models:",
+						error,
+					);
 				});
 		}
 	}, [isOpen]);
@@ -132,10 +135,17 @@ export function EnhancedModelSelector({
 			for (const active of store.activeModels) {
 				const id = `${active.provider}:${active.model}`;
 				if (!existingIds.has(id)) {
-					const isLocal = ["ollama", "lmstudio", "lm_studio"].includes(active.provider);
-					const providerLabel = active.provider === "ollama" ? "Ollama"
-						: active.provider === "lmstudio" || active.provider === "lm_studio" ? "LM Studio"
-						: store.custom.find((c) => c.id === active.provider)?.name || active.provider;
+					const isLocal = ["ollama", "lmstudio", "lm_studio"].includes(
+						active.provider,
+					);
+					const providerLabel =
+						active.provider === "ollama"
+							? "Ollama"
+							: active.provider === "lmstudio" ||
+									active.provider === "lm_studio"
+								? "LM Studio"
+								: store.custom.find((c) => c.id === active.provider)?.name ||
+									active.provider;
 					options.push({
 						id,
 						provider: active.provider,
@@ -181,7 +191,9 @@ export function EnhancedModelSelector({
 		}
 	};
 
-	const selectedOptions = modelOptions.filter((opt) => selectedModels.includes(opt.id));
+	const selectedOptions = modelOptions.filter((opt) =>
+		selectedModels.includes(opt.id),
+	);
 	const localOptions = modelOptions.filter((opt) => opt.isLocal);
 	const cloudOptions = modelOptions.filter((opt) => !opt.isLocal);
 
@@ -218,7 +230,8 @@ export function EnhancedModelSelector({
 										: "Choose a model"}
 						</div>
 						<div className="text-xs text-slate-500">
-							Search works without a model. Models improve planning, validation, and synthesis.
+							Search works without a model. Models improve planning, validation,
+							and synthesis.
 						</div>
 					</div>
 				</div>
@@ -239,7 +252,8 @@ export function EnhancedModelSelector({
 					>
 						{modelOptions.length === 0 ? (
 							<div className="p-4 text-center text-gray-400 text-sm">
-								No models detected. Open Settings to add local or cloud models. You can mix multiple providers here.
+								No models detected. Open Settings to add local or cloud models.
+								You can mix multiple providers here.
 							</div>
 						) : (
 							<>
@@ -263,12 +277,18 @@ export function EnhancedModelSelector({
 												>
 													<Wifi className="w-4 h-4 text-green-500 flex-shrink-0" />
 													<div className="flex-1 min-w-0">
-														<div className={`font-medium text-sm ${isSelected ? "text-pink-300" : "text-white"}`}>
+														<div
+															className={`font-medium text-sm ${isSelected ? "text-pink-300" : "text-white"}`}
+														>
 															{option.label}
 														</div>
-														<div className="text-xs text-gray-400">{option.description}</div>
+														<div className="text-xs text-gray-400">
+															{option.description}
+														</div>
 													</div>
-													{isSelected && <Check className="w-5 h-5 text-pink-500 flex-shrink-0" />}
+													{isSelected && (
+														<Check className="w-5 h-5 text-pink-500 flex-shrink-0" />
+													)}
 												</button>
 											);
 										})}
@@ -293,14 +313,22 @@ export function EnhancedModelSelector({
 													role="option"
 													aria-selected={isSelected}
 												>
-													<Globe className={`w-4 h-4 ${option.isAvailable ? "text-cyan-400" : "text-gray-500"} flex-shrink-0`} />
+													<Globe
+														className={`w-4 h-4 ${option.isAvailable ? "text-cyan-400" : "text-gray-500"} flex-shrink-0`}
+													/>
 													<div className="flex-1 min-w-0">
-														<div className={`font-medium text-sm ${isSelected ? "text-cyan-300" : "text-white"}`}>
+														<div
+															className={`font-medium text-sm ${isSelected ? "text-cyan-300" : "text-white"}`}
+														>
 															{option.label}
 														</div>
-														<div className="text-xs text-gray-400">{option.description}</div>
+														<div className="text-xs text-gray-400">
+															{option.description}
+														</div>
 													</div>
-													{isSelected && <Check className="w-5 h-5 text-cyan-500 flex-shrink-0" />}
+													{isSelected && (
+														<Check className="w-5 h-5 text-cyan-500 flex-shrink-0" />
+													)}
 												</button>
 											);
 										})}

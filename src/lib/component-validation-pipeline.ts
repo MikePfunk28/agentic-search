@@ -1,18 +1,18 @@
 /**
  * Component Validation Pipeline
- * 
+ *
  * Validates each search component independently before combining:
  * - Retrieval: Search results quality
  * - Reasoning: Logic and coherence
  * - Response: Final answer quality
- * 
+ *
  * Security:
  * - Component isolation
  * - Input/output validation
  * - Audit logging
  */
 
-import { AdversarialDifferentialDiscriminator, type ADDScore } from "./add-discriminator";
+import { AdversarialDifferentialDiscriminator } from "./add-discriminator";
 import type { SearchResult } from "./types";
 
 export interface ComponentValidationResult {
@@ -115,7 +115,14 @@ class RetrievalValidator implements ComponentValidator {
 			const confidence = addScore.overallScore;
 			const valid = errors.length === 0 && confidence >= 0.5;
 
-			return this.buildResult(valid, confidence, errors, warnings, metrics, startTime);
+			return this.buildResult(
+				valid,
+				confidence,
+				errors,
+				warnings,
+				metrics,
+				startTime,
+			);
 		} catch (error) {
 			errors.push(`Retrieval validation error: ${error}`);
 			return this.buildResult(false, 0, errors, warnings, metrics, startTime);
@@ -148,7 +155,11 @@ class RetrievalValidator implements ComponentValidator {
  */
 class ReasoningValidator implements ComponentValidator {
 	constructor(
-		private reasoningSteps: Array<{ input: string; output: string; confidence: number }>,
+		private reasoningSteps: Array<{
+			input: string;
+			output: string;
+			confidence: number;
+		}>,
 	) {}
 
 	async validate(): Promise<ComponentValidationResult> {
@@ -184,7 +195,9 @@ class ReasoningValidator implements ComponentValidator {
 				}
 
 				if (step.confidence < 0.5) {
-					warnings.push(`Step ${i} has low confidence (${step.confidence.toFixed(2)})`);
+					warnings.push(
+						`Step ${i} has low confidence (${step.confidence.toFixed(2)})`,
+					);
 				}
 
 				totalConfidence += step.confidence;
@@ -205,7 +218,14 @@ class ReasoningValidator implements ComponentValidator {
 			const confidence = metrics.avgConfidence;
 			const valid = errors.length === 0 && confidence >= 0.6;
 
-			return this.buildResult(valid, confidence, errors, warnings, metrics, startTime);
+			return this.buildResult(
+				valid,
+				confidence,
+				errors,
+				warnings,
+				metrics,
+				startTime,
+			);
 		} catch (error) {
 			errors.push(`Reasoning validation error: ${error}`);
 			return this.buildResult(false, 0, errors, warnings, metrics, startTime);
@@ -283,9 +303,11 @@ class ResponseValidator implements ComponentValidator {
 
 			// Check for source attribution
 			if (this.sources && this.sources.length > 0) {
-				const hasCitations = /\[[\d,\s]+\]/.test(this.response) ||
-					this.sources.some((s) =>
-						this.response.includes(s.url) || this.response.includes(s.title),
+				const hasCitations =
+					/\[[\d,\s]+\]/.test(this.response) ||
+					this.sources.some(
+						(s) =>
+							this.response.includes(s.url) || this.response.includes(s.title),
 					);
 
 				if (!hasCitations) {
@@ -295,7 +317,10 @@ class ResponseValidator implements ComponentValidator {
 			}
 
 			// Check for common quality issues
-			if (this.response.includes("I cannot") || this.response.includes("I'm unable")) {
+			if (
+				this.response.includes("I cannot") ||
+				this.response.includes("I'm unable")
+			) {
 				warnings.push("Response indicates inability to answer");
 			}
 
@@ -314,7 +339,14 @@ class ResponseValidator implements ComponentValidator {
 
 			const valid = errors.length === 0;
 
-			return this.buildResult(valid, confidence, errors, warnings, metrics, startTime);
+			return this.buildResult(
+				valid,
+				confidence,
+				errors,
+				warnings,
+				metrics,
+				startTime,
+			);
 		} catch (error) {
 			errors.push(`Response validation error: ${error}`);
 			return this.buildResult(false, 0, errors, warnings, metrics, startTime);
@@ -364,7 +396,11 @@ export class ComponentValidationPipeline {
 	async validate(input: {
 		query: string;
 		searchResults: SearchResult[];
-		reasoningSteps: Array<{ input: string; output: string; confidence: number }>;
+		reasoningSteps: Array<{
+			input: string;
+			output: string;
+			confidence: number;
+		}>;
 		finalResponse: string;
 	}): Promise<PipelineResult> {
 		const startTime = Date.now();
@@ -395,9 +431,7 @@ export class ComponentValidationPipeline {
 
 					// In strict mode, stop on first failure
 					if (this.config.enableStrictMode && !result.valid) {
-						errors.push(
-							`Component ${result.componentName} failed validation`,
-						);
+						errors.push(`Component ${result.componentName} failed validation`);
 						break;
 					}
 				} catch (error) {

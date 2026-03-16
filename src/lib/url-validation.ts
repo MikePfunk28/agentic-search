@@ -83,7 +83,7 @@ function isPrivateIPv4(hostname: string): boolean {
 	if (parts.length !== 4) return false;
 
 	const octets = parts.map((p) => parseInt(p, 10));
-	if (octets.some((o) => isNaN(o) || o < 0 || o > 255)) return false;
+	if (octets.some((o) => Number.isNaN(o) || o < 0 || o > 255)) return false;
 
 	const [a, b] = octets;
 
@@ -118,7 +118,13 @@ function isPrivateIPv6(hostname: string): boolean {
 	if (lower === "::1") return false;
 
 	// Block unique-local (fd00::/8) and link-local (fe80::/10)
-	if (lower.startsWith("fd") || lower.startsWith("fe8") || lower.startsWith("fe9") || lower.startsWith("fea") || lower.startsWith("feb")) {
+	if (
+		lower.startsWith("fd") ||
+		lower.startsWith("fe8") ||
+		lower.startsWith("fe9") ||
+		lower.startsWith("fea") ||
+		lower.startsWith("feb")
+	) {
 		return true;
 	}
 
@@ -213,7 +219,9 @@ function isInternalIP(ip: string): boolean {
  * Returns null when dns is unavailable (e.g. Cloudflare Workers, where
  * the runtime already blocks private IPs at the network layer).
  */
-async function resolveDns(hostname: string): Promise<{ address: string; family: number }[] | null> {
+async function resolveDns(
+	hostname: string,
+): Promise<{ address: string; family: number }[] | null> {
 	try {
 		// Dynamic import so the module loads in non-Node runtimes without crashing
 		const dns = await import("node:dns/promises");

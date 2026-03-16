@@ -4,19 +4,19 @@
  * Provides knowledge base CRUD, document upload + chunking, and search-time retrieval.
  */
 
-import { useCallback, useMemo, useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { useCallback, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import {
-	getRagLevel,
-	setRagLevel as storeSetRagLevel,
-	getRagKnowledgeBaseId,
-	setRagKnowledgeBaseId,
 	getRagEmbeddingConfig,
-	setRagEmbeddingConfig as storeSetRagEmbeddingConfig,
+	getRagKnowledgeBaseId,
+	getRagLevel,
 	type RagLevel,
+	setRagKnowledgeBaseId,
+	setRagEmbeddingConfig as storeSetRagEmbeddingConfig,
+	setRagLevel as storeSetRagLevel,
 } from "../lib/model-store";
-import { chunkText, estimateTokenCount } from "../lib/rag/retrieval";
+import { chunkText } from "../lib/rag/retrieval";
 
 export function useRag(userId: string | undefined) {
 	const [uploading, setUploading] = useState(false);
@@ -41,7 +41,7 @@ export function useRag(userId: string | undefined) {
 	// ── Convex mutations ─────────────────────────────────────────────
 	const createKbMutation = useMutation(api.rag.createKnowledgeBase);
 	const deleteKbMutation = useMutation(api.rag.deleteKnowledgeBase);
-	const toggleKbMutation = useMutation(api.rag.toggleKnowledgeBase);
+	const _toggleKbMutation = useMutation(api.rag.toggleKnowledgeBase);
 	const storeChunksMutation = useMutation(api.rag.storeChunks);
 	const logAnalyticsMutation = useMutation(api.rag.logRagAnalytics);
 	const rateResultMutation = useMutation(api.rag.rateRagResult);
@@ -92,7 +92,7 @@ export function useRag(userId: string | undefined) {
 	 * Requires a documentId from the Convex `documents` table.
 	 */
 	const uploadDocument = useCallback(
-		async (documentId: string, fileName: string, content: string) => {
+		async (documentId: string, _fileName: string, content: string) => {
 			if (!userId || !activeKbId) {
 				setUploadError("No user or knowledge base selected");
 				return;
@@ -166,7 +166,12 @@ export function useRag(userId: string | undefined) {
 
 	/** Rate a search result for analytics */
 	const rateResult = useCallback(
-		async (analyticsId: string, rating: number, preferredSource?: "rag" | "web" | "merged", feedback?: string) => {
+		async (
+			analyticsId: string,
+			rating: number,
+			preferredSource?: "rag" | "web" | "merged",
+			feedback?: string,
+		) => {
 			await rateResultMutation({
 				id: analyticsId as any,
 				userRating: rating,

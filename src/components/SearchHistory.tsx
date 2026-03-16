@@ -1,5 +1,5 @@
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -31,7 +31,10 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 	// Approve search mutation
 	const approveSearch = useMutation(api.searchHistory.approveSearch);
 
-	const handleApprove = async (searchId: Id<"searchHistory">, rating: number) => {
+	const handleApprove = async (
+		searchId: Id<"searchHistory">,
+		rating: number,
+	) => {
 		try {
 			await approveSearch({
 				searchId,
@@ -74,15 +77,21 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Avg Time</span>
-							<span className="stat-value">{(stats.avgExecutionTime / 1000).toFixed(1)}s</span>
+							<span className="stat-value">
+								{(stats.avgExecutionTime / 1000).toFixed(1)}s
+							</span>
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Total Tokens</span>
-							<span className="stat-value">{stats.totalTokens.toLocaleString()}</span>
+							<span className="stat-value">
+								{stats.totalTokens.toLocaleString()}
+							</span>
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Approval Rate</span>
-							<span className="stat-value">{stats.approvalRate.toFixed(1)}%</span>
+							<span className="stat-value">
+								{stats.approvalRate.toFixed(1)}%
+							</span>
 						</div>
 					</div>
 				)}
@@ -101,7 +110,9 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 				<div className="filter-controls">
 					<select
 						value={qualityFilter || ""}
-						onChange={(e) => setQualityFilter(e.target.value ? Number(e.target.value) : null)}
+						onChange={(e) =>
+							setQualityFilter(e.target.value ? Number(e.target.value) : null)
+						}
 						className="filter-select"
 					>
 						<option value="">All Quality Levels</option>
@@ -139,7 +150,9 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 									<span className="search-date">
 										{new Date(search.createdAt).toLocaleDateString()}
 									</span>
-									<span className={`quality-badge quality-${getQualityLevel(search.quality ?? 0)}`}>
+									<span
+										className={`quality-badge quality-${getQualityLevel(search.quality ?? 0)}`}
+									>
 										Quality: {(search.quality ?? 0).toFixed(2)}
 									</span>
 								</div>
@@ -154,7 +167,8 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 										<strong>Results:</strong> {search.results.length}
 									</span>
 									<span className="detail-item">
-										<strong>Time:</strong> {(search.executionTimeMs / 1000).toFixed(2)}s
+										<strong>Time:</strong>{" "}
+										{(search.executionTimeMs / 1000).toFixed(2)}s
 									</span>
 									<span className="detail-item">
 										<strong>Tokens:</strong> {search.tokensUsed}
@@ -178,7 +192,9 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 								{/* User Feedback */}
 								{search.userApproved !== undefined && (
 									<div className="user-feedback">
-										<span className={search.userApproved ? "approved" : "rejected"}>
+										<span
+											className={search.userApproved ? "approved" : "rejected"}
+										>
 											{search.userApproved ? "✓ Approved" : "✗ Rejected"}
 										</span>
 										{search.userRating && (
@@ -226,9 +242,7 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 				>
 					← Previous
 				</button>
-				<span className="page-indicator">
-					Page {currentPage + 1}
-				</span>
+				<span className="page-indicator">Page {currentPage + 1}</span>
 				<button
 					onClick={() => setCurrentPage((p) => p + 1)}
 					disabled={!searchHistory || searchHistory.length < 10}

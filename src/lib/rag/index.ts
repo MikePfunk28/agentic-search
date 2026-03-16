@@ -2,22 +2,21 @@
  * RAG Pipeline — public barrel export
  */
 
-export type {
-	RagLevel,
-	RagChunk,
-	RagRetrievalResult,
-	RagSearchOptions,
-	RagAnalyticsEvent,
-	DocumentUploadRequest,
-	CrawlJobRequest,
-} from "./types";
-
 export {
-	chunkText,
-	estimateTokenCount,
 	bm25Score,
+	buildRagContext,
+	chunkText,
 	cosineSimilarity,
+	estimateTokenCount,
 	generateEmbedding,
 	rankChunks,
-	buildRagContext,
 } from "./retrieval";
+export type {
+	CrawlJobRequest,
+	DocumentUploadRequest,
+	RagAnalyticsEvent,
+	RagChunk,
+	RagLevel,
+	RagRetrievalResult,
+	RagSearchOptions,
+} from "./types";

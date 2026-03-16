@@ -499,7 +499,7 @@ export class UnifiedSearchOrchestrator {
 					? qualityScores.reduce((s, q) => s + (q.freshness || 0), 0) /
 						qualityScores.length
 					: 0.5;
-			const avgCredibility =
+			const _avgCredibility =
 				qualityScores.length > 0
 					? qualityScores.reduce((s, q) => s + (q.credibility || 0), 0) /
 						qualityScores.length

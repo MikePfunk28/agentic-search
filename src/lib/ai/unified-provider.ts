@@ -14,9 +14,9 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import {
+	type ModelConfig,
 	ModelProvider,
 	ProviderDefaults,
-	type ModelConfig,
 } from "../model-config";
 import { validateServerFetchUrlAsync } from "../url-validation";
 

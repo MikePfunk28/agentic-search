@@ -266,7 +266,7 @@ export function ModelSettings({
 										type="number"
 										value={maxTokens}
 										onChange={(e) =>
-											setMaxTokens(Number.parseInt(e.target.value))
+											setMaxTokens(Number.parseInt(e.target.value, 10))
 										}
 										min="1"
 										max="100000"

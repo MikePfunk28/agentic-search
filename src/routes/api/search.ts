@@ -6,18 +6,9 @@ import {
 import {
 	buildModelConfigFromClient,
 	type ModelConfig,
-	ModelConfigManager,
 } from "@/lib/model-config";
 import { researchStorage } from "@/lib/results-storage";
 import { getAvailableProviders } from "@/lib/search-providers";
-import {
-	checkRateLimit,
-	createSecureErrorResponse,
-	createSecureJsonResponse,
-	getSecurityHeaders,
-	sanitizeSearchQuery,
-	validateRequestBodySize,
-} from "@/lib/security";
 import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
 
 // Cloudflare Workers: read env bindings from .dev.vars / dashboard secrets
@@ -31,7 +22,7 @@ try {
 
 /** Read an env var from any available source.
  *  Priority: cloudflare worker bindings (.dev.vars) > process.env > import.meta.env */
-function getEnvVar(name: string): string | undefined {
+function _getEnvVar(name: string): string | undefined {
 	return (
 		cfEnv[name] ||
 		(typeof process !== "undefined" ? process.env?.[name] : undefined) ||
@@ -87,11 +78,7 @@ export const Route = createFileRoute("/api/search")({
 
 					// Build model config from client-provided data, or fall back to server-side
 					let modelConfig: ModelConfig | null = null;
-					if (
-						clientModelConfig &&
-						clientModelConfig.provider &&
-						clientModelConfig.model
-					) {
+					if (clientModelConfig?.provider && clientModelConfig.model) {
 						modelConfig = buildModelConfigFromClient(clientModelConfig);
 						console.log(
 							`[SearchAPI] Using client model: ${clientModelConfig.provider}:${clientModelConfig.model}`,
@@ -130,7 +117,7 @@ export const Route = createFileRoute("/api/search")({
 					};
 
 					const parallelModelConfigs = (clientModelConfigs || [])
-						.filter((config: any) => config && config.provider && config.model)
+						.filter((config: any) => config?.provider && config.model)
 						.map((config: any) => buildModelConfigFromClient(config));
 					const hasMultipleModels = parallelModelConfigs.length > 1;
 					const availableProviders = getAvailableProviders(mergedSearchApiKeys);

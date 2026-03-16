@@ -28,12 +28,36 @@ export async function detectAvailableProviders(): Promise<ModelProvider[]> {
 	const providers: ModelProvider[] = [];
 
 	// Check local providers via server-side proxy (browser can't reach localhost through miniflare)
-	const localChecks: Array<{ provider: ModelProvider; providerName: string; baseUrl: string }> = [
-		{ provider: ModelProvider.OLLAMA, providerName: "ollama", baseUrl: "http://localhost:11434" },
-		{ provider: ModelProvider.LM_STUDIO, providerName: "lmstudio", baseUrl: "http://localhost:1234" },
-		{ provider: ModelProvider.VLLM, providerName: "vllm", baseUrl: "http://localhost:8000" },
-		{ provider: ModelProvider.GGUF, providerName: "gguf", baseUrl: "http://localhost:8080" },
-		{ provider: ModelProvider.ONNX, providerName: "onnx", baseUrl: "http://localhost:8081" },
+	const localChecks: Array<{
+		provider: ModelProvider;
+		providerName: string;
+		baseUrl: string;
+	}> = [
+		{
+			provider: ModelProvider.OLLAMA,
+			providerName: "ollama",
+			baseUrl: "http://localhost:11434",
+		},
+		{
+			provider: ModelProvider.LM_STUDIO,
+			providerName: "lmstudio",
+			baseUrl: "http://localhost:1234",
+		},
+		{
+			provider: ModelProvider.VLLM,
+			providerName: "vllm",
+			baseUrl: "http://localhost:8000",
+		},
+		{
+			provider: ModelProvider.GGUF,
+			providerName: "gguf",
+			baseUrl: "http://localhost:8080",
+		},
+		{
+			provider: ModelProvider.ONNX,
+			providerName: "onnx",
+			baseUrl: "http://localhost:8081",
+		},
 	];
 
 	await Promise.allSettled(
@@ -49,7 +73,9 @@ export async function detectAvailableProviders(): Promise<ModelProvider[]> {
 					const data = await res.json();
 					if (data.models && data.models.length > 0) {
 						providers.push(provider);
-						console.log(`[Providers] ${providerName} detected with ${data.models.length} models`);
+						console.log(
+							`[Providers] ${providerName} detected with ${data.models.length} models`,
+						);
 					}
 				}
 			} catch {
@@ -59,7 +85,16 @@ export async function detectAvailableProviders(): Promise<ModelProvider[]> {
 	);
 
 	// Cloud providers - always show them so users can add API keys
-	providers.push(ModelProvider.OPENAI, ModelProvider.ANTHROPIC, ModelProvider.GOOGLE, ModelProvider.DEEPSEEK, ModelProvider.MOONSHOT, ModelProvider.KIMI, ModelProvider.OPENROUTER, ModelProvider.AZURE_OPENAI);
+	providers.push(
+		ModelProvider.OPENAI,
+		ModelProvider.ANTHROPIC,
+		ModelProvider.GOOGLE,
+		ModelProvider.DEEPSEEK,
+		ModelProvider.MOONSHOT,
+		ModelProvider.KIMI,
+		ModelProvider.OPENROUTER,
+		ModelProvider.AZURE_OPENAI,
+	);
 
 	console.log("[Providers] Available providers:", providers);
 	return providers;
@@ -95,7 +130,11 @@ export async function listModelsForProvider(
 				const res = await fetch("/api/detect-models", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ provider: providerName, baseUrl: url, ...(apiKey ? { apiKey } : {}) }),
+					body: JSON.stringify({
+						provider: providerName,
+						baseUrl: url,
+						...(apiKey ? { apiKey } : {}),
+					}),
 					signal: AbortSignal.timeout(8000),
 				});
 				if (!res.ok) return [];
@@ -114,14 +153,16 @@ export async function listModelsForProvider(
 					const url = baseURL || "https://api.openai.com/v1";
 					const res = await fetch(`${url}/models`, {
 						headers: {
-							'Authorization': `Bearer ${apiKey}`,
-							'Content-Type': 'application/json',
+							Authorization: `Bearer ${apiKey}`,
+							"Content-Type": "application/json",
 						},
 						signal: AbortSignal.timeout(5000),
 					});
 					if (res.ok) {
 						const data = await res.json();
-						return data.data.map((m: any) => m.id).filter((id: string) => id.startsWith('gpt'));
+						return data.data
+							.map((m: any) => m.id)
+							.filter((id: string) => id.startsWith("gpt"));
 					}
 				} catch (error) {
 					console.error("[Providers] Failed to fetch OpenAI models:", error);
@@ -138,8 +179,8 @@ export async function listModelsForProvider(
 					const url = baseURL || "https://api.deepseek.com/v1";
 					const res = await fetch(`${url}/models`, {
 						headers: {
-							'Authorization': `Bearer ${apiKey}`,
-							'Content-Type': 'application/json',
+							Authorization: `Bearer ${apiKey}`,
+							"Content-Type": "application/json",
 						},
 						signal: AbortSignal.timeout(5000),
 					});
@@ -162,8 +203,8 @@ export async function listModelsForProvider(
 					const url = baseURL || "https://api.moonshot.cn/v1";
 					const res = await fetch(`${url}/models`, {
 						headers: {
-							'Authorization': `Bearer ${apiKey}`,
-							'Content-Type': 'application/json',
+							Authorization: `Bearer ${apiKey}`,
+							"Content-Type": "application/json",
 						},
 						signal: AbortSignal.timeout(5000),
 					});
@@ -186,14 +227,16 @@ export async function listModelsForProvider(
 					const url = baseURL || "https://api.moonshot.cn/v1";
 					const res = await fetch(`${url}/models`, {
 						headers: {
-							'Authorization': `Bearer ${apiKey}`,
-							'Content-Type': 'application/json',
+							Authorization: `Bearer ${apiKey}`,
+							"Content-Type": "application/json",
 						},
 						signal: AbortSignal.timeout(5000),
 					});
 					if (res.ok) {
 						const data = await res.json();
-						return data.data.map((m: any) => m.id).filter((id: string) => id.includes('kimi'));
+						return data.data
+							.map((m: any) => m.id)
+							.filter((id: string) => id.includes("kimi"));
 					}
 				} catch (error) {
 					console.error("[Providers] Failed to fetch Kimi models:", error);
@@ -215,7 +258,13 @@ export async function listModelsForProvider(
 			];
 
 		case "google":
-			return ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
+			return [
+				"gemini-2.5-pro",
+				"gemini-2.5-flash",
+				"gemini-2.0-flash-exp",
+				"gemini-1.5-pro",
+				"gemini-1.5-flash",
+			];
 
 		case "azure_openai":
 			// Azure models depend on deployment names

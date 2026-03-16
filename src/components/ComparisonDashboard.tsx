@@ -1,13 +1,16 @@
 /**
  * Real-Time Comparison Dashboard
- * 
+ *
  * Displays parallel model outputs side-by-side with metrics
  */
 
 import { Activity, Brain, Clock, Zap } from "lucide-react";
-import type { ModelResponse, ParallelPromptResult } from "../lib/parallel-model-orchestrator";
 import type { ADDMetrics } from "../lib/add-discriminator";
 import type { ReasoningResult } from "../lib/interleaved-reasoning-engine";
+import type {
+	ModelResponse,
+	ParallelPromptResult,
+} from "../lib/parallel-model-orchestrator";
 
 export interface DashboardProps {
 	parallelResults?: ParallelPromptResult;
@@ -305,9 +308,7 @@ function ModelOutputCard({ response }: { response: ModelResponse }) {
 						{(response.confidence * 100).toFixed(0)}%
 					</span>
 				</div>
-				<div className="text-slate-400">
-					{response.processingTime}ms
-				</div>
+				<div className="text-slate-400">{response.processingTime}ms</div>
 			</div>
 		</div>
 	);
@@ -342,8 +343,7 @@ function ReasoningStepCard({
 		synthesis: "orange",
 	};
 
-	const color =
-		typeColors[step.type as keyof typeof typeColors] || "slate";
+	const color = typeColors[step.type as keyof typeof typeColors] || "slate";
 
 	// Map color names to Tailwind classes for JIT compiler compatibility
 	const colorClasses: Record<string, string> = {

@@ -12,17 +12,33 @@ export const MAX_FILENAME_LENGTH = 255;
 export const MAX_URL_LENGTH = 2048;
 
 /**
- * Patterns for detecting malicious input
+ * Patterns for detecting malicious input.
+ *
+ * IMPORTANT: These are stored as **source strings** rather than RegExp objects
+ * with the `/g` flag.  A global RegExp remembers `lastIndex` after `.test()`
+ * calls, which causes subsequent `.test()` invocations on the *same* regex
+ * instance to skip occurrences (GitHub issue #29 — "Incomplete multi-character
+ * sanitization").  Building a fresh RegExp per call avoids this pitfall while
+ * keeping the patterns centralised.
  */
-const MALICIOUS_PATTERNS = {
-	xss: /<script\b[^>]*>|<\/script>|javascript:|on\w+\s*=|data:text\/html|vbscript:/gi,
+const MALICIOUS_PATTERN_SOURCES = {
+	xss: "(<script\\b[^>]*>|<\\/script>|javascript:|on\\w+\\s*=|data:text\\/html|vbscript:)",
 	sqlInjection:
-		/('|(\\')|;|(\\;)|(\\x00)|(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\b))/gi,
-	pathTraversal: /\.\.\/|\.\.\\|%2e%2e%2f|%2e%2e\/|\.\.%2f|%2e%2e%5c/gi,
-	commandInjection: /[;&|`$(){}[\]]/g,
+		"('|(\\\\')|;|(\\\\;)|(\\\\x00)|(\\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\\b))",
+	pathTraversal:
+		"(\\.\\.\\/|\\.\\.\\\\\\\\ |%2e%2e%2f|%2e%2e\\/|\\.\\.\\.%2f|%2e%2e%5c)",
+	commandInjection: "[;&|`$(){}\\[\\]]",
 	htmlInjection:
-		/<(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta|base|frame|frameset|applet)[^>]*>/gi,
+		"<(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta|base|frame|frameset|applet)[^>]*>",
 };
+
+/** Build a **new** RegExp for every check so `lastIndex` is always 0. */
+function buildPattern(
+	key: keyof typeof MALICIOUS_PATTERN_SOURCES,
+	flags = "gi",
+): RegExp {
+	return new RegExp(MALICIOUS_PATTERN_SOURCES[key], flags);
+}
 
 /**
  * Sanitize user input string for safe processing
@@ -49,6 +65,7 @@ export function sanitizeInput(
 	let sanitized = input;
 
 	// Remove null bytes and control characters (except newlines/tabs)
+	// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security sanitization of control chars
 	sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 
 	// Trim to max length
@@ -58,7 +75,7 @@ export function sanitizeInput(
 
 	if (!allowHtml) {
 		// Remove HTML tags
-		sanitized = sanitized.replace(MALICIOUS_PATTERNS.htmlInjection, "");
+		sanitized = sanitized.replace(buildPattern("htmlInjection"), "");
 
 		// Remove script-related patterns
 		sanitized = sanitized
@@ -87,7 +104,7 @@ export function sanitizeFilename(filename: string): string {
 	}
 
 	// Check for path traversal attempts
-	if (MALICIOUS_PATTERNS.pathTraversal.test(filename)) {
+	if (buildPattern("pathTraversal").test(filename)) {
 		throw new Error("Invalid filename: path traversal detected");
 	}
 
@@ -95,10 +112,12 @@ export function sanitizeFilename(filename: string): string {
 	let sanitized = filename.replace(/^.*[\\/]/, "");
 
 	// Remove null bytes
+	// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security sanitization of null bytes
 	sanitized = sanitized.replace(/\x00/g, "");
 
 	// Remove or replace dangerous characters
 	sanitized = sanitized
+		// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security sanitization of control chars in filenames
 		.replace(/[<>:"|?*\x00-\x1f]/g, "_")
 		.replace(/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i, "_$1")
 		.replace(/[. ]+$/g, "");
@@ -140,6 +159,7 @@ export function sanitizeUrl(url: string): string {
 	}
 
 	// Remove whitespace and control characters
+	// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security sanitization of control chars in URLs
 	sanitized = sanitized.replace(/[\s\x00-\x1F\x7F]/g, "");
 
 	// Check for javascript: or data: protocols
@@ -264,7 +284,7 @@ export function sanitizeSearchQuery(query: string): string {
 	const sanitized = sanitizeInput(query, { maxLength: MAX_QUERY_LENGTH });
 
 	// Check for injection attempts
-	if (MALICIOUS_PATTERNS.commandInjection.test(sanitized)) {
+	if (buildPattern("commandInjection").test(sanitized)) {
 		console.warn("[Security] Potential command injection detected in query");
 	}
 
@@ -297,7 +317,7 @@ export function validateRequestBodySize(
 	const contentLength = request.headers.get("Content-Length");
 	if (contentLength) {
 		const size = parseInt(contentLength, 10);
-		if (isNaN(size) || size > maxSizeBytes) {
+		if (Number.isNaN(size) || size > maxSizeBytes) {
 			throw new Error(`Request body too large. Maximum: ${maxSizeBytes} bytes`);
 		}
 	}
@@ -341,15 +361,18 @@ export function checkRateLimit(
  * Escape JSON string values to prevent JSON injection
  */
 export function escapeJsonString(str: string): string {
-	return str
-		.replace(/\\/g, "\\\\")
-		.replace(/"/g, '\\"')
-		.replace(/\n/g, "\\n")
-		.replace(/\r/g, "\\r")
-		.replace(/\t/g, "\\t")
-		.replace(/[\x00-\x1F]/g, (char) => {
-			return "\\u" + ("0000" + char.charCodeAt(0).toString(16)).slice(-4);
-		});
+	return (
+		str
+			.replace(/\\/g, "\\\\")
+			.replace(/"/g, '\\"')
+			.replace(/\n/g, "\\n")
+			.replace(/\r/g, "\\r")
+			.replace(/\t/g, "\\t")
+			// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security sanitization of control chars in JSON
+			.replace(/[\x00-\x1F]/g, (char) => {
+				return `\\u${`0000${char.charCodeAt(0).toString(16)}`.slice(-4)}`;
+			})
+	);
 }
 
 /**

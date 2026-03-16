@@ -1,5 +1,5 @@
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -8,21 +8,33 @@ interface ReasoningStepValidatorProps {
 	onComplete?: () => void;
 }
 
-export default function ReasoningStepValidator({ searchHistoryId, onComplete }: ReasoningStepValidatorProps) {
-	const [currentStepId, setCurrentStepId] = useState<Id<"reasoningStepApprovals"> | null>(null);
+export default function ReasoningStepValidator({
+	searchHistoryId,
+	onComplete,
+}: ReasoningStepValidatorProps) {
+	const [currentStepId, setCurrentStepId] =
+		useState<Id<"reasoningStepApprovals"> | null>(null);
 	const [modification, setModification] = useState<string>("");
 	const [guidance, setGuidance] = useState<string>("");
 	const [showModifyForm, setShowModifyForm] = useState(false);
 
 	// Query pending reasoning steps
-	const pendingSteps = useQuery(api.interactiveSegmentation.getPendingReasoningSteps, {
-		searchHistoryId,
-	});
+	const pendingSteps = useQuery(
+		api.interactiveSegmentation.getPendingReasoningSteps,
+		{
+			searchHistoryId,
+		},
+	);
 
 	// Mutation to approve/modify reasoning step
-	const approveReasoningStep = useMutation(api.interactiveSegmentation.approveReasoningStep);
+	const approveReasoningStep = useMutation(
+		api.interactiveSegmentation.approveReasoningStep,
+	);
 
-	const handleApprove = async (stepId: Id<"reasoningStepApprovals">, withModification: boolean) => {
+	const handleApprove = async (
+		stepId: Id<"reasoningStepApprovals">,
+		withModification: boolean,
+	) => {
 		try {
 			await approveReasoningStep({
 				stepId,
@@ -137,7 +149,8 @@ export default function ReasoningStepValidator({ searchHistoryId, onComplete }: 
 			<div className="validator-header">
 				<h2>Step-by-Step Reasoning Validation</h2>
 				<p className="validator-subtitle">
-					Guide the AI's thinking process. Your feedback creates training data for better reasoning.
+					Guide the AI's thinking process. Your feedback creates training data
+					for better reasoning.
 				</p>
 
 				{/* Progress Stepper */}
@@ -159,10 +172,12 @@ export default function ReasoningStepValidator({ searchHistoryId, onComplete }: 
 				<div className="reasoning-step-card">
 					<div className="step-header">
 						<h3 className="step-title">
-							Step {pendingSteps[0].stepNumber}: {pendingSteps[0].stepType.toUpperCase()}
+							Step {pendingSteps[0].stepNumber}:{" "}
+							{pendingSteps[0].stepType.toUpperCase()}
 						</h3>
 						<span className="step-count">
-							{pendingSteps[0].stepNumber} of {pendingSteps.length + pendingSteps[0].stepNumber - 1}
+							{pendingSteps[0].stepNumber} of{" "}
+							{pendingSteps.length + pendingSteps[0].stepNumber - 1}
 						</span>
 					</div>
 
@@ -188,7 +203,8 @@ export default function ReasoningStepValidator({ searchHistoryId, onComplete }: 
 									placeholder="How should the AI think about this step instead?"
 								/>
 								<div className="modification-hint">
-									💡 Tip: Explain your reasoning clearly - this creates high-quality training examples!
+									💡 Tip: Explain your reasoning clearly - this creates
+									high-quality training examples!
 								</div>
 							</div>
 						) : null}
@@ -246,7 +262,10 @@ export default function ReasoningStepValidator({ searchHistoryId, onComplete }: 
 									<button
 										onClick={() => handleApprove(pendingSteps[0]._id, true)}
 										className="btn btn-save"
-										disabled={!modification || modification === pendingSteps[0].aiReasoning}
+										disabled={
+											!modification ||
+											modification === pendingSteps[0].aiReasoning
+										}
 									>
 										💾 Save Improved Reasoning
 									</button>
@@ -687,12 +706,18 @@ export default function ReasoningStepValidator({ searchHistoryId, onComplete }: 
 
 function getStepTypeExplanation(stepType: string): string {
 	const explanations: Record<string, string> = {
-		analysis: "The AI analyzes the query to understand what information is needed and how to approach finding it.",
-		search: "The AI determines the best search strategies, keywords, and sources to use for retrieving information.",
-		synthesis: "The AI combines and integrates information from multiple sources to form a coherent answer.",
-		validation: "The AI checks the quality, relevance, and accuracy of the information before presenting it.",
-		reasoning: "The AI applies logical reasoning to draw conclusions and make connections between pieces of information.",
-		evaluation: "The AI assesses the confidence level and reliability of the information gathered.",
+		analysis:
+			"The AI analyzes the query to understand what information is needed and how to approach finding it.",
+		search:
+			"The AI determines the best search strategies, keywords, and sources to use for retrieving information.",
+		synthesis:
+			"The AI combines and integrates information from multiple sources to form a coherent answer.",
+		validation:
+			"The AI checks the quality, relevance, and accuracy of the information before presenting it.",
+		reasoning:
+			"The AI applies logical reasoning to draw conclusions and make connections between pieces of information.",
+		evaluation:
+			"The AI assesses the confidence level and reliability of the information gathered.",
 	};
 	return explanations[stepType] || "The AI processes information at this step.";
 }

@@ -7,10 +7,8 @@
  */
 
 import { generateText } from "ai";
-import {
-	type ModelConfig,
-} from "./model-config";
 import { createAIModelInstance } from "./ai/unified-provider";
+import type { ModelConfig } from "./model-config";
 import {
 	buildEvidenceVerificationPrompt,
 	type SearchEvidenceBundle,

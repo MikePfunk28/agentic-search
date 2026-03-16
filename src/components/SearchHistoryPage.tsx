@@ -1,52 +1,57 @@
 /**
  * SearchHistoryPage Component
- * 
+ *
  * Browse past searches, view annotations, re-run queries, export to other models/agents
  */
 
-import { useState, useEffect } from 'react';
-import { Search, Download, RefreshCw, Trash2, Calendar, BarChart } from 'lucide-react';
-import { researchStorage } from '../lib/results-storage';
-import type { StoredResearchResult } from '../lib/results-storage';
+import { Calendar, Download, RefreshCw, Search, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { StoredResearchResult } from "../lib/results-storage";
+import { researchStorage } from "../lib/results-storage";
 
 export function SearchHistoryPage() {
-	const [searchHistory, setSearchHistory] = useState<StoredResearchResult[]>([]);
-	const [filterModel, setFilterModel] = useState<string>('');
-	const [filterDateRange, setFilterDateRange] = useState<string>('all');
-	const [sortBy, setSortBy] = useState<'date' | 'quality' | 'results'>('date');
-
-	// Load search history on mount
-	useEffect(() => {
-		loadHistory();
-	}, []);
+	const [searchHistory, setSearchHistory] = useState<StoredResearchResult[]>(
+		[],
+	);
+	const [filterModel, setFilterModel] = useState<string>("");
+	const [filterDateRange, setFilterDateRange] = useState<string>("all");
+	const [sortBy, setSortBy] = useState<"date" | "quality" | "results">("date");
 
 	const loadHistory = () => {
 		const allResults = researchStorage.getAllResults();
 		setSearchHistory(allResults);
 	};
 
+	// Load search history on mount
+	useEffect(() => {
+		loadHistory();
+	}, [loadHistory]);
+
 	// Filter and sort results
 	const filteredResults = searchHistory
-		.filter(result => {
+		.filter((result) => {
 			// Filter by model
-			if (filterModel && !result.modelUsed.toLowerCase().includes(filterModel.toLowerCase())) {
+			if (
+				filterModel &&
+				!result.modelUsed.toLowerCase().includes(filterModel.toLowerCase())
+			) {
 				return false;
 			}
 
 			// Filter by date range
-			if (filterDateRange !== 'all') {
+			if (filterDateRange !== "all") {
 				const now = Date.now();
 				const age = now - result.timestamp;
 				const dayInMs = 24 * 60 * 60 * 1000;
 
 				switch (filterDateRange) {
-					case '1d':
+					case "1d":
 						if (age > dayInMs) return false;
 						break;
-					case '7d':
+					case "7d":
 						if (age > 7 * dayInMs) return false;
 						break;
-					case '30d':
+					case "30d":
 						if (age > 30 * dayInMs) return false;
 						break;
 				}
@@ -56,33 +61,36 @@ export function SearchHistoryPage() {
 		})
 		.sort((a, b) => {
 			switch (sortBy) {
-				case 'date':
+				case "date":
 					return b.timestamp - a.timestamp;
-				case 'quality':
+				case "quality":
 					return b.addScore - a.addScore;
-				case 'results':
+				case "results":
 					return b.results.length - a.results.length;
 				default:
 					return 0;
 			}
 		});
 
-	const handleExport = (result: StoredResearchResult, format: 'markdown' | 'json' | 'jsonl' | 'prompt') => {
+	const handleExport = (
+		result: StoredResearchResult,
+		format: "markdown" | "json" | "jsonl" | "prompt",
+	) => {
 		const exported = researchStorage.exportResult(result.id, format);
 		if (exported) {
 			// Download as file
-			const blob = new Blob([exported], { type: 'text/plain' });
+			const blob = new Blob([exported], { type: "text/plain" });
 			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
+			const a = document.createElement("a");
 			a.href = url;
-			a.download = `search-${result.id}-${format}.${format === 'json' ? 'json' : 'txt'}`;
+			a.download = `search-${result.id}-${format}.${format === "json" ? "json" : "txt"}`;
 			a.click();
 			URL.revokeObjectURL(url);
 		}
 	};
 
 	const handleDelete = (id: string) => {
-		if (confirm('Delete this search result?')) {
+		if (confirm("Delete this search result?")) {
 			researchStorage.deleteResult(id);
 			loadHistory();
 		}
@@ -98,9 +106,9 @@ export function SearchHistoryPage() {
 	};
 
 	const getQualityColor = (score: number) => {
-		if (score >= 0.8) return 'text-green-500';
-		if (score >= 0.6) return 'text-yellow-500';
-		return 'text-red-500';
+		if (score >= 0.8) return "text-green-500";
+		if (score >= 0.6) return "text-yellow-500";
+		return "text-red-500";
 	};
 
 	return (
@@ -113,14 +121,17 @@ export function SearchHistoryPage() {
 						Search History
 					</h1>
 					<p className="text-slate-400">
-						Browse past searches, view annotations, and export results for use with other models
+						Browse past searches, view annotations, and export results for use
+						with other models
 					</p>
 				</div>
 
 				{/* Filters */}
 				<div className="bg-slate-800 rounded-lg p-4 mb-6 flex flex-wrap gap-4">
 					<div className="flex-1 min-w-[200px]">
-						<label className="block text-sm text-slate-400 mb-2">Filter by Model</label>
+						<label className="block text-sm text-slate-400 mb-2">
+							Filter by Model
+						</label>
 						<input
 							type="text"
 							placeholder="e.g. ollama, gpt-4"
@@ -131,7 +142,9 @@ export function SearchHistoryPage() {
 					</div>
 
 					<div>
-						<label className="block text-sm text-slate-400 mb-2">Date Range</label>
+						<label className="block text-sm text-slate-400 mb-2">
+							Date Range
+						</label>
 						<select
 							value={filterDateRange}
 							onChange={(e) => setFilterDateRange(e.target.value)}
@@ -148,7 +161,9 @@ export function SearchHistoryPage() {
 						<label className="block text-sm text-slate-400 mb-2">Sort By</label>
 						<select
 							value={sortBy}
-							onChange={(e) => setSortBy(e.target.value as 'date' | 'quality' | 'results')}
+							onChange={(e) =>
+								setSortBy(e.target.value as "date" | "quality" | "results")
+							}
 							className="px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg"
 						>
 							<option value="date">Date</option>
@@ -179,7 +194,9 @@ export function SearchHistoryPage() {
 								{/* Header */}
 								<div className="flex items-start justify-between mb-4">
 									<div className="flex-1">
-										<h3 className="text-xl font-semibold mb-2">{result.query}</h3>
+										<h3 className="text-xl font-semibold mb-2">
+											{result.query}
+										</h3>
 										<div className="flex flex-wrap gap-4 text-sm text-slate-400">
 											<span className="flex items-center gap-1">
 												<Calendar className="w-4 h-4" />
@@ -216,11 +233,19 @@ export function SearchHistoryPage() {
 								{/* Annotations */}
 								{result.annotations.length > 0 && (
 									<div className="mb-4 p-3 bg-slate-900 rounded-lg">
-										<div className="text-sm font-medium mb-2">Annotations ({result.annotations.length})</div>
+										<div className="text-sm font-medium mb-2">
+											Annotations ({result.annotations.length})
+										</div>
 										<div className="space-y-2">
 											{result.annotations.slice(0, 3).map((annotation) => (
-												<div key={annotation.id} className="text-sm text-slate-300">
-													<span className="text-slate-500">{annotation.author}:</span> {annotation.text}
+												<div
+													key={annotation.id}
+													className="text-sm text-slate-300"
+												>
+													<span className="text-slate-500">
+														{annotation.author}:
+													</span>{" "}
+													{annotation.text}
 												</div>
 											))}
 											{result.annotations.length > 3 && (
@@ -239,25 +264,25 @@ export function SearchHistoryPage() {
 										Export:
 									</span>
 									<button
-										onClick={() => handleExport(result, 'markdown')}
+										onClick={() => handleExport(result, "markdown")}
 										className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition-colors"
 									>
 										Markdown
 									</button>
 									<button
-										onClick={() => handleExport(result, 'json')}
+										onClick={() => handleExport(result, "json")}
 										className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition-colors"
 									>
 										JSON
 									</button>
 									<button
-										onClick={() => handleExport(result, 'jsonl')}
+										onClick={() => handleExport(result, "jsonl")}
 										className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition-colors"
 									>
 										JSONL (Training)
 									</button>
 									<button
-										onClick={() => handleExport(result, 'prompt')}
+										onClick={() => handleExport(result, "prompt")}
 										className="text-sm px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition-colors"
 									>
 										Prompt Format

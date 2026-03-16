@@ -7,7 +7,7 @@
  */
 
 import { z } from "zod";
-import { detectOllamaModels, detectLMStudioModels } from "./ai/model-detection";
+import { detectLMStudioModels, detectOllamaModels } from "./ai/model-detection";
 
 // --- Zod Schemas ---
 
@@ -26,16 +26,22 @@ const CustomProviderSchema = z.object({
 	apiKey: z.string().optional(),
 	models: z.array(z.string()),
 	selectedModel: z.string().nullable(),
-	protocol: z.enum(["openai-compatible", "anthropic"]).default("openai-compatible"),
+	protocol: z
+		.enum(["openai-compatible", "anthropic"])
+		.default("openai-compatible"),
 });
 
 const ActiveModelEntrySchema = z.object({
 	provider: z.string(),
 	model: z.string(),
-	role: z.enum(["validator", "reasoner", "synthesizer", "orchestrator"]).default("reasoner"),
+	role: z
+		.enum(["validator", "reasoner", "synthesizer", "orchestrator"])
+		.default("reasoner"),
 });
 
-const RagLevelSchema = z.enum(["none", "minimal", "medium", "full"]).default("none");
+const RagLevelSchema = z
+	.enum(["none", "minimal", "medium", "full"])
+	.default("none");
 
 const ModelStoreSchema = z.object({
 	version: z.number().default(1),
@@ -190,7 +196,10 @@ export function getModelStore(): ModelStore {
 		}
 		return hydrateStoreWithVolatileSecrets(sanitized);
 	} catch (error) {
-		console.warn("[ModelStore] Failed to parse stored config, using defaults:", error);
+		console.warn(
+			"[ModelStore] Failed to parse stored config, using defaults:",
+			error,
+		);
 		return createDefaultStore();
 	}
 }
@@ -232,11 +241,15 @@ export function getActiveModelConfig(): {
 
 	if (store.activeProvider === "ollama" && store.ollama) {
 		const rawUrl = store.ollama.baseUrl || "";
-		try { new URL(rawUrl); } catch { return null; } // Invalid stored URL — bail
+		try {
+			new URL(rawUrl);
+		} catch {
+			return null;
+		} // Invalid stored URL — bail
 		return {
 			provider: "ollama",
 			model: store.activeModel,
-			baseUrl: rawUrl.replace(/\/+$/, "") + "/v1",
+			baseUrl: `${rawUrl.replace(/\/+$/, "")}/v1`,
 			apiKey: store.ollama.apiKey,
 			protocol: "openai-compatible",
 		};
@@ -244,18 +257,24 @@ export function getActiveModelConfig(): {
 
 	if (store.activeProvider === "lmstudio" && store.lmstudio) {
 		const rawUrl = store.lmstudio.baseUrl || "";
-		try { new URL(rawUrl); } catch { return null; } // Invalid stored URL — bail
+		try {
+			new URL(rawUrl);
+		} catch {
+			return null;
+		} // Invalid stored URL — bail
 		return {
 			provider: "lm_studio",
 			model: store.activeModel,
-			baseUrl: rawUrl.replace(/\/+$/, "") + "/v1",
+			baseUrl: `${rawUrl.replace(/\/+$/, "")}/v1`,
 			apiKey: store.lmstudio.apiKey,
 			protocol: "openai-compatible",
 		};
 	}
 
 	// Custom providers
-	const customProvider = store.custom.find((c) => c.id === store.activeProvider);
+	const customProvider = store.custom.find(
+		(c) => c.id === store.activeProvider,
+	);
 	if (customProvider) {
 		return {
 			provider: customProvider.id,
@@ -292,7 +311,7 @@ function resolveModelConfig(
 		return {
 			provider: "ollama",
 			model,
-			baseUrl: store.ollama.baseUrl + "/v1",
+			baseUrl: `${store.ollama.baseUrl}/v1`,
 			apiKey: store.ollama.apiKey,
 			protocol: "openai-compatible",
 			role,
@@ -302,7 +321,7 @@ function resolveModelConfig(
 		return {
 			provider: "lm_studio",
 			model,
-			baseUrl: store.lmstudio.baseUrl + "/v1",
+			baseUrl: `${store.lmstudio.baseUrl}/v1`,
 			apiKey: store.lmstudio.apiKey,
 			protocol: "openai-compatible",
 			role,
@@ -333,7 +352,12 @@ export function getActiveModelConfigs(): ResolvedModelConfig[] {
 	if (store.activeModels && store.activeModels.length > 0) {
 		const configs: ResolvedModelConfig[] = [];
 		for (const entry of store.activeModels) {
-			const resolved = resolveModelConfig(store, entry.provider, entry.model, entry.role);
+			const resolved = resolveModelConfig(
+				store,
+				entry.provider,
+				entry.model,
+				entry.role,
+			);
 			if (resolved) configs.push(resolved);
 		}
 		if (configs.length > 0) return configs;
@@ -341,7 +365,11 @@ export function getActiveModelConfigs(): ResolvedModelConfig[] {
 
 	// Fallback to single active model
 	if (store.activeProvider && store.activeModel) {
-		const resolved = resolveModelConfig(store, store.activeProvider, store.activeModel);
+		const resolved = resolveModelConfig(
+			store,
+			store.activeProvider,
+			store.activeModel,
+		);
 		if (resolved) return [resolved];
 	}
 
@@ -451,7 +479,10 @@ export function getSearchApiKeys(): {
 /**
  * Set a search provider API key.
  */
-export function setSearchApiKey(provider: "firecrawl" | "tavily" | "exa" | "brave", key: string): void {
+export function setSearchApiKey(
+	provider: "firecrawl" | "tavily" | "exa" | "brave",
+	key: string,
+): void {
 	const store = getModelStore();
 	const keyMap = {
 		firecrawl: "firecrawlApiKey" as const,
@@ -520,9 +551,10 @@ export async function detectAndUpdateLocalModels(): Promise<ModelStore> {
 		const modelIds = ollamaModels.map((m) => m.modelId);
 		const currentSelected = store.ollama?.selectedModel;
 		// Keep current selection if still valid, otherwise use the first detected
-		const selectedModel = currentSelected && modelIds.includes(currentSelected)
-			? currentSelected
-			: modelIds[0];
+		const selectedModel =
+			currentSelected && modelIds.includes(currentSelected)
+				? currentSelected
+				: modelIds[0];
 
 		store.ollama = {
 			baseUrl: ollamaBaseUrl,
@@ -551,9 +583,10 @@ export async function detectAndUpdateLocalModels(): Promise<ModelStore> {
 	if (lmstudioModels.length > 0) {
 		const modelIds = lmstudioModels.map((m) => m.modelId);
 		const currentSelected = store.lmstudio?.selectedModel;
-		const selectedModel = currentSelected && modelIds.includes(currentSelected)
-			? currentSelected
-			: modelIds[0];
+		const selectedModel =
+			currentSelected && modelIds.includes(currentSelected)
+				? currentSelected
+				: modelIds[0];
 
 		store.lmstudio = {
 			baseUrl: lmstudioBaseUrl,
@@ -603,7 +636,7 @@ export async function detectCustomProviderModels(
 	protocol: "openai-compatible" | "anthropic" = "openai-compatible",
 ): Promise<string[]> {
 	// Ensure the URL is absolute — strip any accidental markdown link syntax
-	let cleanedUrl = baseUrl.replace(/^\[/, "").replace(/\].*$/, "").trim();
+	const cleanedUrl = baseUrl.replace(/^\[/, "").replace(/\].*$/, "").trim();
 	if (!/^https?:\/\//i.test(cleanedUrl)) {
 		console.warn("[ModelStore] Invalid provider URL (not absolute):", baseUrl);
 		return [];
@@ -652,14 +685,20 @@ export async function detectCustomProviderModels(
 
 	// OpenAI-compatible: call /v1/models
 	// Route localhost URLs through server proxy (miniflare blocks browser→localhost)
-	const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(baseUrl);
+	const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(
+		baseUrl,
+	);
 	try {
 		let response: Response;
 		if (isLocalhost) {
 			response = await fetch("/api/detect-models", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ provider: "custom", baseUrl, ...(apiKey ? { apiKey } : {}) }),
+				body: JSON.stringify({
+					provider: "custom",
+					baseUrl,
+					...(apiKey ? { apiKey } : {}),
+				}),
 				signal: AbortSignal.timeout(8000),
 			});
 			if (response.ok) {
@@ -673,7 +712,7 @@ export async function detectCustomProviderModels(
 			"Content-Type": "application/json",
 		};
 		if (apiKey) {
-			headers["Authorization"] = `Bearer ${apiKey}`;
+			headers.Authorization = `Bearer ${apiKey}`;
 		}
 
 		const modelsUrl = baseUrl.endsWith("/v1")
@@ -700,12 +739,17 @@ export async function detectCustomProviderModels(
 		}
 		// Some providers return { models: [{ name: "model-name" }] }
 		if (data.models && Array.isArray(data.models)) {
-			return data.models.map((m: { name?: string; id?: string }) => m.name || m.id || "");
+			return data.models.map(
+				(m: { name?: string; id?: string }) => m.name || m.id || "",
+			);
 		}
 
 		return [];
 	} catch (error) {
-		console.warn("[ModelStore] Failed to detect models from custom provider:", error);
+		console.warn(
+			"[ModelStore] Failed to detect models from custom provider:",
+			error,
+		);
 		return [];
 	}
 }
@@ -713,7 +757,9 @@ export async function detectCustomProviderModels(
 /**
  * Add a custom provider to the store.
  */
-export function addCustomProvider(provider: Omit<CustomProvider, "id">): CustomProvider {
+export function addCustomProvider(
+	provider: Omit<CustomProvider, "id">,
+): CustomProvider {
 	const store = getModelStore();
 	const id = `custom-${Date.now()}`;
 	const newProvider: CustomProvider = { ...provider, id };
@@ -733,7 +779,10 @@ export function addCustomProvider(provider: Omit<CustomProvider, "id">): CustomP
 /**
  * Update a custom provider in the store.
  */
-export function updateCustomProvider(id: string, updates: Partial<CustomProvider>): void {
+export function updateCustomProvider(
+	id: string,
+	updates: Partial<CustomProvider>,
+): void {
 	const store = getModelStore();
 	const index = store.custom.findIndex((c) => c.id === id);
 	if (index === -1) return;
@@ -816,7 +865,10 @@ export function setRagKnowledgeBaseId(id: string | undefined): void {
 /** Get RAG embedding config */
 export function getRagEmbeddingConfig(): { model?: string; provider?: string } {
 	const store = getModelStore();
-	return { model: store.ragEmbeddingModel, provider: store.ragEmbeddingProvider };
+	return {
+		model: store.ragEmbeddingModel,
+		provider: store.ragEmbeddingProvider,
+	};
 }
 
 /** Set RAG embedding config */
@@ -850,7 +902,9 @@ export function migrateFromOldStorage(): boolean {
 			for (const [provider, config] of Object.entries(parsed)) {
 				const cfg = config as { apiKey?: string; baseUrl?: string };
 				if (provider !== "firecrawl" && provider !== "ollama" && cfg?.apiKey) {
-					const existing = store.custom.find((c) => c.name.toLowerCase() === provider);
+					const existing = store.custom.find(
+						(c) => c.name.toLowerCase() === provider,
+					);
 					if (!existing) {
 						store.custom.push({
 							id: `migrated-${provider}`,
@@ -859,7 +913,8 @@ export function migrateFromOldStorage(): boolean {
 							apiKey: cfg.apiKey,
 							models: [],
 							selectedModel: null,
-							protocol: provider === "anthropic" ? "anthropic" : "openai-compatible",
+							protocol:
+								provider === "anthropic" ? "anthropic" : "openai-compatible",
 						});
 						migrated = true;
 					}
@@ -894,7 +949,10 @@ export function migrateFromOldStorage(): boolean {
 			}
 		}
 	} catch (error) {
-		console.warn("[ModelStore] Migration from old custom models failed:", error);
+		console.warn(
+			"[ModelStore] Migration from old custom models failed:",
+			error,
+		);
 	}
 
 	if (migrated) {

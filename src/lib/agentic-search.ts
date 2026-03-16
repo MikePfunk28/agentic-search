@@ -83,11 +83,10 @@ export interface SearchMetrics {
 }
 
 export class AgenticSearchEngine {
-	private modelManager: ModelConfigManager;
 	private searchMetrics: SearchMetrics[] = [];
 
 	constructor() {
-		this.modelManager = new ModelConfigManager();
+		// ModelConfigManager available for future model routing integration
 	}
 
 	/**
@@ -1180,7 +1179,7 @@ Make queries specific and effective for the intent type.`;
 	private calculateFreshnessScore(publishedDate: string | number): number {
 		try {
 			const date = new Date(publishedDate);
-			if (isNaN(date.getTime())) return 0.5;
+			if (Number.isNaN(date.getTime())) return 0.5;
 
 			const now = Date.now();
 			const ageInDays = (now - date.getTime()) / (1000 * 60 * 60 * 24);

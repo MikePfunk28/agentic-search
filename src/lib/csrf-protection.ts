@@ -12,15 +12,12 @@
 export function generateCsrfToken(): string {
 	// Use crypto.randomUUID which provides 128-bit (16 bytes) UUID v4
 	// For enhanced security, we'll concatenate two UUIDs to get 256 bits (32 bytes)
-	if (typeof crypto !== "undefined" && crypto.randomUUID) {
+	if (crypto?.randomUUID) {
 		return `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
 	}
 
 	// Fallback for Node.js environments
-	if (
-		typeof globalThis.crypto !== "undefined" &&
-		globalThis.crypto.randomUUID
-	) {
+	if (globalThis.crypto?.randomUUID) {
 		return `${globalThis.crypto.randomUUID()}${globalThis.crypto.randomUUID()}`.replace(
 			/-/g,
 			"",
@@ -294,7 +291,7 @@ export function ensureCsrfToken(
 	const cookieName = cookieOptions?.name || DEFAULT_CSRF_COOKIE_OPTIONS.name;
 
 	// Check if CSRF cookie is already being set
-	if (cookieHeader && cookieHeader.includes(cookieName)) {
+	if (cookieHeader?.includes(cookieName)) {
 		return response;
 	}
 

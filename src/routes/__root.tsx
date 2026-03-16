@@ -1,19 +1,15 @@
-import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
 	createRootRouteWithContext,
 	HeadContent,
 	Scripts,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect, useRef } from "react";
 import Header from "../components/Header";
 
 import ConvexAuthProvider from "../integrations/convex/auth-provider";
 
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import { detectAndUpdateLocalModels, getModelStore } from "../lib/model-store";
-import StoreDevtools from "../lib/demo-store-devtools";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
@@ -69,16 +65,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
 		const store = getModelStore();
 		const hasConfiguredLocalPreference =
-			Boolean(store.ollama?.selectedModel) || Boolean(store.lmstudio?.selectedModel);
+			Boolean(store.ollama?.selectedModel) ||
+			Boolean(store.lmstudio?.selectedModel);
 		const shouldProbeLocalModels =
-			!store.activeProvider
-			|| store.activeProvider === "ollama"
-			|| store.activeProvider === "lmstudio"
-			|| hasConfiguredLocalPreference;
+			!store.activeProvider ||
+			store.activeProvider === "ollama" ||
+			store.activeProvider === "lmstudio" ||
+			hasConfiguredLocalPreference;
 
 		if (!shouldProbeLocalModels) {
-			console.log("[App] Skipping local model detection on startup; active provider is", store.activeProvider);
-			console.log("[App] Active provider:", store.activeProvider, "| Active model:", store.activeModel);
+			console.log(
+				"[App] Skipping local model detection on startup; active provider is",
+				store.activeProvider,
+			);
+			console.log(
+				"[App] Active provider:",
+				store.activeProvider,
+				"| Active model:",
+				store.activeModel,
+			);
 			return;
 		}
 
@@ -87,16 +92,32 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				const ollamaCount = store.ollama?.detectedModels.length ?? 0;
 				const lmstudioCount = store.lmstudio?.detectedModels.length ?? 0;
 				if (ollamaCount > 0) {
-					console.log("[App] Detected Ollama models:", store.ollama?.detectedModels);
+					console.log(
+						"[App] Detected Ollama models:",
+						store.ollama?.detectedModels,
+					);
 				}
 				if (lmstudioCount > 0) {
-					console.log("[App] Detected LM Studio models:", store.lmstudio?.detectedModels);
+					console.log(
+						"[App] Detected LM Studio models:",
+						store.lmstudio?.detectedModels,
+					);
 				}
-				console.log("[App] Active provider:", store.activeProvider, "| Active model:", store.activeModel);
-				console.log("[Security] API keys are stored securely in Convex, not in browser localStorage");
+				console.log(
+					"[App] Active provider:",
+					store.activeProvider,
+					"| Active model:",
+					store.activeModel,
+				);
+				console.log(
+					"[Security] API keys are stored securely in Convex, not in browser localStorage",
+				);
 			})
 			.catch((error) => {
-				console.error("[App] Failed to initialize model configurations:", error);
+				console.error(
+					"[App] Failed to initialize model configurations:",
+					error,
+				);
 			});
 	}, []);
 

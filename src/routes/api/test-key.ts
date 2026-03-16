@@ -4,7 +4,10 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { validateCsrfRequest, createCsrfErrorResponse } from "@/lib/csrf-protection";
+import {
+	createCsrfErrorResponse,
+	validateCsrfRequest,
+} from "@/lib/csrf-protection";
 
 export const Route = createFileRoute("/api/test-key")({
 	server: {
@@ -13,7 +16,10 @@ export const Route = createFileRoute("/api/test-key")({
 				// CSRF Protection
 				const validation = validateCsrfRequest(request);
 				if (!validation.valid) {
-					console.warn("[CSRF] Validation failed for /api/test-key:", validation.error);
+					console.warn(
+						"[CSRF] Validation failed for /api/test-key:",
+						validation.error,
+					);
 					return createCsrfErrorResponse(validation.error!);
 				}
 
@@ -23,13 +29,16 @@ export const Route = createFileRoute("/api/test-key")({
 					if (!configId || !provider) {
 						return new Response(
 							JSON.stringify({ error: "configId and provider are required" }),
-							{ status: 400, headers: { "Content-Type": "application/json" } }
+							{ status: 400, headers: { "Content-Type": "application/json" } },
 						);
 					}
 
 					// For now, return success (you would actually test the API key here)
 					// In production, make a minimal API call to verify the key
-					let testResult = { success: true, message: "API key format is valid" };
+					const testResult = {
+						success: true,
+						message: "API key format is valid",
+					};
 
 					// TODO: Implement actual API key testing based on provider
 					// Example for Anthropic:
@@ -50,10 +59,10 @@ export const Route = createFileRoute("/api/test-key")({
 					//   testResult.success = response.ok;
 					// }
 
-					return new Response(
-						JSON.stringify(testResult),
-						{ status: 200, headers: { "Content-Type": "application/json" } }
-					);
+					return new Response(JSON.stringify(testResult), {
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					});
 				} catch (error) {
 					console.error("API key test error:", error);
 					return new Response(
@@ -61,7 +70,7 @@ export const Route = createFileRoute("/api/test-key")({
 							success: false,
 							message: error instanceof Error ? error.message : "Test failed",
 						}),
-						{ status: 500, headers: { "Content-Type": "application/json" } }
+						{ status: 500, headers: { "Content-Type": "application/json" } },
 					);
 				}
 			},

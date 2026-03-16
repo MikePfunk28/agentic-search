@@ -189,7 +189,7 @@ export function maskApiKey(apiKey: string): string {
 
 	if (apiKey.length <= 11) {
 		// Too short to mask effectively
-		return "***" + apiKey.slice(-2);
+		return `***${apiKey.slice(-2)}`;
 	}
 
 	const prefix = apiKey.slice(0, 7); // "sk-ant-"

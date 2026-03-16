@@ -1,10 +1,8 @@
 import type {
 	CacheEntry,
-	CacheMiss,
 	CacheResult,
 	CacheStats,
 	CacheTier,
-	QueryVector,
 	SemanticCacheOptions,
 } from "./types";
 

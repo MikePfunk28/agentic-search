@@ -1,4 +1,3 @@
-import { remove } from "lodash";
 import type { ModelConfig } from "../model-config";
 import { type LanguageDetector, languageDetector } from "./detector";
 import { TranslationService, translationService } from "./service";
@@ -152,15 +151,16 @@ export class QueryTranslator {
 		];
 
 		for (const { regex, type } of patterns) {
-			let match;
 			regex.lastIndex = 0;
-			while ((match = regex.exec(query)) !== null) {
+			let match: RegExpExecArray | null = regex.exec(query);
+			while (match !== null) {
 				entities.push({
 					text: match[0],
 					type,
 					startIndex: match.index ?? 0,
 					endIndex: (match.index ?? 0) + match[0].length,
 				});
+				match = regex.exec(query);
 			}
 		}
 

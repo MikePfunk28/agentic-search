@@ -4,12 +4,14 @@
  */
 
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Check, X, AlertCircle, Key, RefreshCw } from "lucide-react";
+import { AlertCircle, Check, Key, RefreshCw, X } from "lucide-react";
 import { useState } from "react";
+import { api } from "../../convex/_generated/api";
 
 export function ApiKeyVerification() {
-	const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string }>>({});
+	const [testResults, setTestResults] = useState<
+		Record<string, { success: boolean; message: string }>
+	>({});
 	const [isTesting, setIsTesting] = useState(false);
 
 	// Get all API keys (masked) from Convex
@@ -32,7 +34,9 @@ export function ApiKeyVerification() {
 				...prev,
 				[configId]: {
 					success: result.success,
-					message: result.message || (result.success ? "API key is valid" : "API key test failed"),
+					message:
+						result.message ||
+						(result.success ? "API key is valid" : "API key test failed"),
 				},
 			}));
 		} catch (error) {
@@ -52,7 +56,9 @@ export function ApiKeyVerification() {
 		<div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
 			<div className="flex items-center gap-2 mb-4">
 				<Key className="w-5 h-5 text-cyan-400" />
-				<h3 className="text-lg font-semibold text-white">API Key Verification</h3>
+				<h3 className="text-lg font-semibold text-white">
+					API Key Verification
+				</h3>
 			</div>
 
 			{!apiKeys ? (
@@ -64,7 +70,9 @@ export function ApiKeyVerification() {
 				<div className="text-center py-8 text-slate-400">
 					<AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
 					<p>No API keys configured yet.</p>
-					<p className="text-sm mt-1">Configure API keys in Settings to enable cloud models.</p>
+					<p className="text-sm mt-1">
+						Configure API keys in Settings to enable cloud models.
+					</p>
 				</div>
 			) : (
 				<div className="space-y-3">
@@ -116,10 +124,16 @@ export function ApiKeyVerification() {
 											<X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
 										)}
 										<div>
-											<p className={`font-medium ${testResult.success ? "text-green-400" : "text-red-400"}`}>
-												{testResult.success ? "API Key Valid" : "API Key Invalid"}
+											<p
+												className={`font-medium ${testResult.success ? "text-green-400" : "text-red-400"}`}
+											>
+												{testResult.success
+													? "API Key Valid"
+													: "API Key Invalid"}
 											</p>
-											<p className="text-sm text-slate-300 mt-1">{testResult.message}</p>
+											<p className="text-sm text-slate-300 mt-1">
+												{testResult.message}
+											</p>
 										</div>
 									</div>
 								)}
@@ -135,8 +149,9 @@ export function ApiKeyVerification() {
 					<div className="text-sm">
 						<p className="font-medium text-blue-300 mb-1">Security Note</p>
 						<p className="text-slate-300">
-							API keys are stored securely in Convex with server-side encryption. They are never
-							exposed to the browser or included in client-side code.
+							API keys are stored securely in Convex with server-side
+							encryption. They are never exposed to the browser or included in
+							client-side code.
 						</p>
 					</div>
 				</div>

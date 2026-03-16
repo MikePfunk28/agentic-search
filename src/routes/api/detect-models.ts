@@ -36,10 +36,10 @@ export const Route = createFileRoute("/api/detect-models")({
 				try {
 					body = await request.json();
 				} catch {
-					return new Response(
-						JSON.stringify({ error: "Invalid JSON body" }),
-						{ status: 400, headers: { "Content-Type": "application/json" } },
-					);
+					return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+						status: 400,
+						headers: { "Content-Type": "application/json" },
+					});
 				}
 
 				const { provider, baseUrl, apiKey } = body;
@@ -56,18 +56,28 @@ export const Route = createFileRoute("/api/detect-models")({
 					await validateServerFetchUrlAsync(baseUrl);
 				} catch (err) {
 					return new Response(
-						JSON.stringify({ error: err instanceof Error ? err.message : "Invalid baseUrl" }),
+						JSON.stringify({
+							error: err instanceof Error ? err.message : "Invalid baseUrl",
+						}),
 						{ status: 403, headers: { "Content-Type": "application/json" } },
 					);
 				}
 
 				try {
 					// Skip localhost detection when running in Cloudflare worker (can't reach user's machine)
-					const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|::1)(:|\/|$)/i.test(baseUrl);
-					const isWorkerRuntime = typeof globalThis.caches !== "undefined" && typeof (globalThis as any).process === "undefined";
+					const isLocalhost =
+						/^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|::1)(:|\/|$)/i.test(
+							baseUrl,
+						);
+					const isWorkerRuntime =
+						typeof globalThis.caches !== "undefined" &&
+						typeof (globalThis as any).process === "undefined";
 					if (isLocalhost && isWorkerRuntime) {
 						return new Response(
-							JSON.stringify({ models: [], note: "Local provider detection unavailable from worker runtime" }),
+							JSON.stringify({
+								models: [],
+								note: "Local provider detection unavailable from worker runtime",
+							}),
 							{ status: 200, headers: { "Content-Type": "application/json" } },
 						);
 					}
@@ -87,7 +97,7 @@ export const Route = createFileRoute("/api/detect-models")({
 
 					const headers: Record<string, string> = {};
 					if (apiKey) {
-						headers["Authorization"] = `Bearer ${apiKey}`;
+						headers.Authorization = `Bearer ${apiKey}`;
 					}
 
 					const response = await fetch(modelsUrl, {
@@ -98,7 +108,10 @@ export const Route = createFileRoute("/api/detect-models")({
 
 					if (!response.ok) {
 						return new Response(
-							JSON.stringify({ models: [], error: `Provider returned ${response.status}` }),
+							JSON.stringify({
+								models: [],
+								error: `Provider returned ${response.status}`,
+							}),
 							{ status: 200, headers: { "Content-Type": "application/json" } },
 						);
 					}
@@ -108,7 +121,9 @@ export const Route = createFileRoute("/api/detect-models")({
 
 					if (provider === "ollama") {
 						// Ollama format: { models: [{ name: "model:tag" }] }
-						models = (data.models || []).map((m: any) => m.name || m.model || "");
+						models = (data.models || []).map(
+							(m: any) => m.name || m.model || "",
+						);
 					} else if (data.data && Array.isArray(data.data)) {
 						// OpenAI-compatible: { data: [{ id: "model-name" }] }
 						models = data.data.map((m: any) => m.id || "");
@@ -119,17 +134,21 @@ export const Route = createFileRoute("/api/detect-models")({
 
 					models = models.filter(Boolean);
 
-					return new Response(
-						JSON.stringify({ models }),
-						{ status: 200, headers: { "Content-Type": "application/json" } },
-					);
+					return new Response(JSON.stringify({ models }), {
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					});
 				} catch (error) {
-					const message = error instanceof Error ? error.message : "Unknown error";
-					console.error(`[DetectModels] Failed to detect ${provider} models:`, message);
-					return new Response(
-						JSON.stringify({ models: [], error: message }),
-						{ status: 200, headers: { "Content-Type": "application/json" } },
+					const message =
+						error instanceof Error ? error.message : "Unknown error";
+					console.error(
+						`[DetectModels] Failed to detect ${provider} models:`,
+						message,
 					);
+					return new Response(JSON.stringify({ models: [], error: message }), {
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					});
 				}
 			},
 		},

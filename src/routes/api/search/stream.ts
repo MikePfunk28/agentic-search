@@ -12,10 +12,7 @@ import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
 } from "@/lib/csrf-protection";
-import {
-	buildModelConfigFromClient,
-	ModelConfigManager,
-} from "@/lib/model-config";
+import { buildModelConfigFromClient } from "@/lib/model-config";
 import { researchStorage } from "@/lib/results-storage";
 import { getAvailableProviders } from "@/lib/search-providers";
 import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
@@ -92,10 +89,26 @@ function mergeSearchApiKeys(clientKeys?: {
 	brave?: string;
 }): { firecrawl?: string; tavily?: string; exa?: string; brave?: string } {
 	return {
-		firecrawl: clientKeys?.firecrawl || (typeof process !== "undefined" ? process.env?.FIRECRAWL_API_KEY : undefined),
-		tavily: clientKeys?.tavily || (typeof process !== "undefined" ? process.env?.TAVILY_API_KEY : undefined),
-		exa: clientKeys?.exa || (typeof process !== "undefined" ? process.env?.EXA_SEARCH_API_KEY : undefined),
-		brave: clientKeys?.brave || (typeof process !== "undefined" ? process.env?.BRAVE_SEARCH_API_KEY : undefined),
+		firecrawl:
+			clientKeys?.firecrawl ||
+			(typeof process !== "undefined"
+				? process.env?.FIRECRAWL_API_KEY
+				: undefined),
+		tavily:
+			clientKeys?.tavily ||
+			(typeof process !== "undefined"
+				? process.env?.TAVILY_API_KEY
+				: undefined),
+		exa:
+			clientKeys?.exa ||
+			(typeof process !== "undefined"
+				? process.env?.EXA_SEARCH_API_KEY
+				: undefined),
+		brave:
+			clientKeys?.brave ||
+			(typeof process !== "undefined"
+				? process.env?.BRAVE_SEARCH_API_KEY
+				: undefined),
 	};
 }
 
@@ -114,18 +127,18 @@ export const Route = createFileRoute("/api/search/stream")({
 				}
 
 				try {
-								const {
-									query,
-									scope,
-									modelConfig: clientModelConfig,
-									modelConfigs: clientModelConfigs,
-									searchApiKeys,
-									ragConfig,
-								} = await request.json();
-								const searchId = crypto.randomUUID();
+					const {
+						query,
+						scope,
+						modelConfig: clientModelConfig,
+						modelConfigs: clientModelConfigs,
+						searchApiKeys,
+						ragConfig,
+					} = await request.json();
+					const searchId = crypto.randomUUID();
 
-								// Merge client-sent API keys with server env keys (.dev.vars / dashboard)
-								const resolvedApiKeys = mergeSearchApiKeys(searchApiKeys);
+					// Merge client-sent API keys with server env keys (.dev.vars / dashboard)
+					const resolvedApiKeys = mergeSearchApiKeys(searchApiKeys);
 
 					// Create a streaming SSE response.
 					// The search runs in the same isolate and pushes events directly
@@ -134,39 +147,39 @@ export const Route = createFileRoute("/api/search/stream")({
 					let streamController!: ReadableStreamDefaultController;
 					let aborted = false;
 
-								const stream = new ReadableStream({
-									start(c) {
-										streamController = c;
-									},
-									cancel() {
-										aborted = true;
-										const session = streamSessions.get(searchId);
-										if (session) {
-											session.stopped = true;
-										}
-									},
-								});
+					const stream = new ReadableStream({
+						start(c) {
+							streamController = c;
+						},
+						cancel() {
+							aborted = true;
+							const session = streamSessions.get(searchId);
+							if (session) {
+								session.stopped = true;
+							}
+						},
+					});
 
-								streamSessions.set(searchId, { paused: false, stopped: false });
+					streamSessions.set(searchId, { paused: false, stopped: false });
 
-								// Register the event pusher for this searchId
-								const pushEvent = (data: any) => {
-									if (aborted) return;
+					// Register the event pusher for this searchId
+					const pushEvent = (data: any) => {
+						if (aborted) return;
 						try {
 							streamController.enqueue(
 								encoder.encode(`data: ${JSON.stringify(data)}\n\n`),
 							);
 						} catch {
-										aborted = true;
-									}
-								};
-								const session = streamSessions.get(searchId);
-								if (session) {
-									session.push = pushEvent;
-								}
+							aborted = true;
+						}
+					};
+					const session = streamSessions.get(searchId);
+					if (session) {
+						session.push = pushEvent;
+					}
 
-								// Send initial connected event
-								pushEvent({ type: "connected", searchId });
+					// Send initial connected event
+					pushEvent({ type: "connected", searchId });
 
 					// Start search — pushes events via the local sendStepUpdate /
 					// sendResults / sendError which use eventPushers map.
@@ -177,23 +190,23 @@ export const Route = createFileRoute("/api/search/stream")({
 						clientModelConfig,
 						clientModelConfigs,
 						resolvedApiKeys,
-								)
-									.then(() => {
-										streamSessions.delete(searchId);
-										try {
-											streamController.close();
-										} catch {}
+					)
+						.then(() => {
+							streamSessions.delete(searchId);
+							try {
+								streamController.close();
+							} catch {}
 						})
 						.catch((error) => {
 							console.error("Background search error:", error);
 							pushEvent({
-											type: "error",
-											message: error?.message ?? "Search failed",
-										});
-										streamSessions.delete(searchId);
-										try {
-											streamController.close();
-										} catch {}
+								type: "error",
+								message: error?.message ?? "Search failed",
+							});
+							streamSessions.delete(searchId);
+							try {
+								streamController.close();
+							} catch {}
 						});
 
 					// Keep the search promise alive after handler returns
@@ -291,11 +304,7 @@ async function executeSearchWithProgress(
 		// default Ollama config because it would try to reach localhost:11434 which
 		// may not be running and hangs the search.
 		let modelConfig = null;
-		if (
-			clientModelConfig &&
-			clientModelConfig.provider &&
-			clientModelConfig.model
-		) {
+		if (clientModelConfig?.provider && clientModelConfig.model) {
 			modelConfig = buildModelConfigFromClient(clientModelConfig);
 			console.log(
 				`[StreamSearch] Using client-provided model: ${clientModelConfig.provider}:${clientModelConfig.model}`,
@@ -395,7 +404,7 @@ async function executeSearchWithProgress(
 
 		// Build parallel model configs from the client-provided array
 		const parallelModelConfigs = (clientModelConfigs || [])
-			.filter((c: any) => c && c.provider && c.model)
+			.filter((c: any) => c?.provider && c.model)
 			.map((c: any) => buildModelConfigFromClient(c));
 
 		// Enable parallel execution when multiple models are active
@@ -422,20 +431,24 @@ async function executeSearchWithProgress(
 		}
 
 		// ── RAG Knowledge Base step ──────────────────────────────────────
-		const hasRag = ragConfig?.level && ragConfig.level !== "none" && ragConfig.chunks && ragConfig.chunks.length > 0;
+		const hasRag =
+			ragConfig?.level &&
+			ragConfig.level !== "none" &&
+			ragConfig.chunks &&
+			ragConfig.chunks.length > 0;
 		if (hasRag) {
 			sendStepUpdate(searchId, {
 				id: `${searchId}-rag`,
 				type: "source",
 				status: "completed",
 				title: "Knowledge Base Search",
-				description: `Found ${ragConfig!.chunks!.length} chunks from your knowledge base (${ragConfig!.level} mode)`,
+				description: `Found ${ragConfig?.chunks?.length} chunks from your knowledge base (${ragConfig?.level} mode)`,
 				timestamp: Date.now(),
 				metadata: {
 					source: "rag",
-					documentsFound: ragConfig!.chunks!.length,
-					ragLevel: ragConfig!.level,
-					ragLatencyMs: ragConfig!.latencyMs,
+					documentsFound: ragConfig?.chunks?.length,
+					ragLevel: ragConfig?.level,
+					ragLatencyMs: ragConfig?.latencyMs,
 				},
 			});
 		}
@@ -561,49 +574,63 @@ async function executeSearchWithProgress(
 			},
 		});
 
-				let storageId: string | undefined;
-				if (searchResult.results.length > 0) {
-					try {
-						const storageResult = await researchStorage.storeResults(
-							query,
-							searchResult.results,
-							`${modelConfig?.provider ?? "web-only"}:${modelConfig?.model ?? "none"}`,
-							{
-								addScore: searchResult.addMetrics.overallScore,
-								tokensUsed: searchResult.totalTokens,
-								executionTimeMs: searchResult.totalProcessingTime,
-							},
-						);
-						storageId = storageResult.id;
-					} catch (storageError) {
-						console.error(
-							"[StreamSearch] Failed to persist research storage entry:",
-							storageError,
-						);
-					}
-				}
+		let storageId: string | undefined;
+		if (searchResult.results.length > 0) {
+			try {
+				const storageResult = await researchStorage.storeResults(
+					query,
+					searchResult.results,
+					`${modelConfig?.provider ?? "web-only"}:${modelConfig?.model ?? "none"}`,
+					{
+						addScore: searchResult.addMetrics.overallScore,
+						tokensUsed: searchResult.totalTokens,
+						executionTimeMs: searchResult.totalProcessingTime,
+					},
+				);
+				storageId = storageResult.id;
+			} catch (storageError) {
+				console.error(
+					"[StreamSearch] Failed to persist research storage entry:",
+					storageError,
+				);
+			}
+		}
 
 		// log simple analytics for this search (fire-and-forget via Convex client)
 		try {
 			const { convexClient } = await import("@/lib/convex");
-			const { api: convexApi } = await import("../../../../convex/_generated/api");
+			const { api: convexApi } = await import(
+				"../../../../convex/_generated/api"
+			);
 			if (convexClient) {
-				await convexClient.mutation(convexApi.searchAnalytics.logSearchAnalytics, {
-					userId: "",
-					query,
-					providers: [...new Set(searchResult.results.map((r: any) => r.provider).filter(Boolean))],
-					resultCount: searchResult.results.length,
-					tokensUsed: searchResult.totalTokens,
-				});
+				await convexClient.mutation(
+					convexApi.searchAnalytics.logSearchAnalytics,
+					{
+						userId: "",
+						query,
+						providers: [
+							...new Set(
+								searchResult.results
+									.map((r: any) => r.provider)
+									.filter(Boolean),
+							),
+						],
+						resultCount: searchResult.results.length,
+						tokensUsed: searchResult.totalTokens,
+					},
+				);
 			}
 		} catch (analyticsErr) {
-			console.warn("[StreamSearch] Analytics logging failed (non-fatal):", analyticsErr);
+			console.warn(
+				"[StreamSearch] Analytics logging failed (non-fatal):",
+				analyticsErr,
+			);
 		}
 
 		// ── Merge RAG chunks into results ────────────────────────────────
 		const mergedResults = [...searchResult.results];
-		if (hasRag && ragConfig!.chunks) {
-			for (const [index, chunk] of ragConfig!.chunks.entries()) {
+		if (hasRag && ragConfig?.chunks) {
+			for (const [index, chunk] of (ragConfig?.chunks ?? []).entries()) {
 				mergedResults.push({
 					id: `rag-${searchId}-${index}`,
 					title: chunk.documentName || "Knowledge Base",
@@ -617,7 +644,9 @@ async function executeSearchWithProgress(
 				});
 			}
 			// Re-sort by relevance so RAG and web results interleave naturally
-			mergedResults.sort((a: any, b: any) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
+			mergedResults.sort(
+				(a: any, b: any) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0),
+			);
 		}
 
 		// Send final results
@@ -633,12 +662,14 @@ async function executeSearchWithProgress(
 			availableProviders,
 			usedFallbackCache,
 			storageId,
-			ragMetadata: hasRag ? {
-				level: ragConfig!.level,
-				chunkCount: ragConfig!.chunks!.length,
-				latencyMs: ragConfig!.latencyMs,
-				tokensUsed: ragConfig!.tokensUsed,
-			} : undefined,
+			ragMetadata: hasRag
+				? {
+						level: ragConfig?.level,
+						chunkCount: ragConfig?.chunks?.length,
+						latencyMs: ragConfig?.latencyMs,
+						tokensUsed: ragConfig?.tokensUsed,
+					}
+				: undefined,
 		});
 	} catch (error) {
 		const errMsg = error instanceof Error ? error.message : "Search failed";

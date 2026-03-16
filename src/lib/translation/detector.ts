@@ -833,7 +833,11 @@ export class LanguageDetector {
 
 		const cleanText = text.toLowerCase().trim();
 		const detectedSets = this.detectCharacterSets(cleanText);
-		const scores = this.calculateLanguageScores(cleanText, detectedSets, cleanText);
+		const scores = this.calculateLanguageScores(
+			cleanText,
+			detectedSets,
+			cleanText,
+		);
 
 		const sortedScores = Object.entries(scores).sort(([, a], [, b]) => b - a);
 
@@ -887,7 +891,11 @@ export class LanguageDetector {
 		for (const pattern of LANGUAGE_PATTERNS) {
 			let score = 0;
 
-			const charSetMatch = this.matchCharacterSets(charSets, pattern, originalText);
+			const charSetMatch = this.matchCharacterSets(
+				charSets,
+				pattern,
+				originalText,
+			);
 			score += charSetMatch * 40;
 
 			const wordMatches = words.filter((w) =>

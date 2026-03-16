@@ -11,9 +11,9 @@
  * arXiv:              Preprint papers via free Atom API (no key required)
  */
 
+import he from "he";
 import { calculateDomainAuthority } from "./domain-authority";
 import type { WebSearchResult } from "./types";
-import he from "he";
 
 // ---------------------------------------------------------------------------
 // DuckDuckGo HTML Search

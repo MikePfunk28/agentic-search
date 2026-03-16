@@ -15,8 +15,8 @@ import {
 	Zap,
 } from "lucide-react";
 import { useState } from "react";
-import type { OCRResult, SearchResult } from "../lib/types";
 import { useSpeechSynthesis } from "../hooks/useSpeech";
+import type { OCRResult, SearchResult } from "../lib/types";
 
 interface ResultsListProps {
 	results: SearchResult[];
@@ -29,7 +29,11 @@ interface ResultsListProps {
 		latencyMs?: number;
 		tokensUsed?: number;
 	};
-	onRateRag?: (rating: number, preferredSource: "rag" | "web" | "merged", feedback?: string) => void;
+	onRateRag?: (
+		rating: number,
+		preferredSource: "rag" | "web" | "merged",
+		feedback?: string,
+	) => void;
 }
 
 export function ResultsList({
@@ -141,7 +145,7 @@ export function ResultsList({
 			</div>
 
 			{/* RAG Rating Widget */}
-			{ragMetadata && ragMetadata.level && ragMetadata.level !== "none" && onRateRag && (
+			{ragMetadata?.level && ragMetadata.level !== "none" && onRateRag && (
 				<RagRatingWidget ragMetadata={ragMetadata} onRate={onRateRag} />
 			)}
 		</div>
@@ -150,7 +154,12 @@ export function ResultsList({
 
 function ResultCard({ result, rank }: { result: SearchResult; rank: number }) {
 	const hasHighScore = result.addScore && result.addScore > 0.7;
-	const { supported: ttsSupported, speaking, speak, stop } = useSpeechSynthesis();
+	const {
+		supported: ttsSupported,
+		speaking,
+		speak,
+		stop,
+	} = useSpeechSynthesis();
 
 	const handleReadAloud = () => {
 		if (speaking) {
@@ -207,7 +216,11 @@ function ResultCard({ result, rank }: { result: SearchResult; rank: number }) {
 								title={speaking ? "Stop reading" : "Read aloud"}
 								aria-label={speaking ? "Stop reading" : "Read aloud"}
 							>
-								{speaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+								{speaking ? (
+									<VolumeX className="w-4 h-4" />
+								) : (
+									<Volume2 className="w-4 h-4" />
+								)}
 							</button>
 						)}
 					</div>
@@ -268,11 +281,22 @@ function RagRatingWidget({
 	ragMetadata,
 	onRate,
 }: {
-	ragMetadata: { level?: string; chunkCount?: number; latencyMs?: number; tokensUsed?: number };
-	onRate: (rating: number, preferredSource: "rag" | "web" | "merged", feedback?: string) => void;
+	ragMetadata: {
+		level?: string;
+		chunkCount?: number;
+		latencyMs?: number;
+		tokensUsed?: number;
+	};
+	onRate: (
+		rating: number,
+		preferredSource: "rag" | "web" | "merged",
+		feedback?: string,
+	) => void;
 }) {
 	const [rating, setRating] = useState(0);
-	const [preferred, setPreferred] = useState<"rag" | "web" | "merged" | null>(null);
+	const [preferred, setPreferred] = useState<"rag" | "web" | "merged" | null>(
+		null,
+	);
 	const [submitted, setSubmitted] = useState(false);
 
 	const handleSubmit = () => {
@@ -286,7 +310,9 @@ function RagRatingWidget({
 		return (
 			<div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl text-center">
 				<ThumbsUp className="w-5 h-5 text-green-600 mx-auto mb-2" />
-				<p className="text-sm font-medium text-green-900">Thanks for your feedback!</p>
+				<p className="text-sm font-medium text-green-900">
+					Thanks for your feedback!
+				</p>
 				<p className="text-xs text-green-700 mt-1">
 					This helps improve RAG quality scoring.
 				</p>
@@ -299,7 +325,8 @@ function RagRatingWidget({
 			<div className="flex items-center gap-2">
 				<Star className="w-4 h-4 text-yellow-500" />
 				<h4 className="text-sm font-semibold text-gray-900">
-					Rate This Search ({ragMetadata.chunkCount} KB chunks blended, {ragMetadata.level} mode)
+					Rate This Search ({ragMetadata.chunkCount} KB chunks blended,{" "}
+					{ragMetadata.level} mode)
 				</h4>
 			</div>
 
@@ -318,7 +345,9 @@ function RagRatingWidget({
 						/>
 					</button>
 				))}
-				<span className="ml-2 text-xs text-gray-500">{rating > 0 ? `${rating}/5` : "Rate quality"}</span>
+				<span className="ml-2 text-xs text-gray-500">
+					{rating > 0 ? `${rating}/5` : "Rate quality"}
+				</span>
 			</div>
 
 			{/* Preferred source */}
@@ -335,7 +364,11 @@ function RagRatingWidget({
 								: "bg-white border-gray-300 text-gray-600 hover:border-gray-400"
 						}`}
 					>
-						{src === "rag" ? "Knowledge Base" : src === "web" ? "Web Search" : "Merged"}
+						{src === "rag"
+							? "Knowledge Base"
+							: src === "web"
+								? "Web Search"
+								: "Merged"}
 					</button>
 				))}
 			</div>

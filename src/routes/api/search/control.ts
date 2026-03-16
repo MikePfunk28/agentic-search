@@ -4,12 +4,15 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { validateCsrfRequest, createCsrfErrorResponse } from "@/lib/csrf-protection";
 import type { SearchScope } from "@/components/SearchProgressPanel";
 import {
+	createCsrfErrorResponse,
+	validateCsrfRequest,
+} from "@/lib/csrf-protection";
+import {
+	sendProgressUpdate,
 	setSearchPaused,
 	stopSearch as stopSearchHelper,
-	sendProgressUpdate,
 } from "./progress";
 
 // Store for search scopes and control state
@@ -49,129 +52,170 @@ export const Route = createFileRoute("/api/search/control")({
 				// CSRF Protection
 				const validation = validateCsrfRequest(request);
 				if (!validation.valid) {
-					console.warn("[CSRF] Validation failed for /api/search/control:", validation.error);
+					console.warn(
+						"[CSRF] Validation failed for /api/search/control:",
+						validation.error,
+					);
 					return createCsrfErrorResponse(validation.error!);
 				}
 
 				try {
-					const { searchId, action, scope, stepId, modifications } = await request.json();
+					const { searchId, action, scope, stepId, modifications } =
+						await request.json();
 
 					if (!searchId || !action) {
 						return new Response(
 							JSON.stringify({ error: "searchId and action are required" }),
-							{ status: 400, headers: { "Content-Type": "application/json" } }
+							{ status: 400, headers: { "Content-Type": "application/json" } },
 						);
 					}
 
-										switch (action) {
-											case "pause":
-												updateStreamSession(
-													searchId,
-													{ paused: true, stopped: false },
-													"paused",
-												);
-												setSearchPaused(searchId, true);
-												return new Response(
-													JSON.stringify({ success: true, action: "paused" }),
-								{ status: 200, headers: { "Content-Type": "application/json" } }
+					switch (action) {
+						case "pause":
+							updateStreamSession(
+								searchId,
+								{ paused: true, stopped: false },
+								"paused",
+							);
+							setSearchPaused(searchId, true);
+							return new Response(
+								JSON.stringify({ success: true, action: "paused" }),
+								{
+									status: 200,
+									headers: { "Content-Type": "application/json" },
+								},
 							);
 
-											case "resume":
-												updateStreamSession(
-													searchId,
-													{ paused: false, stopped: false },
-													"resumed",
-												);
-												setSearchPaused(searchId, false);
-												return new Response(
-													JSON.stringify({ success: true, action: "resumed" }),
-								{ status: 200, headers: { "Content-Type": "application/json" } }
+						case "resume":
+							updateStreamSession(
+								searchId,
+								{ paused: false, stopped: false },
+								"resumed",
+							);
+							setSearchPaused(searchId, false);
+							return new Response(
+								JSON.stringify({ success: true, action: "resumed" }),
+								{
+									status: 200,
+									headers: { "Content-Type": "application/json" },
+								},
 							);
 
-											case "stop":
-												updateStreamSession(
-													searchId,
-													{ paused: false, stopped: true },
-													"stopped",
-												);
-												stopSearchHelper(searchId);
-												searchScopes.delete(searchId);
-												stepApprovals.delete(searchId);
+						case "stop":
+							updateStreamSession(
+								searchId,
+								{ paused: false, stopped: true },
+								"stopped",
+							);
+							stopSearchHelper(searchId);
+							searchScopes.delete(searchId);
+							stepApprovals.delete(searchId);
 							stepModifications.delete(searchId);
 							return new Response(
 								JSON.stringify({ success: true, action: "stopped" }),
-								{ status: 200, headers: { "Content-Type": "application/json" } }
+								{
+									status: 200,
+									headers: { "Content-Type": "application/json" },
+								},
 							);
 
 						case "update_scope":
 							if (!scope) {
 								return new Response(
-									JSON.stringify({ error: "scope is required for update_scope action" }),
-									{ status: 400, headers: { "Content-Type": "application/json" } }
+									JSON.stringify({
+										error: "scope is required for update_scope action",
+									}),
+									{
+										status: 400,
+										headers: { "Content-Type": "application/json" },
+									},
 								);
 							}
 							searchScopes.set(searchId, scope);
 							sendProgressUpdate(searchId, {
 								type: "scope_updated",
-								scope
+								scope,
 							});
 							return new Response(
 								JSON.stringify({ success: true, action: "scope_updated" }),
-								{ status: 200, headers: { "Content-Type": "application/json" } }
+								{
+									status: 200,
+									headers: { "Content-Type": "application/json" },
+								},
 							);
 
 						case "approve_step":
 							if (!stepId) {
 								return new Response(
-									JSON.stringify({ error: "stepId is required for approve_step action" }),
-									{ status: 400, headers: { "Content-Type": "application/json" } }
+									JSON.stringify({
+										error: "stepId is required for approve_step action",
+									}),
+									{
+										status: 400,
+										headers: { "Content-Type": "application/json" },
+									},
 								);
 							}
 							if (!stepApprovals.has(searchId)) {
 								stepApprovals.set(searchId, new Set());
 							}
-							stepApprovals.get(searchId)!.add(stepId);
+							stepApprovals.get(searchId)?.add(stepId);
 							sendProgressUpdate(searchId, {
 								type: "step_approved",
-								stepId
+								stepId,
 							});
 							return new Response(
 								JSON.stringify({ success: true, action: "step_approved" }),
-								{ status: 200, headers: { "Content-Type": "application/json" } }
+								{
+									status: 200,
+									headers: { "Content-Type": "application/json" },
+								},
 							);
 
 						case "modify_step":
 							if (!stepId || !modifications) {
 								return new Response(
-									JSON.stringify({ error: "stepId and modifications are required for modify_step action" }),
-									{ status: 400, headers: { "Content-Type": "application/json" } }
+									JSON.stringify({
+										error:
+											"stepId and modifications are required for modify_step action",
+									}),
+									{
+										status: 400,
+										headers: { "Content-Type": "application/json" },
+									},
 								);
 							}
 							if (!stepModifications.has(searchId)) {
 								stepModifications.set(searchId, new Map());
 							}
-							stepModifications.get(searchId)!.set(stepId, modifications);
+							stepModifications.get(searchId)?.set(stepId, modifications);
 							sendProgressUpdate(searchId, {
 								type: "step_modified",
 								stepId,
-								modifications
+								modifications,
 							});
 							return new Response(
 								JSON.stringify({ success: true, action: "step_modified" }),
-								{ status: 200, headers: { "Content-Type": "application/json" } }
+								{
+									status: 200,
+									headers: { "Content-Type": "application/json" },
+								},
 							);
 
 						default:
 							return new Response(
 								JSON.stringify({ error: `Unknown action: ${action}` }),
-								{ status: 400, headers: { "Content-Type": "application/json" } }
+								{
+									status: 400,
+									headers: { "Content-Type": "application/json" },
+								},
 							);
 					}
 				} catch (error) {
 					console.error("Search control error:", error);
 					return new Response(
 						JSON.stringify({ error: "Failed to process control request" }),
-						{ status: 500, headers: { "Content-Type": "application/json" } }
+						{ status: 500, headers: { "Content-Type": "application/json" } },
 					);
 				}
 			},
@@ -196,6 +240,9 @@ export function isStepApproved(searchId: string, stepId: string): boolean {
 /**
  * Helper to get step modifications
  */
-export function getStepModifications(searchId: string, stepId: string): any | undefined {
+export function getStepModifications(
+	searchId: string,
+	stepId: string,
+): any | undefined {
 	return stepModifications.get(searchId)?.get(stepId);
 }

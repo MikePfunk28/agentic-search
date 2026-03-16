@@ -7,7 +7,6 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
-import { validateCsrfRequest, createCsrfErrorResponse } from "@/lib/csrf-protection";
 import type { SearchProgressStep } from "@/components/SearchProgressPanel";
 
 // ---------------------------------------------------------------------------
@@ -82,7 +81,9 @@ export const Route = createFileRoute("/api/search/progress")({
 						// Flush any buffered events that arrived before this SSE connected
 						const buffered = eventBuffers.get(searchId);
 						if (buffered && buffered.events.length > 0) {
-							console.log(`[SSE] Flushing ${buffered.events.length} buffered events for searchId=${searchId}`);
+							console.log(
+								`[SSE] Flushing ${buffered.events.length} buffered events for searchId=${searchId}`,
+							);
 							for (const raw of buffered.events) {
 								try {
 									controller.enqueue(encoder.encode(raw));
@@ -109,7 +110,7 @@ export const Route = createFileRoute("/api/search/progress")({
 					headers: {
 						"Content-Type": "text/event-stream",
 						"Cache-Control": "no-cache",
-						"Connection": "keep-alive",
+						Connection: "keep-alive",
 						"Access-Control-Allow-Origin": "*",
 					},
 				});
@@ -134,7 +135,10 @@ export function sendProgressUpdate(searchId: string, data: any) {
 			search.controller.enqueue(encoder.encode(encoded));
 			return true;
 		} catch (error) {
-			console.error(`[SSE] Failed to send progress update for ${searchId}:`, error);
+			console.error(
+				`[SSE] Failed to send progress update for ${searchId}:`,
+				error,
+			);
 			return false;
 		}
 	}
@@ -151,7 +155,9 @@ export function sendProgressUpdate(searchId: string, data: any) {
 		}, BUFFER_TTL_MS);
 	}
 	buf.events.push(encoded);
-	console.log(`[SSE] Buffered event for searchId=${searchId} (${buf.events.length} total)`);
+	console.log(
+		`[SSE] Buffered event for searchId=${searchId} (${buf.events.length} total)`,
+	);
 	return true;
 }
 
@@ -179,7 +185,7 @@ export function setSearchPaused(searchId: string, paused: boolean) {
 	if (search) {
 		search.isPaused = paused;
 		sendProgressUpdate(searchId, {
-			type: paused ? "paused" : "resumed"
+			type: paused ? "paused" : "resumed",
 		});
 	}
 }

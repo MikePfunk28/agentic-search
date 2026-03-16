@@ -10,11 +10,7 @@ export default function AppConvexProvider({
 }: {
 	children: React.ReactNode;
 }) {
-	return (
-		<ConvexProvider client={convexClient}>
-			{children}
-		</ConvexProvider>
-	);
+	return <ConvexProvider client={convexClient}>{children}</ConvexProvider>;
 }
 
 // Export query client for use with TanStack Query

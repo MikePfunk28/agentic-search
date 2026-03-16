@@ -26,8 +26,12 @@ const launchRequestSchema = z.object({
 	suffix: z.string().optional(),
 	hyperparameters: z
 		.object({
-			nEpochs: z.union([z.literal("auto"), z.number().int().positive()]).optional(),
-			batchSize: z.union([z.literal("auto"), z.number().int().positive()]).optional(),
+			nEpochs: z
+				.union([z.literal("auto"), z.number().int().positive()])
+				.optional(),
+			batchSize: z
+				.union([z.literal("auto"), z.number().int().positive()])
+				.optional(),
 			learningRateMultiplier: z
 				.union([z.literal("auto"), z.number().positive()])
 				.optional(),
@@ -45,10 +49,13 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 		handlers: {
 			GET: async ({ request }) => {
 				// Auth gate: require valid session unless auth is explicitly disabled (dev mode)
-				const authDisabled = typeof process !== "undefined" && process.env?.VITE_DISABLE_AUTH === "true";
+				const authDisabled =
+					typeof process !== "undefined" &&
+					process.env?.VITE_DISABLE_AUTH === "true";
 				if (!authDisabled) {
 					const cookie = request.headers.get("cookie") || "";
-					const hasSession = cookie.includes("__session") || cookie.includes("wos-session");
+					const hasSession =
+						cookie.includes("__session") || cookie.includes("wos-session");
 					if (!hasSession) {
 						return new Response(
 							JSON.stringify({ error: "Authentication required" }),
@@ -95,10 +102,13 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 			},
 			POST: async ({ request }) => {
 				// Auth gate: require valid session unless auth is explicitly disabled (dev mode)
-				const postAuthDisabled = typeof process !== "undefined" && process.env?.VITE_DISABLE_AUTH === "true";
+				const postAuthDisabled =
+					typeof process !== "undefined" &&
+					process.env?.VITE_DISABLE_AUTH === "true";
 				if (!postAuthDisabled) {
 					const cookie = request.headers.get("cookie") || "";
-					const hasSession = cookie.includes("__session") || cookie.includes("wos-session");
+					const hasSession =
+						cookie.includes("__session") || cookie.includes("wos-session");
 					if (!hasSession) {
 						return new Response(
 							JSON.stringify({ error: "Authentication required" }),
@@ -132,7 +142,7 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 						launchRequest.datasetName,
 						jsonl,
 					);
-					let job;
+					let job: Awaited<ReturnType<typeof createFineTuneJob>> | undefined;
 					try {
 						job = await createFineTuneJob(
 							{

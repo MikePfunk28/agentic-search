@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Settings as SettingsIcon, Keyboard } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ArrowLeft, Keyboard, Settings as SettingsIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { SettingsModal } from "../components/SettingsModal";
 
 export const Route = createFileRoute("/settings")({
@@ -38,7 +38,8 @@ function SettingsPage() {
 			<div
 				className="pointer-events-none absolute inset-0"
 				style={{
-					background: "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(6,182,212,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(139,92,246,0.06) 0%, transparent 50%)",
+					background:
+						"radial-gradient(ellipse 80% 50% at 50% -10%, rgba(6,182,212,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(139,92,246,0.06) 0%, transparent 50%)",
 				}}
 			/>
 
@@ -58,7 +59,9 @@ function SettingsPage() {
 						className="group flex items-center gap-2.5 text-slate-400 hover:text-cyan-400 transition-colors duration-200"
 					>
 						<ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
-						<span className="text-sm font-medium tracking-wide">Back to Search</span>
+						<span className="text-sm font-medium tracking-wide">
+							Back to Search
+						</span>
 					</button>
 
 					<div className="flex items-center gap-2 text-slate-600 text-xs">
@@ -83,7 +86,9 @@ function SettingsPage() {
 							<SettingsIcon className="w-5 h-5 text-cyan-400" />
 						</div>
 						<div>
-							<h1 className="text-2xl font-bold text-white tracking-tight">Settings</h1>
+							<h1 className="text-2xl font-bold text-white tracking-tight">
+								Settings
+							</h1>
 							<p className="text-sm text-slate-400 mt-0.5">
 								AI models, search providers, and API keys
 							</p>
@@ -107,8 +112,12 @@ function SettingsPage() {
 							<SettingsIcon className="w-7 h-7 text-slate-500" />
 						</div>
 						<div className="text-center">
-							<p className="text-slate-300 text-lg font-medium mb-1">Settings closed</p>
-							<p className="text-slate-500 text-sm">Reopen or head back to search</p>
+							<p className="text-slate-300 text-lg font-medium mb-1">
+								Settings closed
+							</p>
+							<p className="text-slate-500 text-sm">
+								Reopen or head back to search
+							</p>
 						</div>
 						<div className="flex items-center gap-3">
 							<button

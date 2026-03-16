@@ -9,7 +9,7 @@
  * Each level is additive — medium includes minimal, full includes both.
  */
 
-import type { RagChunk, RagLevel, RagRetrievalResult, RagSearchOptions } from "./types";
+import type { RagChunk, RagLevel } from "./types";
 
 // ── Token estimation ────────────────────────────────────────────────────
 
@@ -95,7 +95,8 @@ export function bm25Score(
 
 		// BM25 term score
 		const numerator = termFreq * (k1 + 1);
-		const denominator = termFreq + k1 * (1 - b + b * (docLength / avgDocLength));
+		const denominator =
+			termFreq + k1 * (1 - b + b * (docLength / avgDocLength));
 		score += numerator / denominator;
 	}
 
@@ -128,9 +129,16 @@ export function cosineSimilarity(a: number[], b: number[]): number {
  */
 export async function generateEmbedding(
 	text: string,
-	config: { provider: string; model: string; baseUrl?: string; apiKey?: string },
+	config: {
+		provider: string;
+		model: string;
+		baseUrl?: string;
+		apiKey?: string;
+	},
 ): Promise<number[]> {
-	const baseUrl = config.baseUrl || (config.provider === "ollama" ? "http://localhost:11434" : "");
+	const baseUrl =
+		config.baseUrl ||
+		(config.provider === "ollama" ? "http://localhost:11434" : "");
 
 	if (config.provider === "ollama") {
 		const resp = await fetch(`${baseUrl}/api/embeddings`, {
@@ -144,8 +152,10 @@ export async function generateEmbedding(
 	}
 
 	// OpenAI-compatible embedding endpoint
-	const headers: Record<string, string> = { "Content-Type": "application/json" };
-	if (config.apiKey) headers["Authorization"] = `Bearer ${config.apiKey}`;
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+	};
+	if (config.apiKey) headers.Authorization = `Bearer ${config.apiKey}`;
 
 	const resp = await fetch(`${baseUrl}/v1/embeddings`, {
 		method: "POST",
@@ -184,13 +194,18 @@ export function rankChunks(
 ): RagChunk[] {
 	if (chunks.length === 0) return [];
 
-	const avgDocLen = chunks.reduce((s, c) => s + c.text.split(/\s+/).length, 0) / chunks.length;
+	const avgDocLen =
+		chunks.reduce((s, c) => s + c.text.split(/\s+/).length, 0) / chunks.length;
 
 	const scored: RagChunk[] = chunks.map((chunk) => {
 		const bm25 = bm25Score(query, chunk.text, avgDocLen);
 
 		let vectorSim = 0;
-		if ((level === "medium" || level === "full") && queryEmbedding && chunk.embedding) {
+		if (
+			(level === "medium" || level === "full") &&
+			queryEmbedding &&
+			chunk.embedding
+		) {
 			vectorSim = cosineSimilarity(queryEmbedding, chunk.embedding);
 		}
 
@@ -198,10 +213,20 @@ export function rankChunks(
 		let domainBoost = 0;
 		if (level === "full" && chunk.domain) {
 			const queryLower = query.toLowerCase();
-			if (chunk.domain.toLowerCase().split(/\s+/).some((w) => queryLower.includes(w))) {
+			if (
+				chunk.domain
+					.toLowerCase()
+					.split(/\s+/)
+					.some((w) => queryLower.includes(w))
+			) {
 				domainBoost = 0.1;
 			}
-			if (chunk.topic && chunk.topic.toLowerCase().split(/\s+/).some((w) => queryLower.includes(w))) {
+			if (
+				chunk.topic
+					?.toLowerCase()
+					.split(/\s+/)
+					.some((w) => queryLower.includes(w))
+			) {
 				domainBoost += 0.15;
 			}
 		}
@@ -246,7 +271,9 @@ export function buildRagContext(chunks: RagChunk[], maxTokens = 2000): string {
 		const chunkTokens = estimateTokenCount(chunk.text);
 		if (tokens + chunkTokens > maxTokens) break;
 
-		parts.push(`[${chunk.documentName} — chunk ${chunk.chunkIndex + 1}${chunk.page ? `, p${chunk.page}` : ""}]\n${chunk.text}`);
+		parts.push(
+			`[${chunk.documentName} — chunk ${chunk.chunkIndex + 1}${chunk.page ? `, p${chunk.page}` : ""}]\n${chunk.text}`,
+		);
 		tokens += chunkTokens;
 	}
 

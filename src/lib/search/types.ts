@@ -1,7 +1,13 @@
 /** Paid providers require an API key; free providers always run */
 export type PaidSearchProviderType = "firecrawl" | "brave" | "tavily" | "exa";
-export type FreeSearchProviderType = "duckduckgo" | "wikipedia" | "semantic_scholar" | "arxiv";
-export type SearchProviderType = PaidSearchProviderType | FreeSearchProviderType;
+export type FreeSearchProviderType =
+	| "duckduckgo"
+	| "wikipedia"
+	| "semantic_scholar"
+	| "arxiv";
+export type SearchProviderType =
+	| PaidSearchProviderType
+	| FreeSearchProviderType;
 
 export interface WebSearchResult {
 	id: string;

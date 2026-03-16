@@ -75,7 +75,9 @@ async function openAIFetch(path: string, init: RequestInit): Promise<Response> {
 	return response;
 }
 
-function normalizeOpenAIRecord(record: any): { messages: Array<{ role: string; content: string }> } {
+function normalizeOpenAIRecord(record: any): {
+	messages: Array<{ role: string; content: string }>;
+} {
 	if (record?.messages && Array.isArray(record.messages)) {
 		return {
 			messages: record.messages.map((message: any) => ({

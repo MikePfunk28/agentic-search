@@ -261,7 +261,10 @@ function mapBraveResult(
 		publishedDate: result.page_age || result.age || undefined,
 		domainAuthority,
 		citationCount: 1,
-		rawScore: Math.min(1.0, (0.85 - index * 0.03) * 0.6 + domainAuthority * 0.4),
+		rawScore: Math.min(
+			1.0,
+			(0.85 - index * 0.03) * 0.6 + domainAuthority * 0.4,
+		),
 	};
 }
 
@@ -294,7 +297,10 @@ export async function searchFirecrawl(
 			markdown: result.markdown,
 			domainAuthority,
 			citationCount: 1,
-			rawScore: Math.min(1.0, (0.85 - index * 0.03) * 0.6 + domainAuthority * 0.4),
+			rawScore: Math.min(
+				1.0,
+				(0.85 - index * 0.03) * 0.6 + domainAuthority * 0.4,
+			),
 		};
 	});
 }

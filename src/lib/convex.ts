@@ -15,13 +15,14 @@ try {
 }
 if (!VITE_CONVEX_URL) {
 	VITE_CONVEX_URL =
-		(typeof process !== "undefined" ? process.env?.VITE_CONVEX_URL : undefined) ||
-		"";
+		(typeof process !== "undefined"
+			? process.env?.VITE_CONVEX_URL
+			: undefined) || "";
 }
 
 if (!VITE_CONVEX_URL) {
 	console.warn(
-		"[convex] VITE_CONVEX_URL is not set. Convex queries will fail until configured in environment variables or wrangler.toml."
+		"[convex] VITE_CONVEX_URL is not set. Convex queries will fail until configured in environment variables or wrangler.toml.",
 	);
 }
 

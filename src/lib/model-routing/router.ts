@@ -103,7 +103,7 @@ export class ModelRouter {
 			requiresTools?: boolean;
 			maxLatencyMs?: number;
 		},
-		analysis?: ComplexityAnalysis,
+		_analysis?: ComplexityAnalysis,
 	): Array<{ model: string; provider: string; config: ModelConfig }> {
 		const candidates: Array<{
 			model: string;
@@ -321,7 +321,7 @@ export class ModelRouter {
 	}
 
 	private createFallbackDecision(
-		query: string,
+		_query: string,
 		analysis: ComplexityAnalysis,
 	): RoutingDecision {
 		return {

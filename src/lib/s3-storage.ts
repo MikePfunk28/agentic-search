@@ -1,7 +1,7 @@
 /**
  * S3 Document Storage with IAM Role
  * Secure document upload/download using AWS SDK v3
- * 
+ *
  * Setup:
  * 1. Create IAM role with S3 permissions
  * 2. Set environment variables:
@@ -11,7 +11,12 @@
  *    - AWS_S3_BUCKET
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+	DeleteObjectCommand,
+	GetObjectCommand,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Initialize S3 client with IAM credentials from environment
@@ -43,12 +48,12 @@ export interface UploadResult {
 export async function uploadDocument(
 	file: Buffer | string,
 	filename: string,
-	contentType: string
+	contentType: string,
 ): Promise<UploadResult> {
 	// Validate credentials
 	if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
 		throw new Error(
-			"AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables."
+			"AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.",
 		);
 	}
 
@@ -97,7 +102,7 @@ export async function uploadDocument(
  */
 export async function getPresignedDownloadUrl(
 	key: string,
-	expiresIn: number = 3600
+	expiresIn: number = 3600,
 ): Promise<string> {
 	const command = new GetObjectCommand({
 		Bucket: BUCKET_NAME,
