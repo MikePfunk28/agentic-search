@@ -40,6 +40,9 @@ dist/*
 .env (2).local
 tanstack-router-8a5edab282632443.txt
 
+# Test coverage reports
+coverage/
+
 # Build output and deployment artifacts
 .output/
 .wrangler/

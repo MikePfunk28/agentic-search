@@ -100,7 +100,7 @@ describe("Cost Estimation", () => {
 });
 
 describe("Usage Tracker Client", () => {
-  it("should export trackApiUsage and trackSearch functions", async () => {
+  it.skipIf(!process.env.VITE_CONVEX_URL)("should export trackApiUsage and trackSearch functions", async () => {
     const tracker = await import("../../src/lib/usage-tracker");
     expect(tracker.trackApiUsage).toBeDefined();
     expect(tracker.trackSearch).toBeDefined();

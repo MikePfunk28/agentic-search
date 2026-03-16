@@ -691,6 +691,13 @@ export function AgenticChat({ onSearchResults }: AgenticChatProps) {
 					/>
 				)}
 
+				{/* Search Checkpoint Timeline */}
+				{dashboardData.checkpoints && dashboardData.checkpoints.length > 0 && (
+					<SearchCheckpointTimeline
+						checkpoints={dashboardData.checkpoints}
+						sessionId={dashboardData.checkpointSessionId}
+					/>
+				)}
 				{/* Search Results */}
 				{searchResults.length > 0 && (
 					<div className="bg-slate-800/30 rounded-lg p-4 border border-slate-600">
