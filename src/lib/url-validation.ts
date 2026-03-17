@@ -58,13 +58,7 @@ const KNOWN_CLOUD_HOSTS = new Set([
 ]);
 
 /** Localhost hostnames allowed for local model providers */
-const LOCAL_HOSTS = new Set([
-	"localhost",
-	"127.0.0.1",
-	"[::1]",
-	"::1",
-	"0.0.0.0",
-]);
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
 
 /** Cloud metadata endpoints that must always be blocked */
 const BLOCKED_HOSTS = new Set([
@@ -73,6 +67,13 @@ const BLOCKED_HOSTS = new Set([
 	"metadata.google",
 	"100.100.100.200",
 ]);
+
+function allowLocalHosts(): boolean {
+	return (
+		process.env.ALLOW_LOCAL_MODEL_HOSTS === "true" ||
+		process.env.NODE_ENV !== "production"
+	);
+}
 
 /**
  * Check if an IPv4 address string is a private/internal IP.
@@ -173,6 +174,11 @@ export function validateServerFetchUrl(url: string): void {
 
 	// Localhost — safe for local model providers
 	if (LOCAL_HOSTS.has(hostname)) {
+		if (!allowLocalHosts()) {
+			throw new Error(
+				"Blocked: localhost URLs are disabled outside local development",
+			);
+		}
 		return;
 	}
 
@@ -258,7 +264,7 @@ export async function validateServerFetchUrlAsync(url: string): Promise<void> {
 
 	// Skip DNS resolution for explicit localhost — these are intentionally
 	// allowed for local model providers (Ollama, LM Studio, etc.)
-	if (LOCAL_HOSTS.has(hostname)) {
+	if (LOCAL_HOSTS.has(hostname) && allowLocalHosts()) {
 		return;
 	}
 

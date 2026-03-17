@@ -1,7 +1,9 @@
 /**
  * Security Utilities for Input Sanitization and Validation
- * Addresses CodeQL security warnings for XSS, injection, and path traversal
+ * Uses DOMPurify (battle-tested library) instead of fragile regex patterns.
  */
+
+import DOMPurify from "isomorphic-dompurify";
 
 /**
  * Maximum allowed string lengths to prevent DoS
@@ -12,37 +14,8 @@ export const MAX_FILENAME_LENGTH = 255;
 export const MAX_URL_LENGTH = 2048;
 
 /**
- * Patterns for detecting malicious input.
- *
- * IMPORTANT: These are stored as **source strings** rather than RegExp objects
- * with the `/g` flag.  A global RegExp remembers `lastIndex` after `.test()`
- * calls, which causes subsequent `.test()` invocations on the *same* regex
- * instance to skip occurrences (GitHub issue #29 — "Incomplete multi-character
- * sanitization").  Building a fresh RegExp per call avoids this pitfall while
- * keeping the patterns centralised.
- */
-const MALICIOUS_PATTERN_SOURCES = {
-	xss: "(<script\\b[^>]*>|<\\/script>|javascript:|on\\w+\\s*=|data:text\\/html|vbscript:)",
-	sqlInjection:
-		"('|(\\\\')|;|(\\\\;)|(\\\\x00)|(\\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\\b))",
-	pathTraversal:
-		"(\\.\\.\\/|\\.\\.\\\\\\\\ |%2e%2e%2f|%2e%2e\\/|\\.\\.\\.%2f|%2e%2e%5c)",
-	commandInjection: "[;&|`$(){}\\[\\]]",
-	htmlInjection:
-		"<(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta|base|frame|frameset|applet)[^>]*>",
-};
-
-/** Build a **new** RegExp for every check so `lastIndex` is always 0. */
-function buildPattern(
-	key: keyof typeof MALICIOUS_PATTERN_SOURCES,
-	flags = "gi",
-): RegExp {
-	return new RegExp(MALICIOUS_PATTERN_SOURCES[key], flags);
-}
-
-/**
- * Sanitize user input string for safe processing
- * Removes control characters and potentially dangerous patterns
+ * Sanitize user input string for safe processing.
+ * Uses DOMPurify to strip HTML — no fragile regex.
  */
 export function sanitizeInput(
 	input: string,
@@ -74,22 +47,22 @@ export function sanitizeInput(
 	}
 
 	if (!allowHtml) {
-		// Remove HTML tags
-		sanitized = sanitized.replace(buildPattern("htmlInjection"), "");
-
-		// Remove script-related patterns
-		sanitized = sanitized
-			.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-			.replace(/javascript\s*:/gi, "")
-			.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "");
+		// DOMPurify strips ALL HTML tags — one line, battle-tested
+		sanitized = DOMPurify.sanitize(sanitized, { ALLOWED_TAGS: [] });
 	}
 
 	if (strict) {
-		// Additional strict sanitization for high-security contexts
+		// DOMPurify handles HTML; strict mode additionally removes
+		// characters that could be dangerous in shell/SQL contexts
 		sanitized = sanitized
-			.replace(/[<>]/g, "")
-			.replace(/["']/g, "")
-			.replace(/[;&|`]/g, "");
+			.replaceAll("<", "")
+			.replaceAll(">", "")
+			.replaceAll('"', "")
+			.replaceAll("'", "")
+			.replaceAll(";", "")
+			.replaceAll("&", "")
+			.replaceAll("|", "")
+			.replaceAll("`", "");
 	}
 
 	return sanitized.trim();
@@ -103,24 +76,53 @@ export function sanitizeFilename(filename: string): string {
 		throw new Error("Filename must be a string");
 	}
 
-	// Check for path traversal attempts
-	if (buildPattern("pathTraversal").test(filename)) {
+	// Check for path traversal attempts — simple string checks, no regex
+	if (
+		filename.includes("../") ||
+		filename.includes("..\\") ||
+		filename.toLowerCase().includes("%2e%2e%2f") ||
+		filename.toLowerCase().includes("%2e%2e%5c")
+	) {
 		throw new Error("Invalid filename: path traversal detected");
 	}
 
+	// Strip HTML via DOMPurify first
+	let sanitized = DOMPurify.sanitize(filename, { ALLOWED_TAGS: [] });
+
 	// Remove any path components
-	let sanitized = filename.replace(/^.*[\\/]/, "");
+	const lastSlash = Math.max(
+		sanitized.lastIndexOf("/"),
+		sanitized.lastIndexOf("\\"),
+	);
+	if (lastSlash >= 0) {
+		sanitized = sanitized.substring(lastSlash + 1);
+	}
 
 	// Remove null bytes
-	// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security sanitization of null bytes
-	sanitized = sanitized.replace(/\x00/g, "");
+	sanitized = sanitized.replaceAll("\x00", "");
 
-	// Remove or replace dangerous characters
-	sanitized = sanitized
-		// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security sanitization of control chars in filenames
-		.replace(/[<>:"|?*\x00-\x1f]/g, "_")
-		.replace(/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i, "_$1")
-		.replace(/[. ]+$/g, "");
+	// Replace dangerous filesystem characters with underscore
+	const dangerousChars = new Set(["<", ">", ":", '"', "|", "?", "*"]);
+	sanitized = Array.from(sanitized)
+		.map((ch) => {
+			if (dangerousChars.has(ch)) return "_";
+			// Control characters
+			if (ch.charCodeAt(0) < 0x20) return "_";
+			return ch;
+		})
+		.join("");
+
+	// Block Windows reserved device names
+	const reserved =
+		/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
+	if (reserved.test(sanitized)) {
+		sanitized = `_${sanitized}`;
+	}
+
+	// Remove trailing dots and spaces
+	while (sanitized.endsWith(".") || sanitized.endsWith(" ")) {
+		sanitized = sanitized.slice(0, -1);
+	}
 
 	// Limit length
 	if (sanitized.length > MAX_FILENAME_LENGTH) {
@@ -203,8 +205,9 @@ export function sanitizeApiKey(key: string | undefined): string | undefined {
 		throw new Error("Invalid API key length");
 	}
 
-	// Check for obviously malicious patterns
-	if (/[<>"']/.test(sanitized)) {
+	// Strip any HTML via DOMPurify
+	const cleaned = DOMPurify.sanitize(sanitized, { ALLOWED_TAGS: [] });
+	if (cleaned !== sanitized) {
 		throw new Error("Invalid characters in API key");
 	}
 
@@ -283,9 +286,13 @@ export function sanitizeModelConfig(config: unknown): {
 export function sanitizeSearchQuery(query: string): string {
 	const sanitized = sanitizeInput(query, { maxLength: MAX_QUERY_LENGTH });
 
-	// Check for injection attempts
-	if (buildPattern("commandInjection").test(sanitized)) {
-		console.warn("[Security] Potential command injection detected in query");
+	// Check for shell metacharacters — simple set lookup, no regex
+	const shellChars = new Set([";", "&", "|", "`", "$", "(", ")", "{", "}", "[", "]"]);
+	for (const ch of sanitized) {
+		if (shellChars.has(ch)) {
+			console.warn("[Security] Potential command injection detected in query");
+			break;
+		}
 	}
 
 	return sanitized;
@@ -361,18 +368,7 @@ export function checkRateLimit(
  * Escape JSON string values to prevent JSON injection
  */
 export function escapeJsonString(str: string): string {
-	return (
-		str
-			.replace(/\\/g, "\\\\")
-			.replace(/"/g, '\\"')
-			.replace(/\n/g, "\\n")
-			.replace(/\r/g, "\\r")
-			.replace(/\t/g, "\\t")
-			// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security sanitization of control chars in JSON
-			.replace(/[\x00-\x1F]/g, (char) => {
-				return `\\u${`0000${char.charCodeAt(0).toString(16)}`.slice(-4)}`;
-			})
-	);
+	return JSON.stringify(str).slice(1, -1);
 }
 
 /**

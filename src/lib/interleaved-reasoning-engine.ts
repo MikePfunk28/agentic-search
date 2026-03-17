@@ -14,7 +14,7 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { AdversarialDifferentialDiscriminator } from "./add-discriminator";
-import { sanitizeInput } from "@/lib/security/input-sanitization";
+import { sanitizeInput } from "./security/input-sanitization";
 import type { SearchResult } from "./types";
 
 export interface ReasoningStep {

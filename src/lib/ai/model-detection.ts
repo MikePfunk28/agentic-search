@@ -5,6 +5,81 @@
 
 import { ModelProvider } from "../model-config";
 
+const LOCAL_PROVIDER_HOSTS = new Set([
+	"localhost",
+	"127.0.0.1",
+	"0.0.0.0",
+	"::1",
+	"[::1]",
+]);
+
+function isLocalProviderUrl(rawUrl: string): boolean {
+	try {
+		return LOCAL_PROVIDER_HOSTS.has(new URL(rawUrl).hostname.toLowerCase());
+	} catch {
+		return false;
+	}
+}
+
+function isLocalBrowserSession(): boolean {
+	if (typeof window === "undefined") {
+		return false;
+	}
+
+	return LOCAL_PROVIDER_HOSTS.has(window.location.hostname.toLowerCase());
+}
+
+async function detectLocalModelsDirect(
+	provider: "ollama" | "lmstudio",
+	baseURL: string,
+): Promise<string[]> {
+	const cleanBase = baseURL.replace(/\/+$/, "");
+	const modelsUrl =
+		provider === "ollama"
+			? `${cleanBase.replace(/\/v1\/?$/, "")}/api/tags`
+			: cleanBase.endsWith("/v1")
+				? `${cleanBase}/models`
+				: cleanBase.endsWith("/v1/")
+					? `${cleanBase}models`
+					: `${cleanBase}/v1/models`;
+
+	const response = await fetch(modelsUrl, {
+		method: "GET",
+		signal: AbortSignal.timeout(5000),
+	});
+
+	if (!response.ok) {
+		console.log(
+			`[ModelDetection] Direct ${provider} detection failed:`,
+			response.status,
+		);
+		return [];
+	}
+
+	const data = await response.json();
+	if (provider === "ollama") {
+		return (data.models || []).map(
+			(model: OllamaModel) => model.name || model.model,
+		);
+	}
+
+	if (Array.isArray(data.data)) {
+		return data.data
+			.map((model: { id?: string }) => model.id || "")
+			.filter(Boolean);
+	}
+
+	if (Array.isArray(data.models)) {
+		return data.models
+			.map(
+				(model: { id?: string; name?: string }) => model.name || model.id || "",
+			)
+			.filter(Boolean);
+	}
+
+	return [];
+}
+
 export interface OllamaModel {
 	name: string;
 	model: string;
@@ -43,29 +118,41 @@ export async function detectOllamaModels(
 	try {
 		console.log("[ModelDetection] Checking Ollama at", baseURL);
 
-		// Use server-side API to avoid miniflare blocking localhost fetches
-		const response = await fetch("/api/detect-models", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ provider: "ollama", baseUrl: baseURL }),
-			signal: AbortSignal.timeout(10000),
-		});
+		let modelNames: string[] = [];
+		if (isLocalProviderUrl(baseURL)) {
+			if (!isLocalBrowserSession()) {
+				console.log(
+					"[ModelDetection] Skipping Ollama auto-detection outside a local browser session",
+				);
+				return [];
+			}
 
-		if (!response.ok) {
-			console.log(
-				"[ModelDetection] Ollama detection API failed:",
-				response.status,
-			);
-			return [];
+			modelNames = await detectLocalModelsDirect("ollama", baseURL);
+		} else {
+			// Use server-side API for non-local providers only.
+			const response = await fetch("/api/detect-models", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ provider: "ollama", baseUrl: baseURL }),
+				signal: AbortSignal.timeout(10000),
+			});
+
+			if (!response.ok) {
+				console.log(
+					"[ModelDetection] Ollama detection API failed:",
+					response.status,
+				);
+				return [];
+			}
+
+			const data = await response.json();
+
+			if (data.error) {
+				console.log("[ModelDetection] Ollama not available:", data.error);
+			}
+
+			modelNames = data.models || [];
 		}
-
-		const data = await response.json();
-
-		if (data.error) {
-			console.log("[ModelDetection] Ollama not available:", data.error);
-		}
-
-		const modelNames: string[] = data.models || [];
 		const models: DetectedModel[] = modelNames.map((name) => ({
 			provider: "ollama" as ModelProvider,
 			modelId: name,
@@ -99,29 +186,41 @@ export async function detectLMStudioModels(
 	try {
 		console.log("[ModelDetection] Checking LM Studio at", baseURL);
 
-		// Use server-side API to avoid miniflare blocking localhost fetches
-		const response = await fetch("/api/detect-models", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ provider: "lmstudio", baseUrl: baseURL }),
-			signal: AbortSignal.timeout(10000),
-		});
+		let modelNames: string[] = [];
+		if (isLocalProviderUrl(baseURL)) {
+			if (!isLocalBrowserSession()) {
+				console.log(
+					"[ModelDetection] Skipping LM Studio auto-detection outside a local browser session",
+				);
+				return [];
+			}
 
-		if (!response.ok) {
-			console.log(
-				"[ModelDetection] LM Studio detection API failed:",
-				response.status,
-			);
-			return [];
+			modelNames = await detectLocalModelsDirect("lmstudio", baseURL);
+		} else {
+			// Use server-side API for non-local providers only.
+			const response = await fetch("/api/detect-models", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ provider: "lmstudio", baseUrl: baseURL }),
+				signal: AbortSignal.timeout(10000),
+			});
+
+			if (!response.ok) {
+				console.log(
+					"[ModelDetection] LM Studio detection API failed:",
+					response.status,
+				);
+				return [];
+			}
+
+			const data = await response.json();
+
+			if (data.error) {
+				console.log("[ModelDetection] LM Studio not available:", data.error);
+			}
+
+			modelNames = data.models || [];
 		}
-
-		const data = await response.json();
-
-		if (data.error) {
-			console.log("[ModelDetection] LM Studio not available:", data.error);
-		}
-
-		const modelNames: string[] = data.models || [];
 		const models: DetectedModel[] = modelNames.map((name) => ({
 			provider: "lm_studio" as ModelProvider,
 			modelId: name,

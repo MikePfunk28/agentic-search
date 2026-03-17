@@ -164,14 +164,22 @@ export const storeChunks = mutation({
       ids.push(id);
     }
 
-    // Update KB stats
+    // Update KB stats — only increment documentCount if this is the first
+    // batch of chunks for this document (prevents inflation on retries).
+    const existingChunks = await ctx.db
+      .query("ragChunks")
+      .withIndex("by_document", (q) => q.eq("documentId", args.documentId))
+      .first();
+    const isNewDocument = existingChunks === null ||
+      ids.includes(existingChunks._id as string);
+
     const kb = await ctx.db.get(args.knowledgeBaseId);
     if (kb) {
       const totalTokens = args.chunks.reduce((s, c) => s + c.tokenCount, 0);
       await ctx.db.patch(args.knowledgeBaseId, {
         totalChunks: kb.totalChunks + args.chunks.length,
         totalTokens: kb.totalTokens + totalTokens,
-        documentCount: kb.documentCount + 1,
+        documentCount: isNewDocument ? kb.documentCount + 1 : kb.documentCount,
         updatedAt: now,
       });
     }

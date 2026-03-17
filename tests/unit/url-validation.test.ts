@@ -1,8 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   validateServerFetchUrl,
   validateServerFetchUrlAsync,
 } from "../../src/lib/url-validation";
+
+const originalNodeEnv = process.env.NODE_ENV;
+const originalAllowLocalModelHosts = process.env.ALLOW_LOCAL_MODEL_HOSTS;
+
+afterEach(() => {
+  process.env.NODE_ENV = originalNodeEnv;
+  process.env.ALLOW_LOCAL_MODEL_HOSTS = originalAllowLocalModelHosts;
+});
 
 describe("validateServerFetchUrl (sync)", () => {
   describe("allowed URLs", () => {
@@ -44,9 +52,6 @@ describe("validateServerFetchUrl (sync)", () => {
       ).not.toThrow();
       expect(() =>
         validateServerFetchUrl("http://127.0.0.1:1234/v1/models"),
-      ).not.toThrow();
-      expect(() =>
-        validateServerFetchUrl("http://0.0.0.0:8080/health"),
       ).not.toThrow();
     });
 
@@ -112,6 +117,21 @@ describe("validateServerFetchUrl (sync)", () => {
       );
       expect(() => validateServerFetchUrl("")).toThrow("Invalid URL format");
     });
+
+    it("should block localhost in production unless explicitly enabled", () => {
+      process.env.NODE_ENV = "production";
+      delete process.env.ALLOW_LOCAL_MODEL_HOSTS;
+
+      expect(() =>
+        validateServerFetchUrl("http://localhost:11434/api/tags"),
+      ).toThrow("localhost URLs are disabled");
+
+      process.env.ALLOW_LOCAL_MODEL_HOSTS = "true";
+
+      expect(() =>
+        validateServerFetchUrl("http://localhost:11434/api/tags"),
+      ).not.toThrow();
+    });
   });
 
   describe("edge cases", () => {
@@ -164,5 +184,14 @@ describe("validateServerFetchUrlAsync", () => {
     await expect(
       validateServerFetchUrlAsync("http://localhost:11434/api/tags"),
     ).resolves.toBeUndefined();
+  });
+
+  it("should reject localhost in production when not explicitly enabled", async () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.ALLOW_LOCAL_MODEL_HOSTS;
+
+    await expect(
+      validateServerFetchUrlAsync("http://localhost:11434/api/tags"),
+    ).rejects.toThrow("localhost URLs are disabled");
   });
 });

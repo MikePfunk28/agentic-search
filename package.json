@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --import ./instrument.server.mjs .\\node_modules\\vite\\bin\\vite.js dev --port 3000",
+    "dev": "vite dev --port 3000",
+    "dev:instrumented": "node --import ./instrument.server.mjs .\\node_modules\\vite\\bin\\vite.js dev --port 3000",
     "build": "vite build",
     "build:cloudflare": "vite build",
     "serve": "vite preview",
@@ -17,7 +18,7 @@
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "start": "node --import ./.output/server/instrument.server.mjs .output/server/index.mjs",
+    "start": "node .output/server/index.mjs",
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
     "deploy": "pnpm run build && wrangler deploy",
@@ -67,6 +68,7 @@
     "dotenv": "^17.2.3",
     "he": "^1.2.0",
     "highlight.js": "^11.11.1",
+    "isomorphic-dompurify": "^3.3.0",
     "lucide-react": "^0.544.0",
     "ollama": "^0.6.2",
     "ollama-ai-provider": "^1.2.0",
@@ -91,6 +93,7 @@
     "@tanstack/devtools-event-client": "^0.3.2",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
+    "@types/dompurify": "^3.2.0",
     "@types/he": "^1.2.3",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
@@ -107,6 +110,13 @@
     "wrangler": "^4.59.1"
   },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "workerd",
+      "esbuild",
+      "@esbuild/*",
+      "sharp",
+      "@sentry/cli"
+    ],
     "overrides": {
       "seroval": "1.5.0",
       "seroval-plugins": "1.5.0",

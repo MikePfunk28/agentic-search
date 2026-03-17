@@ -14,6 +14,14 @@ import {
 	createCsrfErrorResponse,
 } from "@/lib/csrf-protection";
 
+const LOCAL_PROVIDER_HOSTS = new Set([
+	"localhost",
+	"127.0.0.1",
+	"0.0.0.0",
+	"::1",
+	"[::1]",
+]);
+
 /** Parse cookies properly — match by cookie NAME, not substring of entire header */
 function parseCookies(request: Request): Map<string, string> {
 	const cookieHeader = request.headers.get("cookie") || "";
@@ -39,6 +47,14 @@ function hasAuthenticatedSession(request: Request): boolean {
 	const cookies = parseCookies(request);
 	const sessionToken = cookies.get("__session") || cookies.get("wos-session");
 	return typeof sessionToken === "string" && sessionToken.length > 0;
+}
+
+function isLocalProviderUrl(rawUrl: string): boolean {
+	try {
+		return LOCAL_PROVIDER_HOSTS.has(new URL(rawUrl).hostname.toLowerCase());
+	} catch {
+		return false;
+	}
 }
 
 export const Route = createFileRoute("/api/detect-models")({
@@ -77,6 +93,18 @@ export const Route = createFileRoute("/api/detect-models")({
 					);
 				}
 
+				// Worker runtimes cannot proxy requests to a user's localhost.
+				// Local browser sessions should detect local providers directly.
+				if (isLocalProviderUrl(baseUrl)) {
+					return new Response(
+						JSON.stringify({
+							models: [],
+							note: "Local provider detection is only available from a local browser session",
+						}),
+						{ status: 200, headers: { "Content-Type": "application/json" } },
+					);
+				}
+
 				// SSRF protection: block internal/metadata endpoints
 				try {
 					await validateServerFetchUrlAsync(baseUrl);
@@ -90,24 +118,6 @@ export const Route = createFileRoute("/api/detect-models")({
 				}
 
 				try {
-					// Skip localhost detection when running in Cloudflare worker (can't reach user's machine)
-					const isLocalhost =
-						/^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|::1)(:|\/|$)/i.test(
-							baseUrl,
-						);
-					const isWorkerRuntime =
-						typeof globalThis.caches !== "undefined" &&
-						typeof (globalThis as any).process === "undefined";
-					if (isLocalhost && isWorkerRuntime) {
-						return new Response(
-							JSON.stringify({
-								models: [],
-								note: "Local provider detection unavailable from worker runtime",
-							}),
-							{ status: 200, headers: { "Content-Type": "application/json" } },
-						);
-					}
-
 					let modelsUrl: string;
 					if (provider === "ollama") {
 						const clean = baseUrl.replace(/\/v1\/?$/, "");

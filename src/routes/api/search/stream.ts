@@ -190,6 +190,7 @@ export const Route = createFileRoute("/api/search/stream")({
 						clientModelConfig,
 						clientModelConfigs,
 						resolvedApiKeys,
+						ragConfig,
 					)
 						.then(() => {
 							streamSessions.delete(searchId);
