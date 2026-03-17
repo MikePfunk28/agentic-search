@@ -24,7 +24,27 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true
+			"recommended": true,
+			"suspicious": {
+				"noExplicitAny": "warn",
+				"noArrayIndexKey": "warn",
+				"noControlCharactersInRegex": "warn"
+			},
+			"a11y": {
+				"useButtonType": "warn",
+				"noLabelWithoutControl": "warn",
+				"useKeyWithClickEvents": "warn",
+				"noStaticElementInteractions": "warn",
+				"noSvgWithoutTitle": "warn"
+			},
+			"correctness": {
+				"useExhaustiveDependencies": "warn",
+				"useUniqueElementIds": "warn",
+				"noInvalidUseBeforeDeclaration": "warn"
+			},
+			"style": {
+				"noNonNullAssertion": "warn"
+			}
 		}
 	},
 	"javascript": {

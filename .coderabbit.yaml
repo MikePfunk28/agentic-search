@@ -1,0 +1,119 @@
+language: "en"
+tone_instructions: "Be concise, direct, and helpful. Focus on actionable feedback."
+
+early_access: false
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  auto_title_placeholder: "@coderabbitai"
+  review_status: true
+  commit_status: true
+  fail_commit_status: false
+  collapse_walkthrough: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: false
+  suggested_reviewers: true
+  auto_assign_reviewers: false
+  poem: false
+  
+  tools:
+    ast-grep:
+      essential_rules: true
+    biome:
+      enabled: true
+    languagetool:
+      enabled: true
+      file_patterns:
+        - "**/*.md"
+        - "**/*.txt"
+    markdownlint:
+      enabled: true
+    semgrep:
+      enabled: true
+      config_files:
+        - ".semgrep.yml"
+    shellcheck:
+      enabled: true
+
+  path_filters:
+    - "!**/dist/**"
+    - "!**/.output/**"
+    - "!**/node_modules/**"
+    - "!**/convex/_generated/**"
+    - "!**/*.min.js"
+    - "!**/*.map"
+
+  path_instructions:
+    - path: "src/**/*.ts"
+      instructions: |
+        Focus on:
+        - TypeScript type safety (avoid `any`, use proper types)
+        - Proper error handling with try/catch
+        - Async/await patterns
+        - Import organization
+        - Code modularity and single responsibility
+    
+    - path: "src/**/*.tsx"
+      instructions: |
+        Focus on:
+        - React best practices (hooks, component composition)
+        - Accessibility (ARIA attributes, keyboard navigation)
+        - Performance (useMemo, useCallback when needed)
+        - Proper prop typing
+        - Avoid inline styles when Tailwind classes exist
+    
+    - path: "src/routes/**/*"
+      instructions: |
+        Focus on:
+        - TanStack Start conventions
+        - CSRF protection for mutations
+        - Proper error responses
+        - Request validation
+    
+    - path: "convex/**/*"
+      instructions: |
+        Focus on:
+        - Convex best practices
+        - Proper schema definitions
+        - Efficient queries and indexes
+        - Security (authorization checks)
+    
+    - path: "tests/**/*"
+      instructions: |
+        Focus on:
+        - Test coverage
+        - Clear test descriptions
+        - Proper assertions
+        - Edge case testing
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: "auto"
+  issues:
+    scope: "auto"
+  jira:
+    project_keys: []
+  linear:
+    team_keys: []
+  pull_requests:
+    scope: "auto"
+
+code_generation:
+  docstrings:
+    language: "en"
+    path_instructions:
+      - path: "src/**/*.ts"
+        instructions: "Use JSDoc style with @param and @returns"
+      - path: "convex/**/*.ts"
+        instructions: "Include Convex-specific documentation patterns"

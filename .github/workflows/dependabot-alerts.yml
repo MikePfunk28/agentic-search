@@ -1,0 +1,32 @@
+name: Dependabot Alerts
+
+on:
+  dependabot_alert:
+    types: [created, fixed]
+
+# Principle of least privilege - only grant what's needed
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create_issue:
+    permissions:
+      issues: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open Dependabot issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const alert = context.payload.alert;
+            if (alert.state === 'open') {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🛡️ Dependabot alert: ${alert.dependency.name}`,
+                body: `A new Dependabot security alert has been created:\n\n- **Dependency**: ${alert.dependency.name}\n- **Severity**: ${alert.security_advisory.severity}\n- **Summary**: ${alert.security_advisory.summary}\n\n[View alert](${alert.html_url})`,
+                labels: ['security','dependabot'],
+              });
+            }

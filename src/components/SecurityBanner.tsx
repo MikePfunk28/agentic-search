@@ -1,9 +1,9 @@
 /**
  * SecurityBanner Component
- * Explains security advantages over traditional RAG systems
+ * Explains quality validation and security features
  */
 
-import { Shield, Lock, Eye, AlertTriangle } from "lucide-react";
+import { Eye, Lock, Shield } from "lucide-react";
 import { useState } from "react";
 
 export function SecurityBanner() {
@@ -16,41 +16,33 @@ export function SecurityBanner() {
 				<div className="flex-1">
 					<div className="flex items-center justify-between mb-2">
 						<h3 className="text-lg font-semibold text-green-100">
-							Safer Than Traditional RAG
+							Validated Search Results
 						</h3>
 						<button
 							type="button"
 							onClick={() => setIsExpanded(!isExpanded)}
 							className="text-sm text-green-300 hover:text-green-200 underline"
 						>
-							{isExpanded ? "Show less" : "Learn why"}
+							{isExpanded ? "Show less" : "Learn more"}
 						</button>
 					</div>
 
 					<p className="text-green-200 text-sm mb-3">
-						Agentic search with ADD (Adversarial Differential Discrimination)
-						quality scoring provides better protection against RAG exploitation
-						attacks.
+						Every result is quality-scored with ADD (Adversarial Differential
+						Discrimination) before being shown to you. Your keys stay local.
 					</p>
 
 					{isExpanded && (
 						<div className="space-y-3 mt-4 text-sm text-green-100">
 							<div className="flex gap-3">
-								<AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+								<Shield className="w-5 h-5 text-green-400 flex-shrink-0" />
 								<div>
-									<strong>Traditional RAG Vulnerability:</strong>
+									<strong>Quality Scoring:</strong>
 									<p className="text-green-200 mt-1">
-										RAG systems blindly embed malicious content into context,
-										allowing prompt injection attacks to manipulate outputs (
-										<a
-											href="https://youtu.be/O7BI4jfEFwA?si=pBcRqkYsl7Cbmyp3"
-											target="_blank"
-											rel="noopener noreferrer"
-											className="text-cyan-300 hover:text-cyan-200 underline"
-										>
-											watch exploit demo
-										</a>
-										).
+										Every search result is scored for relevance, diversity,
+										freshness, and source consistency before being included in
+										the response. Low-quality or suspicious content is flagged
+										and filtered automatically.
 									</p>
 								</div>
 							</div>
@@ -58,12 +50,11 @@ export function SecurityBanner() {
 							<div className="flex gap-3">
 								<Lock className="w-5 h-5 text-green-400 flex-shrink-0" />
 								<div>
-									<strong>Our ADD Protection:</strong>
+									<strong>Your Keys, Your Control:</strong>
 									<p className="text-green-200 mt-1">
-										Every search result is scored for quality, source
-										credibility, and content integrity BEFORE being included in
-										the AI's context. Suspicious patterns are flagged and
-										filtered.
+										API keys are stored locally in your browser and never sent
+										to our servers. All model calls go directly from your
+										browser to your chosen provider.
 									</p>
 								</div>
 							</div>
@@ -82,19 +73,14 @@ export function SecurityBanner() {
 
 							<div className="bg-green-900/30 border border-green-500/20 rounded-lg p-3 mt-3">
 								<p className="text-xs text-green-300 font-semibold mb-2">
-									👥 Human-in-the-Loop Protection:
+									Human-in-the-Loop Controls:
 								</p>
 								<ul className="text-xs text-green-200 space-y-1.5 ml-4">
-									<li>✓ View detailed ADD scores for every result</li>
-									<li>✓ Adjust quality thresholds in real-time</li>
-									<li>✓ Flag suspicious results for immediate removal</li>
-									<li>✓ Full reasoning transparency - see what AI sees</li>
+									<li>View detailed ADD scores for every result</li>
+									<li>Adjust quality thresholds in real-time</li>
+									<li>Flag suspicious results for immediate removal</li>
+									<li>Pause, resume, or modify search mid-flight</li>
 								</ul>
-								<div className="mt-3 p-2 bg-pink-500/20 border border-pink-400/30 rounded">
-									<p className="text-xs text-pink-200 font-medium">
-										📊 The ADD Quality Control panel appears after your first search, letting you inspect and filter results based on adversarial scoring.
-									</p>
-								</div>
 							</div>
 						</div>
 					)}

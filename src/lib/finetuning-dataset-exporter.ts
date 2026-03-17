@@ -1,8 +1,8 @@
 /**
  * Fine-Tuning Dataset Export System
- * 
+ *
  * Exports logged searches with user feedback for model fine-tuning.
- * 
+ *
  * Security features:
  * - PII detection and removal
  * - User consent tracking
@@ -10,6 +10,7 @@
  * - Secure export formats
  */
 
+import { isS3Configured, shouldUseS3, uploadDocument } from "./s3-storage";
 import type { SearchResult } from "./types";
 
 export interface TrainingExample {
@@ -224,7 +225,9 @@ export class FineTuningDatasetExporter {
 					if (this.config.includePIIFiltered) {
 						// Remove PII
 						const cleanedQuery = this.piiDetector.remove(ex.query).cleaned;
-						const cleanedResponse = this.piiDetector.remove(ex.response).cleaned;
+						const cleanedResponse = this.piiDetector.remove(
+							ex.response,
+						).cleaned;
 
 						return {
 							...ex,
@@ -290,7 +293,8 @@ export class FineTuningDatasetExporter {
 					messages: [
 						{
 							role: "system",
-							content: "You are a helpful search assistant that provides accurate, well-sourced answers.",
+							content:
+								"You are a helpful search assistant that provides accurate, well-sourced answers.",
 						},
 						{ role: "user", content: ex.query },
 						{ role: "assistant", content: ex.response },
@@ -461,6 +465,44 @@ export class FineTuningDatasetExporter {
 				feedbackRate,
 				uniqueQueries,
 			},
+		};
+	}
+
+	/**
+	 * Export dataset to S3 if configured and data exceeds size threshold.
+	 * Falls back to returning the data string if S3 is not available.
+	 */
+	async exportToS3(examples: TrainingExample[]): Promise<{
+		s3Url: string | null;
+		data: string;
+		stats: {
+			total: number;
+			exported: number;
+			filtered: number;
+			piiDetected: number;
+		};
+		warnings: string[];
+	}> {
+		const exportResult = await this.export(examples);
+
+		if (!isS3Configured() || !shouldUseS3(exportResult.data.length)) {
+			return { s3Url: null, ...exportResult };
+		}
+
+		const ext = this.config.format === "csv" ? "csv" : "jsonl";
+		const filename = `finetuning-dataset-${Date.now()}.${ext}`;
+		const contentType =
+			this.config.format === "csv" ? "text/csv" : "application/jsonl";
+
+		const upload = await uploadDocument(
+			exportResult.data,
+			filename,
+			contentType,
+		);
+
+		return {
+			s3Url: upload.url,
+			...exportResult,
 		};
 	}
 

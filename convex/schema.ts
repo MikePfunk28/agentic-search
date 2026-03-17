@@ -1,7 +1,19 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import { authTables } from '@convex-dev/auth/server'
 
 export default defineSchema({
+  // Auth tables (users, authAccounts, authSessions, authRateLimits, authRefreshTokens, authVerificationCodes)
+  ...authTables,
+  // Custom users table (extends the default from authTables)
+  users: defineTable({
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+  }).index("email", ["email"]),
+
   // OCR Results (compressed documents)
   ocrResults: defineTable({
     documentUrl: v.string(),
@@ -141,6 +153,18 @@ export default defineSchema({
     .index("by_user", ["userId"]),
 
   // Document Storage (Convex + S3 hybrid)
+  // Search analytics for queries executed by users
+  searchAnalytics: defineTable({
+    userId: v.string(),
+    query: v.string(),
+    providers: v.array(v.string()), // which providers returned results
+    resultCount: v.number(),
+    tokensUsed: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_query", ["query"]),
+
   documents: defineTable({
     userId: v.string(),
 
@@ -330,6 +354,7 @@ export default defineSchema({
     userId: v.string(),
     name: v.string(),
     description: v.optional(v.string()),
+    provider: v.optional(v.union(v.literal("openai"))),
     format: v.union(
       v.literal("openai_jsonl"),
       v.literal("anthropic_jsonl"),
@@ -337,11 +362,24 @@ export default defineSchema({
     ),
     eventCount: v.number(),
     exportedAt: v.number(),
+    launchedAt: v.optional(v.number()),
+    baseModel: v.optional(v.string()),
+    suffix: v.optional(v.string()),
+    jobId: v.optional(v.string()),
+    trainingFileId: v.optional(v.string()),
+    validationFileId: v.optional(v.string()),
+    status: v.optional(v.string()),
+    fineTunedModel: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+    lastCheckedAt: v.optional(v.number()),
     s3Url: v.optional(v.string()), // S3 URL for exported dataset
     metadata: v.optional(v.object({
       avgQuality: v.optional(v.number()),
       totalTokens: v.optional(v.number()),
       modelDistribution: v.optional(v.any()),
+      sourceBreakdown: v.optional(v.any()),
+      approvedSearchCount: v.optional(v.number()),
+      usageEventCount: v.optional(v.number()),
     })),
   })
     .index("by_user", ["userId"])
@@ -365,6 +403,8 @@ export default defineSchema({
     tokensUsed: v.number(),
     quality: v.optional(v.number()), // ADD discriminator score
     userApproved: v.optional(v.boolean()), // Did user approve results?
+    userRating: v.optional(v.number()), // Optional 1-5 rating for reinforcement data
+    feedback: v.optional(v.string()), // Free-form user feedback for training
     userModifications: v.optional(v.any()), // What did user change?
     createdAt: v.number(),
   })
@@ -420,6 +460,200 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_search", ["searchHistoryId"])
     .index("by_search_step", ["searchHistoryId", "stepNumber"]),
+
+  // External API Usage Tracking (Firecrawl, Tavily, Brave, Exa, LlamaParse, DeepSeek OCR, PaddleOCR, etc.)
+  externalApiUsage: defineTable({
+    userId: v.string(),
+    provider: v.string(), // "firecrawl", "tavily", "brave", "exa", "llamaparse", "deepseek_ocr", "paddleocr", "openai", "anthropic", "google"
+    endpoint: v.string(), // specific API endpoint called
+    tokensUsed: v.optional(v.number()),
+    requestCount: v.number(), // number of API calls in this event
+    responseTimeMs: v.number(),
+    success: v.boolean(),
+    costEstimate: v.optional(v.number()), // estimated cost in USD
+    metadata: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_provider", ["provider"])
+    .index("by_user_provider", ["userId", "provider"])
+    .index("by_created", ["createdAt"])
+    .index("by_user_created", ["userId", "createdAt"]),
+
+  // ── RAG Pipeline ────────────────────────────────────────────────────
+
+  // RAG Knowledge Bases (user-scoped collections of documents)
+  ragKnowledgeBases: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    description: v.optional(v.string()),
+    ragLevel: v.union(
+      v.literal("minimal"),   // BM25 text search only
+      v.literal("medium"),    // + vector embeddings via local model
+      v.literal("full"),      // + web crawl + knowledge graph
+    ),
+    documentCount: v.number(),
+    totalChunks: v.number(),
+    totalTokens: v.number(),
+    embeddingModel: v.optional(v.string()), // e.g. "nomic-embed-text"
+    embeddingProvider: v.optional(v.string()), // "ollama" | "openai" | "local"
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_active", ["userId", "isActive"]),
+
+  // RAG Document Chunks (searchable text segments)
+  ragChunks: defineTable({
+    userId: v.string(),
+    knowledgeBaseId: v.id("ragKnowledgeBases"),
+    documentId: v.id("documents"),
+    text: v.string(),
+    chunkIndex: v.number(),
+    tokenCount: v.number(),
+    page: v.optional(v.number()),
+    // Embedding stored as array of floats (for medium/full RAG)
+    embedding: v.optional(v.array(v.number())),
+    // Knowledge boundary metadata (for full RAG)
+    domain: v.optional(v.string()),
+    topic: v.optional(v.string()),
+    relatedChunkIds: v.optional(v.array(v.string())),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_knowledge_base", ["knowledgeBaseId"])
+    .index("by_document", ["documentId"])
+    .searchIndex("search_text", {
+      searchField: "text",
+      filterFields: ["userId", "knowledgeBaseId"],
+    }),
+
+  // RAG Crawl Jobs (for full RAG — web crawl pipeline)
+  ragCrawlJobs: defineTable({
+    userId: v.string(),
+    knowledgeBaseId: v.id("ragKnowledgeBases"),
+    seedUrl: v.string(),
+    canonicalUrl: v.optional(v.string()),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("crawling"),
+      v.literal("indexing"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    depth: v.number(), // how many links deep to follow
+    maxPages: v.number(),
+    pagesCrawled: v.number(),
+    chunksCreated: v.number(),
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_knowledge_base", ["knowledgeBaseId"])
+    .index("by_status", ["status"]),
+
+  // RAG Analytics — tracks how RAG results perform vs. web-only
+  ragAnalytics: defineTable({
+    userId: v.string(),
+    searchHistoryId: v.optional(v.id("searchHistory")),
+    query: v.string(),
+    ragLevel: v.union(
+      v.literal("none"),      // web search only (baseline)
+      v.literal("minimal"),
+      v.literal("medium"),
+      v.literal("full"),
+    ),
+    // Result quality metrics
+    ragResultCount: v.number(),
+    webResultCount: v.number(),
+    mergedResultCount: v.number(),
+    addScoreRag: v.optional(v.number()),  // ADD score for RAG-sourced results
+    addScoreWeb: v.optional(v.number()),  // ADD score for web-sourced results
+    addScoreMerged: v.number(),           // ADD score for final merged set
+    // Performance
+    ragLatencyMs: v.number(),
+    webLatencyMs: v.number(),
+    totalLatencyMs: v.number(),
+    ragTokensUsed: v.number(),
+    // User feedback
+    userRating: v.optional(v.number()), // 1-5
+    userPreferredSource: v.optional(v.union(
+      v.literal("rag"),
+      v.literal("web"),
+      v.literal("merged"),
+    )),
+    feedback: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_rag_level", ["ragLevel"])
+    .index("by_created", ["createdAt"])
+    .index("by_user_created", ["userId", "createdAt"]),
+
+  // ── Knowledge Graph ────────────────────────────────────────────────────
+
+  // Knowledge Graph Entities
+  kgEntities: defineTable({
+    userId: v.string(),
+    text: v.string(),
+    type: v.union(
+      v.literal("person"),
+      v.literal("organization"),
+      v.literal("location"),
+      v.literal("concept"),
+      v.literal("date"),
+      v.literal("product"),
+    ),
+    normalized: v.string(),
+    confidence: v.number(),
+    source: v.object({
+      type: v.union(
+        v.literal("query"),
+        v.literal("document"),
+        v.literal("user"),
+        v.literal("inferred"),
+      ),
+      reference: v.optional(v.string()),
+      position: v.optional(v.object({
+        start: v.number(),
+        end: v.number(),
+      })),
+    }),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_type", ["userId", "type"])
+    .index("by_user_normalized", ["userId", "normalized"])
+    .index("by_created", ["createdAt"]),
+
+  // Knowledge Graph Relationships
+  kgRelationships: defineTable({
+    userId: v.string(),
+    fromEntityId: v.id("kgEntities"),
+    toEntityId: v.id("kgEntities"),
+    type: v.union(
+      v.literal("works_for"),
+      v.literal("located_in"),
+      v.literal("related_to"),
+      v.literal("part_of"),
+      v.literal("created_by"),
+      v.literal("owns"),
+      v.literal("knows"),
+      v.literal("uses"),
+    ),
+    confidence: v.number(),
+    evidence: v.optional(v.array(v.string())),
+    weight: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_from", ["fromEntityId"])
+    .index("by_to", ["toEntityId"])
+    .index("by_user_type", ["userId", "type"])
+    .index("by_from_to", ["fromEntityId", "toEntityId"]),
 })
 
 

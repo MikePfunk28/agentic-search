@@ -1,52 +1,78 @@
-import { useState } from "react";
 import { useQuery } from "convex/react";
+import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { useAppAuth } from "../hooks/useAppAuth";
+import { AuthRequiredState } from "./AuthRequiredState";
 
 interface SearchComparisonDashboardProps {
 	searchIds?: [Id<"searchHistory">, Id<"searchHistory">];
 }
 
-export default function SearchComparisonDashboard({ searchIds }: SearchComparisonDashboardProps) {
+export default function SearchComparisonDashboard({
+	searchIds,
+}: SearchComparisonDashboardProps) {
+	const { isAuthenticated, isLoading } = useAppAuth();
 	const [leftSearchId, setLeftSearchId] = useState<Id<"searchHistory"> | null>(
 		searchIds?.[0] || null,
 	);
-	const [rightSearchId, setRightSearchId] = useState<Id<"searchHistory"> | null>(
-		searchIds?.[1] || null,
-	);
+	const [rightSearchId, setRightSearchId] =
+		useState<Id<"searchHistory"> | null>(searchIds?.[1] || null);
 
-	const recentSearches = useQuery(api.searchHistory.listSearchHistory, {
-		limit: 20,
-		offset: 0,
-	});
+	const recentSearches = useQuery(
+		api.searchHistory.listSearchHistory,
+		isAuthenticated ? { limit: 20, offset: 0 } : "skip",
+	);
 
 	const leftSearch = useQuery(
 		api.searchHistory.getSearch,
-		leftSearchId ? { searchId: leftSearchId } : "skip",
+		isAuthenticated && leftSearchId ? { searchId: leftSearchId } : "skip",
 	);
 
 	const rightSearch = useQuery(
 		api.searchHistory.getSearch,
-		rightSearchId ? { searchId: rightSearchId } : "skip",
+		isAuthenticated && rightSearchId ? { searchId: rightSearchId } : "skip",
 	);
+
+	if (isLoading) {
+		return <div className="p-8 text-gray-500">Loading comparison dashboard...</div>;
+	}
+
+	if (!isAuthenticated) {
+		return (
+			<AuthRequiredState
+				title="Sign in to compare searches"
+				description="Search comparison uses your synced history, so it needs an authenticated session."
+			/>
+		);
+	}
+
+	const getSearchDate = (search: {
+		createdAt?: number;
+		_creationTime: number;
+	}) => new Date(search.createdAt ?? search._creationTime).toLocaleDateString();
 
 	return (
 		<div className="search-comparison-dashboard">
 			<div className="dashboard-header">
 				<h2>Search Comparison Dashboard</h2>
-				<p>Compare searches side-by-side for quality and performance analysis.</p>
+				<p>
+					Compare searches side-by-side for quality and performance analysis.
+				</p>
 			</div>
 
 			<div className="selection-controls">
 				<select
 					value={leftSearchId || ""}
-					onChange={(e) => setLeftSearchId(e.target.value as Id<"searchHistory">)}
+					onChange={(e) =>
+						setLeftSearchId(e.target.value as Id<"searchHistory">)
+					}
 					className="search-select"
 				>
 					<option value="">Select first search...</option>
 					{recentSearches?.map((search) => (
 						<option key={search._id} value={search._id}>
-							{search.query} - {new Date(search.timestamp).toLocaleDateString()}
+							{search.query} - {getSearchDate(search)}
 						</option>
 					))}
 				</select>
@@ -55,13 +81,15 @@ export default function SearchComparisonDashboard({ searchIds }: SearchCompariso
 
 				<select
 					value={rightSearchId || ""}
-					onChange={(e) => setRightSearchId(e.target.value as Id<"searchHistory">)}
+					onChange={(e) =>
+						setRightSearchId(e.target.value as Id<"searchHistory">)
+					}
 					className="search-select"
 				>
 					<option value="">Select second search...</option>
 					{recentSearches?.map((search) => (
 						<option key={search._id} value={search._id}>
-							{search.query} - {new Date(search.timestamp).toLocaleDateString()}
+							{search.query} - {getSearchDate(search)}
 						</option>
 					))}
 				</select>
@@ -72,11 +100,22 @@ export default function SearchComparisonDashboard({ searchIds }: SearchCompariso
 					<h3>Search 1</h3>
 					{leftSearch ? (
 						<div>
-							<p><strong>Query:</strong> {leftSearch.query}</p>
-							<p><strong>Quality:</strong> {leftSearch.quality.toFixed(3)}</p>
-							<p><strong>Results:</strong> {leftSearch.results.length}</p>
-							<p><strong>Time:</strong> {(leftSearch.executionTimeMs / 1000).toFixed(2)}s</p>
-							<p><strong>Tokens:</strong> {leftSearch.tokensUsed}</p>
+							<p>
+								<strong>Query:</strong> {leftSearch.query}
+							</p>
+							<p>
+								<strong>Quality:</strong> {(leftSearch.quality ?? 0).toFixed(3)}
+							</p>
+							<p>
+								<strong>Results:</strong> {leftSearch.results.length}
+							</p>
+							<p>
+								<strong>Time:</strong>{" "}
+								{(leftSearch.executionTimeMs / 1000).toFixed(2)}s
+							</p>
+							<p>
+								<strong>Tokens:</strong> {leftSearch.tokensUsed}
+							</p>
 						</div>
 					) : (
 						<p>Select a search</p>
@@ -86,11 +125,22 @@ export default function SearchComparisonDashboard({ searchIds }: SearchCompariso
 					<h3>Search 2</h3>
 					{rightSearch ? (
 						<div>
-							<p><strong>Query:</strong> {rightSearch.query}</p>
-							<p><strong>Quality:</strong> {rightSearch.quality.toFixed(3)}</p>
-							<p><strong>Results:</strong> {rightSearch.results.length}</p>
-							<p><strong>Time:</strong> {(rightSearch.executionTimeMs / 1000).toFixed(2)}s</p>
-							<p><strong>Tokens:</strong> {rightSearch.tokensUsed}</p>
+							<p>
+								<strong>Query:</strong> {rightSearch.query}
+							</p>
+							<p>
+								<strong>Quality:</strong> {(rightSearch.quality ?? 0).toFixed(3)}
+							</p>
+							<p>
+								<strong>Results:</strong> {rightSearch.results.length}
+							</p>
+							<p>
+								<strong>Time:</strong>{" "}
+								{(rightSearch.executionTimeMs / 1000).toFixed(2)}s
+							</p>
+							<p>
+								<strong>Tokens:</strong> {rightSearch.tokensUsed}
+							</p>
 						</div>
 					) : (
 						<p>Select a search</p>

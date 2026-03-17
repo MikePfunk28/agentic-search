@@ -4,14 +4,45 @@
  * Tests security, validation, and reasoning capabilities
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll, afterAll, vi } from "vitest";
 import { InterleavedReasoningEngine } from "../src/lib/interleaved-reasoning-engine";
+
+// Mock the AI SDK to avoid real network calls during unit tests
+vi.mock("ai", () => ({
+	generateText: vi.fn(async () => ({
+		text: "This is a mocked response used for testing the reasoning engine. It includes enough content to pass validation.",
+		usage: { totalTokens: 50 },
+	})),
+}));
 
 describe("InterleavedReasoningEngine", () => {
 	let engine: InterleavedReasoningEngine;
 
+	// Mock fetch so health checks succeed for our test endpoint
+	// and fail (throw) for any other URL — simulating the offline case.
+	beforeAll(() => {
+		vi.spyOn(globalThis, "fetch").mockImplementation(
+			async (url: RequestInfo | URL) => {
+				if (url.toString().includes("test-endpoint")) {
+					return new Response(
+						JSON.stringify({ data: [{ id: "test-model" }] }),
+						{ status: 200, headers: { "Content-Type": "application/json" } },
+					);
+				}
+				throw new Error("Network unavailable in test environment");
+			},
+		);
+	});
+
+	afterAll(() => {
+		vi.restoreAllMocks();
+	});
+
 	beforeEach(() => {
-		engine = new InterleavedReasoningEngine();
+		engine = new InterleavedReasoningEngine(
+			{ orchestratorModel: "test-model" },
+			"http://test-endpoint:8080",
+		);
 	});
 
 	describe("Security", () => {
@@ -177,7 +208,9 @@ describe("InterleavedReasoningEngine", () => {
 	describe("Error Handling", () => {
 		it("should handle model connection failures gracefully", async () => {
 			const offlineEngine = new InterleavedReasoningEngine(
-				{},
+				{
+					orchestratorModel: "gpt-test",
+				},
 				"http://localhost:99999" // Invalid port
 			);
 
@@ -188,9 +221,10 @@ describe("InterleavedReasoningEngine", () => {
 		});
 
 		it("should timeout long-running operations", async () => {
-			const fastEngine = new InterleavedReasoningEngine({
-				timeoutMs: 100, // Very short timeout
-			});
+			const fastEngine = new InterleavedReasoningEngine(
+				{ timeoutMs: 100, orchestratorModel: "test-model" },
+				"http://test-endpoint:8080",
+			);
 
 			const result = await fastEngine.reason("Complex reasoning task");
 

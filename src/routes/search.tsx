@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, Send } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getClientSearchConfig } from "../lib/model-store";
 
 export const Route = createFileRoute("/search")({ component: SearchPage });
 
@@ -44,17 +45,37 @@ function SearchPage() {
 					"Content-Type": "application/json",
 					"X-CSRF-Token": csrfToken,
 				},
-				body: JSON.stringify({ query }),
+				body: JSON.stringify({
+					query,
+					...getClientSearchConfig(),
+				}),
 				signal: abortController.signal,
 			});
 
 			if (!response.ok) {
-				const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-				throw new Error(errorData.error || `Search failed with status ${response.status}`);
+				const errorData = await response
+					.json()
+					.catch(() => ({ error: "Unknown error" }));
+				throw new Error(
+					errorData.error || `Search failed with status ${response.status}`,
+				);
 			}
 
 			const data = await response.json();
 			setResults(data.results || []);
+			if (Array.isArray(data.results) && data.results.length > 0) {
+				const { researchStorage } = await import("../lib/results-storage");
+				await researchStorage.storeResults(
+					query,
+					data.results,
+					`${data.provider || "web-only"}:${data.modelUsed || "none"}`,
+					{
+						addScore: data.addMetrics?.overallScore,
+						tokensUsed: data.totalTokens,
+						executionTimeMs: data.totalProcessingTime,
+					},
+				);
+			}
 		} catch (err) {
 			if (err instanceof Error && err.name === "AbortError") {
 				console.log("[Search] Request aborted");
@@ -81,9 +102,7 @@ function SearchPage() {
 		<div className="min-h-screen bg-slate-900 p-8">
 			<div className="max-w-4xl mx-auto">
 				<div className="text-center mb-12">
-					<h1 className="text-5xl font-bold text-white mb-4">
-						Agentic Search
-					</h1>
+					<h1 className="text-5xl font-bold text-white mb-4">Agentic Search</h1>
 					<p className="text-gray-400 text-lg">
 						AI-powered search with reasoning and quality scoring
 					</p>
@@ -103,7 +122,11 @@ function SearchPage() {
 							disabled={loading}
 							className="absolute right-2 top-1/2 -translate-y-1/2 p-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg disabled:opacity-50"
 						>
-							{loading ? <Search className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+							{loading ? (
+								<Search className="w-5 h-5 animate-spin" />
+							) : (
+								<Send className="w-5 h-5" />
+							)}
 						</button>
 					</div>
 				</form>
@@ -129,10 +152,11 @@ function SearchPage() {
 									<span className="text-cyan-400">
 										Quality Score: {(result.addScore * 100).toFixed(0)}%
 									</span>
-									<span className="text-gray-500">
-										Source: {result.source}
-									</span>
-									<a href={result.url} className="text-gray-500 hover:text-cyan-400 truncate">
+									<span className="text-gray-500">Source: {result.source}</span>
+									<a
+										href={result.url}
+										className="text-gray-500 hover:text-cyan-400 truncate"
+									>
 										{result.url}
 									</a>
 								</div>

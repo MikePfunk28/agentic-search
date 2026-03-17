@@ -1,41 +1,53 @@
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { useAppAuth } from "../hooks/useAppAuth";
 
 interface SearchHistoryProps {
 	onSelectSearch?: (searchId: Id<"searchHistory">) => void;
 }
 
 export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
+	const { isAuthenticated, isLoading } = useAppAuth();
 	const [currentPage, setCurrentPage] = useState(0);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [qualityFilter, setQualityFilter] = useState<number | null>(null);
 	const [modelFilter, setModelFilter] = useState<string>("");
 
 	// Query search history with pagination
-	const searchHistory = useQuery(api.searchHistory.listSearchHistory, {
-		limit: 10,
-		offset: currentPage * 10,
-	});
+	const searchHistory = useQuery(
+		api.searchHistory.listSearchHistory,
+		isAuthenticated
+			? {
+					limit: 10,
+					offset: currentPage * 10,
+				}
+			: "skip",
+	);
 
 	// Query search statistics
-	const stats = useQuery(api.searchHistory.getSearchStats, {});
+	const stats = useQuery(
+		api.searchHistory.getSearchStats,
+		isAuthenticated ? {} : "skip",
+	);
 
 	// Search within history
 	const searchResults = useQuery(
 		api.searchHistory.searchHistory,
-		searchQuery ? { query: searchQuery, limit: 10 } : "skip",
+		isAuthenticated && searchQuery ? { query: searchQuery, limit: 10 } : "skip",
 	);
 
 	// Approve search mutation
 	const approveSearch = useMutation(api.searchHistory.approveSearch);
 
-	const handleApprove = async (searchId: Id<"searchHistory">, rating: number) => {
+	const handleApprove = async (
+		searchId: Id<"searchHistory">,
+		rating: number,
+	) => {
 		try {
 			await approveSearch({
 				searchId,
-				userApproved: true,
 				userRating: rating,
 				feedback: "Approved from history browser",
 			});
@@ -51,11 +63,26 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 	};
 
 	// Filter results based on criteria
-	const filteredResults = (searchResults || searchHistory)?.filter((search) => {
-		if (qualityFilter && search.quality < qualityFilter) return false;
+	const baseResults =
+		searchQuery.trim().length > 0 ? searchResults || [] : searchHistory || [];
+
+	const filteredResults = baseResults.filter((search) => {
+		if (qualityFilter && (search.quality ?? 0) < qualityFilter) return false;
 		if (modelFilter && !search.modelUsed.includes(modelFilter)) return false;
 		return true;
 	});
+
+	if (isLoading) {
+		return <div className="p-8 text-slate-500">Loading history...</div>;
+	}
+
+	if (!isAuthenticated) {
+		return (
+			<div className="p-8 text-slate-500">
+				Sign in or continue as a guest to sync server-side history.
+			</div>
+		);
+	}
 
 	return (
 		<div className="search-history-container">
@@ -71,19 +98,25 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Avg Quality</span>
-							<span className="stat-value">{stats.averageQuality.toFixed(2)}</span>
+							<span className="stat-value">{stats.avgQuality.toFixed(2)}</span>
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Avg Time</span>
-							<span className="stat-value">{(stats.averageExecutionTime / 1000).toFixed(1)}s</span>
+							<span className="stat-value">
+								{(stats.avgExecutionTime / 1000).toFixed(1)}s
+							</span>
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Total Tokens</span>
-							<span className="stat-value">{stats.totalTokens.toLocaleString()}</span>
+							<span className="stat-value">
+								{stats.totalTokens.toLocaleString()}
+							</span>
 						</div>
 						<div className="stat-card">
 							<span className="stat-label">Approval Rate</span>
-							<span className="stat-value">{stats.approvalRate.toFixed(1)}%</span>
+							<span className="stat-value">
+								{stats.approvalRate.toFixed(1)}%
+							</span>
 						</div>
 					</div>
 				)}
@@ -102,7 +135,9 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 				<div className="filter-controls">
 					<select
 						value={qualityFilter || ""}
-						onChange={(e) => setQualityFilter(e.target.value ? Number(e.target.value) : null)}
+						onChange={(e) =>
+							setQualityFilter(e.target.value ? Number(e.target.value) : null)
+						}
 						className="filter-select"
 					>
 						<option value="">All Quality Levels</option>
@@ -138,10 +173,12 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 								<h3 className="search-query">{search.query}</h3>
 								<div className="search-metadata">
 									<span className="search-date">
-										{new Date(search.timestamp).toLocaleDateString()}
+										{new Date(search.createdAt).toLocaleDateString()}
 									</span>
-									<span className={`quality-badge quality-${getQualityLevel(search.quality)}`}>
-										Quality: {search.quality.toFixed(2)}
+									<span
+										className={`quality-badge quality-${getQualityLevel(search.quality ?? 0)}`}
+									>
+										Quality: {(search.quality ?? 0).toFixed(2)}
 									</span>
 								</div>
 							</div>
@@ -155,7 +192,8 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 										<strong>Results:</strong> {search.results.length}
 									</span>
 									<span className="detail-item">
-										<strong>Time:</strong> {(search.executionTimeMs / 1000).toFixed(2)}s
+										<strong>Time:</strong>{" "}
+										{(search.executionTimeMs / 1000).toFixed(2)}s
 									</span>
 									<span className="detail-item">
 										<strong>Tokens:</strong> {search.tokensUsed}
@@ -179,7 +217,9 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 								{/* User Feedback */}
 								{search.userApproved !== undefined && (
 									<div className="user-feedback">
-										<span className={search.userApproved ? "approved" : "rejected"}>
+										<span
+											className={search.userApproved ? "approved" : "rejected"}
+										>
 											{search.userApproved ? "✓ Approved" : "✗ Rejected"}
 										</span>
 										{search.userRating && (
@@ -227,9 +267,7 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 				>
 					← Previous
 				</button>
-				<span className="page-indicator">
-					Page {currentPage + 1}
-				</span>
+				<span className="page-indicator">Page {currentPage + 1}</span>
 				<button
 					onClick={() => setCurrentPage((p) => p + 1)}
 					disabled={!searchHistory || searchHistory.length < 10}

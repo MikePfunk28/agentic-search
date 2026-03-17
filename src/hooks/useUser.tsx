@@ -17,7 +17,7 @@ export const useUser = (): UserOrNull => {
 		} else {
 			console.log(user);
 		}
-	}, [isLoading, user]);
+	}, [isLoading, user, location.pathname, signIn]);
 
 	return user;
 };

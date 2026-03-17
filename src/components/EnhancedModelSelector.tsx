@@ -1,19 +1,27 @@
 /**
  * Enhanced ModelSelector Component
- * Multi-select model picker with connection testing and 2025 latest models
+ * Reads from the unified model store - shows only REAL detected/configured models.
+ * No hardcoded model lists.
  */
 
-import { Check, Sparkles, Wifi, WifiOff, Loader2, AlertCircle } from "lucide-react";
-import { useState, useEffect, useMemo, useRef } from "react";
-import { ModelProvider, AVAILABLE_MODELS } from "../lib/model-config";
+import { Check, Globe, Sparkles, Wifi } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import {
+	detectAndUpdateLocalModels,
+	getModelStore,
+	type ModelStore,
+	setActiveModel,
+	toggleActiveModel,
+} from "../lib/model-store";
 
 interface ModelOption {
 	id: string;
-	provider: ModelProvider;
+	provider: string;
 	model: string;
 	label: string;
 	description: string;
 	isLocal: boolean;
+	isAvailable: boolean;
 }
 
 interface ModelSelectorProps {
@@ -30,99 +38,150 @@ export function EnhancedModelSelector({
 	allowMultiple = true,
 }: ModelSelectorProps) {
 	const [isOpen, setIsOpen] = useState(false);
-	const [connectionStatus, setConnectionStatus] = useState<Record<string, 'connected' | 'disconnected' | 'testing'>>({});
-	const hasDetected = useRef(false);
+	const [store, setStore] = useState<ModelStore>(getModelStore());
 
-	// Define all available models with 2025 latest versions - memoize to prevent recreating
-	const modelOptions: ModelOption[] = useMemo(() => [
-		// Ollama local models
-		...AVAILABLE_MODELS.Ollama.map(model => ({
-			id: `ollama:${model}`,
-			provider: ModelProvider.OLLAMA,
-			model,
-			label: model.toUpperCase().replace(':', ' '),
-			description: "Local Ollama",
-			isLocal: true,
-		})),
-		// OpenAI models
-		...AVAILABLE_MODELS.OpenAI.map(model => ({
-			id: `openai:${model}`,
-			provider: ModelProvider.OPENAI,
-			model,
-			label: model.toUpperCase(),
-			description: "OpenAI Cloud",
-			isLocal: false,
-		})),
-		// Anthropic models
-		...AVAILABLE_MODELS.Anthropic.map(model => ({
-			id: `anthropic:${model}`,
-			provider: ModelProvider.ANTHROPIC,
-			model,
-			label: model.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-			description: "Anthropic Cloud",
-			isLocal: false,
-		})),
-	], []);
-
-	// Test connection to a model
-	const testConnection = async (option: ModelOption): Promise<boolean> => {
-		setConnectionStatus(prev => ({ ...prev, [option.id]: 'testing' }));
-
-		try {
-			if (option.isLocal && option.provider === ModelProvider.OLLAMA) {
-				// Test Ollama connection
-				const response = await fetch('http://localhost:11434/api/tags', {
-					signal: AbortSignal.timeout(5000),
-				});
-
-				if (!response.ok) {
-					setConnectionStatus(prev => ({ ...prev, [option.id]: 'disconnected' }));
-					return false;
-				}
-
-				const data = await response.json();
-				const hasModel = data.models?.some((m: any) => m.name === option.model || m.name.startsWith(option.model));
-
-				setConnectionStatus(prev => ({ 
-					...prev, 
-					[option.id]: hasModel ? 'connected' : 'disconnected' 
-				}));
-				return hasModel;
-			}
-
-			// For cloud models, just mark as connected (actual testing happens on first use)
-			setConnectionStatus(prev => ({ ...prev, [option.id]: 'connected' }));
-			return true;
-
-		} catch (error) {
-			console.error(`Failed to test connection to ${option.id}:`, error);
-			setConnectionStatus(prev => ({ ...prev, [option.id]: 'disconnected' }));
-			return false;
-		}
-	};
-
-	// Auto-detect available Ollama models on mount - only once
+	// Refresh store when dropdown opens
 	useEffect(() => {
-		if (hasDetected.current) return;
-		hasDetected.current = true;
+		if (isOpen) {
+			setStore(getModelStore());
+			detectAndUpdateLocalModels()
+				.then(() => setStore(getModelStore()))
+				.catch((error) => {
+					console.warn(
+						"[EnhancedModelSelector] Failed to refresh local models:",
+						error,
+					);
+				});
+		}
+	}, [isOpen]);
 
-		const detectOllamaModels = async () => {
-			const ollamaOptions = modelOptions.filter(opt => opt.isLocal && opt.provider === ModelProvider.OLLAMA);
-			
-			for (const option of ollamaOptions) {
-				await testConnection(option);
-			}
+	// Listen for storage changes from SettingsModal
+	useEffect(() => {
+		const handleStorage = () => setStore(getModelStore());
+		window.addEventListener("storage", handleStorage);
+		// Poll for same-tab localStorage changes (storage event only fires cross-tab)
+		const interval = setInterval(handleStorage, 2000);
+		return () => {
+			window.removeEventListener("storage", handleStorage);
+			clearInterval(interval);
 		};
+	}, []);
 
-		detectOllamaModels();
-	}, [modelOptions]);
+	// Build model options from store
+	const buildModelOptions = useCallback((): ModelOption[] => {
+		const options: ModelOption[] = [];
+
+		// Ollama models
+		if (store.ollama && store.ollama.detectedModels.length > 0) {
+			for (const model of store.ollama.detectedModels) {
+				options.push({
+					id: `ollama:${model}`,
+					provider: "ollama",
+					model,
+					label: model,
+					description: "Ollama (Local)",
+					isLocal: true,
+					isAvailable: true,
+				});
+			}
+		}
+
+		// LM Studio models
+		if (store.lmstudio && store.lmstudio.detectedModels.length > 0) {
+			for (const model of store.lmstudio.detectedModels) {
+				options.push({
+					id: `lmstudio:${model}`,
+					provider: "lmstudio",
+					model,
+					label: model,
+					description: "LM Studio (Local)",
+					isLocal: true,
+					isAvailable: true,
+				});
+			}
+		}
+
+		// Custom providers
+		for (const custom of store.custom) {
+			if (custom.models.length > 0) {
+				for (const model of custom.models) {
+					options.push({
+						id: `${custom.id}:${model}`,
+						provider: custom.id,
+						model,
+						label: model,
+						description: custom.name,
+						isLocal: false,
+						isAvailable: !!custom.apiKey,
+					});
+				}
+			} else if (custom.selectedModel) {
+				options.push({
+					id: `${custom.id}:${custom.selectedModel}`,
+					provider: custom.id,
+					model: custom.selectedModel,
+					label: custom.selectedModel,
+					description: custom.name,
+					isLocal: false,
+					isAvailable: !!custom.apiKey,
+				});
+			}
+		}
+
+		// Include active models that aren't already in the list
+		// (e.g., LM Studio model selected previously but detection now failing)
+		if (store.activeModels && store.activeModels.length > 0) {
+			const existingIds = new Set(options.map((o) => o.id));
+			for (const active of store.activeModels) {
+				const id = `${active.provider}:${active.model}`;
+				if (!existingIds.has(id)) {
+					const isLocal = ["ollama", "lmstudio", "lm_studio"].includes(
+						active.provider,
+					);
+					const providerLabel =
+						active.provider === "ollama"
+							? "Ollama"
+							: active.provider === "lmstudio" ||
+									active.provider === "lm_studio"
+								? "LM Studio"
+								: store.custom.find((c) => c.id === active.provider)?.name ||
+									active.provider;
+					options.push({
+						id,
+						provider: active.provider,
+						model: active.model,
+						label: active.model,
+						description: `${providerLabel}${isLocal ? " (Local - offline)" : ""}`,
+						isLocal,
+						isAvailable: false, // Server not currently detected
+					});
+				}
+			}
+		}
+
+		return options;
+	}, [store]);
+
+	const modelOptions = buildModelOptions();
 
 	const toggleModel = (modelId: string) => {
 		if (disabled) return;
 
+		// Parse to update the unified store
+		const [provider, ...modelParts] = modelId.split(":");
+		const model = modelParts.join(":");
+
+		if (provider && model) {
+			if (allowMultiple) {
+				toggleActiveModel(provider, model, "reasoner");
+			} else {
+				setActiveModel(provider, model);
+			}
+		}
+
 		if (allowMultiple) {
 			if (selectedModels.includes(modelId)) {
-				onChange(selectedModels.filter(id => id !== modelId));
+				onChange(selectedModels.filter((id) => id !== modelId));
 			} else {
 				onChange([...selectedModels, modelId]);
 			}
@@ -132,20 +191,11 @@ export function EnhancedModelSelector({
 		}
 	};
 
-	const getStatusIcon = (status: 'connected' | 'disconnected' | 'testing' | undefined) => {
-		switch (status) {
-			case 'connected':
-				return <Wifi className="w-4 h-4 text-green-500" />;
-			case 'disconnected':
-				return <WifiOff className="w-4 h-4 text-red-500" />;
-			case 'testing':
-				return <Loader2 className="w-4 h-4 text-yellow-500 animate-spin" />;
-			default:
-				return <AlertCircle className="w-4 h-4 text-gray-400" />;
-		}
-	};
-
-	const selectedOptions = modelOptions.filter(opt => selectedModels.includes(opt.id));
+	const selectedOptions = modelOptions.filter((opt) =>
+		selectedModels.includes(opt.id),
+	);
+	const localOptions = modelOptions.filter((opt) => opt.isLocal);
+	const cloudOptions = modelOptions.filter((opt) => !opt.isLocal);
 
 	return (
 		<div className="relative">
@@ -165,123 +215,127 @@ export function EnhancedModelSelector({
 					<div className="text-left">
 						<div className="font-medium text-white">
 							{selectedOptions.length > 0
-								? `${selectedOptions.length} model${selectedOptions.length > 1 ? 's' : ''} selected`
-								: "Select Models"}
+								? `${selectedOptions.length} model${selectedOptions.length > 1 ? "s" : ""} selected`
+								: modelOptions.length === 0
+									? "No models configured"
+									: "Select Models"}
 						</div>
 						<div className="text-sm text-gray-400">
 							{selectedOptions.length > 0
-								? selectedOptions.map(opt => opt.label).join(', ')
-								: allowMultiple ? "Choose one or more models" : "Choose a model"}
+								? selectedOptions.map((opt) => opt.label).join(", ")
+								: modelOptions.length === 0
+									? "Open Settings to configure"
+									: allowMultiple
+										? "Choose one or more models for parallel reasoning"
+										: "Choose a model"}
+						</div>
+						<div className="text-xs text-slate-500">
+							Search works without a model. Models improve planning, validation,
+							and synthesis.
 						</div>
 					</div>
 				</div>
 			</button>
 
-			{/* Dropdown menu */}
 			{isOpen && (
 				<>
-					{/* Backdrop */}
 					<div
 						className="fixed inset-0 z-10"
 						onClick={() => setIsOpen(false)}
 						aria-hidden="true"
 					/>
 
-					{/* Menu */}
 					<div
 						className="absolute z-20 w-full mt-2 bg-slate-900 border-2 border-pink-500/30 rounded-lg shadow-xl
                        max-h-96 overflow-y-auto"
 						role="listbox"
 					>
-						{/* Local Models Section */}
-						<div className="p-2">
-							<div className="px-3 py-2 text-xs font-semibold text-pink-500 uppercase tracking-wider">
-								Local Models (Ollama)
+						{modelOptions.length === 0 ? (
+							<div className="p-4 text-center text-gray-400 text-sm">
+								No models detected. Open Settings to add local or cloud models.
+								You can mix multiple providers here.
 							</div>
-							{modelOptions
-								.filter(opt => opt.isLocal)
-								.map((option) => {
-									const isSelected = selectedModels.includes(option.id);
-									const status = connectionStatus[option.id];
-
-									return (
-										<button
-											key={option.id}
-											type="button"
-											onClick={() => toggleModel(option.id)}
-											disabled={status === 'disconnected'}
-											className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left
+						) : (
+							<>
+								{localOptions.length > 0 && (
+									<div className="p-2">
+										<div className="px-3 py-2 text-xs font-semibold text-pink-500 uppercase tracking-wider">
+											Local Models
+										</div>
+										{localOptions.map((option) => {
+											const isSelected = selectedModels.includes(option.id);
+											return (
+												<button
+													key={option.id}
+													type="button"
+													onClick={() => toggleModel(option.id)}
+													className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left
                            hover:bg-pink-500/10 transition-colors
-                           disabled:opacity-50 disabled:cursor-not-allowed
                            ${isSelected ? "bg-pink-500/20 border-l-4 border-pink-500" : ""}`}
-											role="option"
-											aria-selected={isSelected}
-										>
-											{/* Status icon */}
-											<div className="flex-shrink-0">
-												{getStatusIcon(status)}
-											</div>
+													role="option"
+													aria-selected={isSelected}
+												>
+													<Wifi className="w-4 h-4 text-green-500 flex-shrink-0" />
+													<div className="flex-1 min-w-0">
+														<div
+															className={`font-medium text-sm ${isSelected ? "text-pink-300" : "text-white"}`}
+														>
+															{option.label}
+														</div>
+														<div className="text-xs text-gray-400">
+															{option.description}
+														</div>
+													</div>
+													{isSelected && (
+														<Check className="w-5 h-5 text-pink-500 flex-shrink-0" />
+													)}
+												</button>
+											);
+										})}
+									</div>
+								)}
 
-											{/* Model info */}
-											<div className="flex-1 min-w-0">
-												<div className={`font-medium text-sm ${isSelected ? "text-pink-300" : "text-white"}`}>
-													{option.label}
-												</div>
-												<div className="text-xs text-gray-400">
-													{option.description}
-													{status === 'disconnected' && ' - Not available'}
-													{status === 'testing' && ' - Testing...'}
-												</div>
-											</div>
-
-											{/* Check icon */}
-											{isSelected && (
-												<Check className="w-5 h-5 text-pink-500 flex-shrink-0" />
-											)}
-										</button>
-									);
-								})}
-						</div>
-
-						{/* Cloud Models Section */}
-						<div className="p-2 border-t border-slate-700">
-							<div className="px-3 py-2 text-xs font-semibold text-cyan-500 uppercase tracking-wider">
-								Cloud Models
-							</div>
-							{modelOptions
-								.filter(opt => !opt.isLocal)
-								.map((option) => {
-									const isSelected = selectedModels.includes(option.id);
-
-									return (
-										<button
-											key={option.id}
-											type="button"
-											onClick={() => toggleModel(option.id)}
-											className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left
+								{cloudOptions.length > 0 && (
+									<div className="p-2 border-t border-slate-700">
+										<div className="px-3 py-2 text-xs font-semibold text-cyan-500 uppercase tracking-wider">
+											Cloud Models
+										</div>
+										{cloudOptions.map((option) => {
+											const isSelected = selectedModels.includes(option.id);
+											return (
+												<button
+													key={option.id}
+													type="button"
+													onClick={() => toggleModel(option.id)}
+													className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left
                            hover:bg-cyan-500/10 transition-colors
                            ${isSelected ? "bg-cyan-500/20 border-l-4 border-cyan-500" : ""}`}
-											role="option"
-											aria-selected={isSelected}
-										>
-											<Sparkles
-												className={`w-4 h-4 ${isSelected ? "text-cyan-400" : "text-gray-500"}`}
-											/>
-
-											<div className="flex-1 min-w-0">
-												<div className={`font-medium text-sm ${isSelected ? "text-cyan-300" : "text-white"}`}>
-													{option.label}
-												</div>
-												<div className="text-xs text-gray-400">{option.description}</div>
-											</div>
-
-											{isSelected && (
-												<Check className="w-5 h-5 text-cyan-500 flex-shrink-0" />
-											)}
-										</button>
-									);
-								})}
-						</div>
+													role="option"
+													aria-selected={isSelected}
+												>
+													<Globe
+														className={`w-4 h-4 ${option.isAvailable ? "text-cyan-400" : "text-gray-500"} flex-shrink-0`}
+													/>
+													<div className="flex-1 min-w-0">
+														<div
+															className={`font-medium text-sm ${isSelected ? "text-cyan-300" : "text-white"}`}
+														>
+															{option.label}
+														</div>
+														<div className="text-xs text-gray-400">
+															{option.description}
+														</div>
+													</div>
+													{isSelected && (
+														<Check className="w-5 h-5 text-cyan-500 flex-shrink-0" />
+													)}
+												</button>
+											);
+										})}
+									</div>
+								)}
+							</>
+						)}
 					</div>
 				</>
 			)}

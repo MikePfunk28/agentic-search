@@ -6,13 +6,10 @@ export const Route = createFileRoute("/api/csrf-token")({
 		handlers: {
 			GET: async () => {
 				const token = generateCsrfToken();
-				const response = new Response(
-					JSON.stringify({ token }),
-					{
-						status: 200,
-						headers: { "Content-Type": "application/json" },
-					},
-				);
+				const response = new Response(JSON.stringify({ token }), {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				});
 				return setCsrfCookie(response, token);
 			},
 		},

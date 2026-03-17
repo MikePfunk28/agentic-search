@@ -1,25 +1,16 @@
-import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
 	createRootRouteWithContext,
 	HeadContent,
 	Scripts,
-	useLocation,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { useEffect } from "react";
-import * as Sentry from "@sentry/tanstackstart-react";
+import { useEffect, useRef } from "react";
 import Header from "../components/Header";
 
-import ConvexProvider from "../integrations/convex/provider";
-import WorkOSProvider from "../integrations/workos/provider";
+import ConvexAuthProvider from "../integrations/convex/auth-provider";
 
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-import StoreDevtools from "../lib/demo-store-devtools";
+import { detectAndUpdateLocalModels, getModelStore } from "../lib/model-store";
 import appCss from "../styles.css?url";
-import { modelConfig } from "../lib/model-config";
-import { detectOllamaModels, detectLMStudioModels } from "../lib/ai/model-detection";
-import { initSentry } from "../lib/sentry";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
@@ -40,7 +31,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			},
 			{
 				name: "description",
-				content: "Move beyond unsafe RAG systems. Agentic search uses multi-model reasoning, adversarial validation, and OCR compression for superior results with continuous learning.",
+				content:
+					"Move beyond unsafe RAG systems. Agentic search uses multi-model reasoning, adversarial validation, and OCR compression for superior results with continuous learning.",
 			},
 		],
 		links: [
@@ -52,68 +44,81 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	}),
 
 	shellComponent: RootDocument,
+	notFoundComponent: () => (
+		<div className="mx-auto max-w-2xl px-6 py-20 text-center">
+			<h1 className="text-3xl font-bold text-white">Page not found</h1>
+			<p className="mt-3 text-slate-300">
+				The route you requested does not exist.
+			</p>
+		</div>
+	),
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-	const location = useLocation();
+	const initializedRef = useRef(false);
 
-	// Hide header on home page for clean chat experience
-	const showHeader = location.pathname !== "/";
-
-	// Initialize Sentry and model configurations on app startup
+	// Initialize model configurations on app startup
+	// Uses the unified model store (model-store.ts) as single source of truth
 	useEffect(() => {
-		// Initialize Sentry error tracking
-		try {
-			initSentry({
-				enabled: import.meta.env.PROD, // Enable only in production
+		if (initializedRef.current) return;
+		initializedRef.current = true;
+
+		const store = getModelStore();
+		const hasConfiguredLocalPreference =
+			Boolean(store.ollama?.selectedModel) ||
+			Boolean(store.lmstudio?.selectedModel);
+		const shouldProbeLocalModels =
+			!store.activeProvider ||
+			store.activeProvider === "ollama" ||
+			store.activeProvider === "lmstudio" ||
+			hasConfiguredLocalPreference;
+
+		if (!shouldProbeLocalModels) {
+			console.log(
+				"[App] Skipping local model detection on startup; active provider is",
+				store.activeProvider,
+			);
+			console.log(
+				"[App] Active provider:",
+				store.activeProvider,
+				"| Active model:",
+				store.activeModel,
+			);
+			return;
+		}
+
+		detectAndUpdateLocalModels()
+			.then((store) => {
+				const ollamaCount = store.ollama?.detectedModels.length ?? 0;
+				const lmstudioCount = store.lmstudio?.detectedModels.length ?? 0;
+				if (ollamaCount > 0) {
+					console.log(
+						"[App] Detected Ollama models:",
+						store.ollama?.detectedModels,
+					);
+				}
+				if (lmstudioCount > 0) {
+					console.log(
+						"[App] Detected LM Studio models:",
+						store.lmstudio?.detectedModels,
+					);
+				}
+				console.log(
+					"[App] Active provider:",
+					store.activeProvider,
+					"| Active model:",
+					store.activeModel,
+				);
+				console.log(
+					"[Security] API keys are stored securely in Convex, not in browser localStorage",
+				);
+			})
+			.catch((error) => {
+				console.error(
+					"[App] Failed to initialize model configurations:",
+					error,
+				);
 			});
-			console.log("[Sentry] Initialized successfully");
-		} catch (error) {
-			console.error("[Sentry] Failed to initialize:", error);
-		}
-
-		async function initializeModels() {
-			try {
-				// NOTE: API keys are now stored securely in Convex, NOT localStorage!
-				// Model configurations will be loaded from Convex via authenticated queries
-
-				// Auto-detect local models (Ollama & LM Studio)
-				const ollamaModels = await detectOllamaModels();
-				const lmStudioModels = await detectLMStudioModels();
-
-				if (ollamaModels.length > 0) {
-					console.log("[App] Detected Ollama models:", ollamaModels.map(m => m.modelId));
-
-					// Set first Ollama model as default (no API key needed for local models)
-					const defaultOllamaConfig = {
-						provider: "ollama" as const,
-						model: ollamaModels[0].modelId,
-						baseUrl: "http://localhost:11434/v1",
-						temperature: 0.7,
-						maxTokens: 32000,
-						timeout: 60000,
-						enableStreaming: false,
-					};
-					modelConfig.addConfig("ollama-default", defaultOllamaConfig);
-					modelConfig.setActiveConfig("ollama-default");
-					console.log("[App] Set Ollama as default provider");
-				}
-
-				if (lmStudioModels.length > 0) {
-					console.log("[App] Detected LM Studio models:", lmStudioModels.map(m => m.modelId));
-				}
-
-				// Show status in console
-				const configs = modelConfig.listConfigs();
-				console.log("[App] Available model configurations:", configs.length);
-				console.log("[Security] API keys are stored securely in Convex, not in browser localStorage");
-			} catch (error) {
-				console.error("[App] Failed to initialize model configurations:", error);
-				Sentry.captureException(error);
-			}
-		}
-
-		initializeModels();
 	}, []);
 
 	return (
@@ -122,14 +127,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				<Sentry.ErrorBoundary fallback={<div>An error occurred. Please refresh the page.</div>}>
-					<ConvexProvider>
-						<WorkOSProvider>
-						{showHeader && <Header />}
-						{children}
-						</WorkOSProvider>
-					</ConvexProvider>
-				</Sentry.ErrorBoundary>
+				<ConvexAuthProvider>
+					<Header />
+					{children}
+				</ConvexAuthProvider>
 				<Scripts />
 			</body>
 		</html>

@@ -1,0 +1,7295 @@
+{
+  "generated_at": "2026-03-17T16:41:42.790169+00:00",
+  "root": "C:\\Users\\mikep\\ts-hackathon\\agentic-search",
+  "tool": "codebase-research-index/scripts/build_codebase_index.py",
+  "settings": {
+    "max_file_bytes": 1048576,
+    "include_hidden": false,
+    "ignored_dirs": [
+      ".git",
+      ".hg",
+      ".next",
+      ".nuxt",
+      ".svn",
+      ".terraform",
+      ".venv",
+      "__pycache__",
+      "bin",
+      "build",
+      "coverage",
+      "dist",
+      "node_modules",
+      "obj",
+      "target",
+      "venv"
+    ]
+  },
+  "stats": {
+    "indexed_files": 314,
+    "skipped_files": 18,
+    "languages": {
+      "css": 1,
+      "javascript": 4,
+      "json": 9,
+      "markdown": 60,
+      "text": 7,
+      "toml": 1,
+      "typescript": 231,
+      "yaml": 1
+    },
+    "import_edges": 556
+  },
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "language": "markdown",
+      "size_bytes": 8547,
+      "sha1": "cf7be0d7216b5220823bc7a4bf3d1f2abf8ffbd8",
+      "modified_at": "2025-11-11T17:12:52.789398+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "CODERABBIT_FINAL.md",
+      "language": "markdown",
+      "size_bytes": 14139,
+      "sha1": "2d13de1715f57730f09ce6bd3769ad9cc3fd8b22",
+      "modified_at": "2025-11-12T19:18:39.837488+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "CODERABBIT_FIXES.md",
+      "language": "markdown",
+      "size_bytes": 3960,
+      "sha1": "36480f62ed18a496eb83ad3953cd2f992b2772f5",
+      "modified_at": "2025-11-12T18:57:01.775989+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "CODERABBIT_RESOLUTION.md",
+      "language": "markdown",
+      "size_bytes": 5462,
+      "sha1": "4471992da18c235dae15271f5f9bda68580e2a06",
+      "modified_at": "2025-11-12T19:07:29.955638+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "DEPLOYMENT.md",
+      "language": "markdown",
+      "size_bytes": 6969,
+      "sha1": "a267a5e427a18ae3572226119b2609ef03fb9431",
+      "modified_at": "2025-11-12T23:51:47.683459+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "IMPLEMENTATION_COMPLETE.md",
+      "language": "markdown",
+      "size_bytes": 13208,
+      "sha1": "a85389f3dd37ddc9db8e1cc8a493b20f157817f9",
+      "modified_at": "2025-11-11T17:01:06.506567+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "INTEGRATION_COMPLETE.md",
+      "language": "markdown",
+      "size_bytes": 4983,
+      "sha1": "21a12414f2ab572a6a2fde4942913e113ab323c9",
+      "modified_at": "2025-11-12T18:52:17.898712+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "PRODUCTION_STATUS.md",
+      "language": "markdown",
+      "size_bytes": 9096,
+      "sha1": "9e4e9a7582f697ae0da927b33c46dbff616b4dc2",
+      "modified_at": "2025-11-12T18:50:41.757411+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "size_bytes": 9633,
+      "sha1": "b0a952e99fd1c690b11c6759f094d97c56867f5b",
+      "modified_at": "2026-03-08T18:52:51.028642+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "SECURITY.md",
+      "language": "markdown",
+      "size_bytes": 6467,
+      "sha1": "39ad7bf2335da22a15eccdff87686feb4e4f2c22",
+      "modified_at": "2025-11-11T16:51:15.931931+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "TODO.md",
+      "language": "markdown",
+      "size_bytes": 7985,
+      "sha1": "014339ebd3e42060f3d08c994f34fa763943bb01",
+      "modified_at": "2025-11-15T05:04:17.489058+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "WARP.md",
+      "language": "markdown",
+      "size_bytes": 14076,
+      "sha1": "a97956d4732bb0fdf9daba608a13c0ddc7dc4127",
+      "modified_at": "2025-11-09T23:58:45.541834+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "biome.json",
+      "language": "json",
+      "size_bytes": 1144,
+      "sha1": "d175422cb55fae994f0e1a5071038cba9d599e37",
+      "modified_at": "2026-03-16T16:15:44.002194+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "claude-flow.cmd",
+      "language": "text",
+      "size_bytes": 997,
+      "sha1": "2ea8d44d27ce217af5d40d2f607ccca9966e0cba",
+      "modified_at": "2025-11-06T20:08:08.217040+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "claude2.md",
+      "language": "markdown",
+      "size_bytes": 28430,
+      "sha1": "92e51efcd50f7695d9a29c8e02dee0a315947d9e",
+      "modified_at": "2025-11-10T21:04:27.617067+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "components.json",
+      "language": "json",
+      "size_bytes": 423,
+      "sha1": "de3476822ead93bc27f56e8205a7adda82e4c9b8",
+      "modified_at": "2025-11-06T22:07:05.002800+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "convex.config.ts",
+      "language": "typescript",
+      "size_bytes": 161,
+      "sha1": "fc054272bf0fa92d78162bcb7afd358e0a3d18b4",
+      "modified_at": "2025-11-07T23:48:19.003615+00:00",
+      "imports": [
+        "convex/server"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/_generated/api.d.ts",
+      "language": "typescript",
+      "size_bytes": 5017,
+      "sha1": "1279e5cca1472b7884f10c46f02456d21560872a",
+      "modified_at": "2026-03-11T23:11:00.889681+00:00",
+      "imports": [
+        "../auth.js",
+        "../costEstimation.js",
+        "../crons.js",
+        "../documents.js",
+        "../externalApiTracking.js",
+        "../http.js",
+        "../indexing.js",
+        "../interactiveSegmentation.js",
+        "../knowledgeGraph.js",
+        "../lib/indexing/documentIndexing.js",
+        "../lib/indexing/documentIndexingActions.js",
+        "../lib/indexing/documentIndexingQueries.js",
+        "../lib/ocr/processDocument.js",
+        "../lib/reasoning/interleavedReasoningActions.js",
+        "../lib/search/index.js",
+        "../lib/search/orchestrator.js",
+        "../lib/search/querySegmentationActions.js",
+        "../lib/search/querySegmentationQueries.js",
+        "../lib/search/querySegmentationTypes.js",
+        "../lib/search/segmentExecutorActions.js",
+        "../lib/search/segmentExecutorMutations.js",
+        "../mcp.js",
+        "../mcp_mutations.js",
+        "../modelConfiguration.js",
+        "../ocr.js",
+        "../orchestrator.js",
+        "../rag.js",
+        "../reasoning.js",
+        "../search.js",
+        "../searchAnalytics.js",
+        "../searchHistory.js",
+        "../secureApiKeys.js",
+        "../sessionCleanup.js",
+        "../todos.js",
+        "../usageTracking.js",
+        "../userPreferences.js",
+        "../users.js"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/_generated/api.js",
+      "language": "javascript",
+      "size_bytes": 480,
+      "sha1": "26ddc35868e3b6267986452016330a9ca8c7f973",
+      "modified_at": "2025-11-07T20:06:35.887458+00:00",
+      "imports": [
+        "convex/server"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/_generated/dataModel.d.ts",
+      "language": "typescript",
+      "size_bytes": 1725,
+      "sha1": "832d87da8a1f6d51ca7e91312ed6702b392b67ec",
+      "modified_at": "2025-11-07T20:06:35.790557+00:00",
+      "imports": [
+        "../schema.js",
+        "convex/values"
+      ],
+      "symbols": [
+        {
+          "name": "TableNames",
+          "kind": "type",
+          "line": 23
+        },
+        {
+          "name": "Doc",
+          "kind": "type",
+          "line": 30
+        },
+        {
+          "name": "Id",
+          "kind": "type",
+          "line": 48
+        },
+        {
+          "name": "DataModel",
+          "kind": "type",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "path": "convex/_generated/server.d.ts",
+      "language": "typescript",
+      "size_bytes": 5694,
+      "sha1": "12920c71344d31217dfced19a25bfed664f9194f",
+      "modified_at": "2025-11-07T20:06:36.657485+00:00",
+      "imports": [
+        "./dataModel.js"
+      ],
+      "symbols": [
+        {
+          "name": "GenericCtx",
+          "kind": "type",
+          "line": 26
+        },
+        {
+          "name": "QueryCtx",
+          "kind": "type",
+          "line": 113
+        },
+        {
+          "name": "MutationCtx",
+          "kind": "type",
+          "line": 121
+        },
+        {
+          "name": "ActionCtx",
+          "kind": "type",
+          "line": 129
+        },
+        {
+          "name": "DatabaseReader",
+          "kind": "type",
+          "line": 138
+        },
+        {
+          "name": "DatabaseWriter",
+          "kind": "type",
+          "line": 149
+        }
+      ]
+    },
+    {
+      "path": "convex/_generated/server.js",
+      "language": "javascript",
+      "size_bytes": 3474,
+      "sha1": "691b02c84746bf2d708a23e41289779a08e02dfb",
+      "modified_at": "2025-11-07T20:06:35.882294+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "convex/auth.ts",
+      "language": "typescript",
+      "size_bytes": 1196,
+      "sha1": "7c78887be781e47ce58f772334567c15c094c3c4",
+      "modified_at": "2026-03-10T21:49:48.179026+00:00",
+      "imports": [
+        "@auth/core/providers/github",
+        "@convex-dev/auth/providers/Anonymous",
+        "@convex-dev/auth/providers/Password",
+        "@convex-dev/auth/server"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/costEstimation.ts",
+      "language": "typescript",
+      "size_bytes": 6196,
+      "sha1": "1b9701efdd81695b28714d8f431aad28e21b4f22",
+      "modified_at": "2026-03-08T21:11:17.868556+00:00",
+      "imports": [
+        "./_generated/server",
+        "@convex-dev/auth/server",
+        "convex/values"
+      ],
+      "symbols": [
+        {
+          "name": "estimateCost",
+          "kind": "function",
+          "line": 136
+        }
+      ]
+    },
+    {
+      "path": "convex/crons.ts",
+      "language": "typescript",
+      "size_bytes": 393,
+      "sha1": "a000b3aeb17a96f67c4b023d3b7a7b1a149f90af",
+      "modified_at": "2026-03-08T21:12:28.848207+00:00",
+      "imports": [
+        "./_generated/api",
+        "convex/server"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/documents.ts",
+      "language": "typescript",
+      "size_bytes": 6595,
+      "sha1": "9b704ad6eaf2bcf7f3ee7fd86af08455d58edb68",
+      "modified_at": "2025-11-16T01:07:14.803550+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/externalApiTracking.ts",
+      "language": "typescript",
+      "size_bytes": 4931,
+      "sha1": "b4d32fc0c411f41ac063d1e71926d2bd026ab7a7",
+      "modified_at": "2026-03-08T21:10:44.709908+00:00",
+      "imports": [
+        "./_generated/server",
+        "@convex-dev/auth/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/http.ts",
+      "language": "typescript",
+      "size_bytes": 314,
+      "sha1": "d34df6df4be0324be70e1bb9c902fe0cc18cdcae",
+      "modified_at": "2026-03-08T21:02:43.282775+00:00",
+      "imports": [
+        "./auth",
+        "convex/server"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/indexing.ts",
+      "language": "typescript",
+      "size_bytes": 3202,
+      "sha1": "91e02fec7925c1d11bccd0b2f3e3e1dd2f72d266",
+      "modified_at": "2025-11-16T01:07:14.805773+00:00",
+      "imports": [
+        "./_generated/api",
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/interactiveSegmentation.ts",
+      "language": "typescript",
+      "size_bytes": 10632,
+      "sha1": "3f96727341c080635a7a304a896bb63f8d93ab2f",
+      "modified_at": "2025-11-16T01:07:14.806510+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/knowledgeGraph.ts",
+      "language": "typescript",
+      "size_bytes": 8148,
+      "sha1": "000a0bc203f2eaf4153464d17d395762b9a2b36d",
+      "modified_at": "2026-03-11T23:11:17.162597+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/lib/indexing/documentIndexing.ts",
+      "language": "typescript",
+      "size_bytes": 14607,
+      "sha1": "ce2057a5bbe4cce804076a564140da91e7e5e38f",
+      "modified_at": "2025-11-16T01:07:14.821244+00:00",
+      "imports": [
+        "../../_generated/api",
+        "../../_generated/server",
+        "convex/values"
+      ],
+      "symbols": [
+        {
+          "name": "DocumentChunk",
+          "kind": "interface",
+          "line": 10
+        },
+        {
+          "name": "KnowledgeBoundary",
+          "kind": "interface",
+          "line": 32
+        },
+        {
+          "name": "cosineSimilarity",
+          "kind": "function",
+          "line": 332
+        },
+        {
+          "name": "estimateTokens",
+          "kind": "function",
+          "line": 342
+        }
+      ]
+    },
+    {
+      "path": "convex/lib/indexing/documentIndexingActions.ts",
+      "language": "typescript",
+      "size_bytes": 396,
+      "sha1": "6df3f84e1fb92db40277bcf621bb036079989a76",
+      "modified_at": "2025-11-16T01:07:14.822750+00:00",
+      "imports": [
+        "../../_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/lib/indexing/documentIndexingQueries.ts",
+      "language": "typescript",
+      "size_bytes": 570,
+      "sha1": "2b8b6f3bc0468503f5434b228c4137bcae09e417",
+      "modified_at": "2025-11-16T01:07:14.825755+00:00",
+      "imports": [
+        "../../_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/lib/ocr/processDocument.ts",
+      "language": "typescript",
+      "size_bytes": 10694,
+      "sha1": "84a9821c633df33500992256a9aaa8183b88d420",
+      "modified_at": "2025-11-16T01:09:12.066740+00:00",
+      "imports": [
+        "../../_generated/api",
+        "../../_generated/server",
+        "convex/values",
+        "stream/consumers"
+      ],
+      "symbols": [
+        {
+          "name": "estimateTokens",
+          "kind": "function",
+          "line": 20
+        },
+        {
+          "name": "OCRResult",
+          "kind": "interface",
+          "line": 147
+        }
+      ]
+    },
+    {
+      "path": "convex/lib/reasoning/interleavedReasoningActions.ts",
+      "language": "typescript",
+      "size_bytes": 2246,
+      "sha1": "cbff51e44dc0e68e1f7844de2d233605d1bddf45",
+      "modified_at": "2025-11-16T01:07:14.828259+00:00",
+      "imports": [
+        "../../_generated/api",
+        "../../_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/lib/search/index.ts",
+      "language": "typescript",
+      "size_bytes": 893,
+      "sha1": "c50a13b45c954b4c40afff09386c2d3a1a364e59",
+      "modified_at": "2025-11-16T01:07:14.829263+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "convex/lib/search/orchestrator.ts",
+      "language": "typescript",
+      "size_bytes": 14135,
+      "sha1": "b2d753f0eec80c580314ae5cceea058d01263027",
+      "modified_at": "2025-11-16T01:09:59.919571+00:00",
+      "imports": [
+        "../../_generated/api",
+        "../../_generated/server",
+        "convex/values"
+      ],
+      "symbols": [
+        {
+          "name": "SearchRequest",
+          "kind": "interface",
+          "line": 12
+        },
+        {
+          "name": "SearchResult",
+          "kind": "interface",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "path": "convex/lib/search/querySegmentationActions.ts",
+      "language": "typescript",
+      "size_bytes": 12335,
+      "sha1": "9e02a50dc9aa21ca5c432e3a1fd6edeabea03d62",
+      "modified_at": "2025-11-16T01:07:14.830265+00:00",
+      "imports": [
+        "../../_generated/api",
+        "../../_generated/server",
+        "./querySegmentationTypes",
+        "convex/values",
+        "crypto"
+      ],
+      "symbols": [
+        {
+          "name": "buildExecutionGraph",
+          "kind": "function",
+          "line": 233
+        },
+        {
+          "name": "calculateEstimatedTime",
+          "kind": "function",
+          "line": 281
+        },
+        {
+          "name": "estimateTokens",
+          "kind": "function",
+          "line": 307
+        }
+      ]
+    },
+    {
+      "path": "convex/lib/search/querySegmentationQueries.ts",
+      "language": "typescript",
+      "size_bytes": 2083,
+      "sha1": "6a0f103884fe4ce82c9dd5c03c428e8ab66f37fe",
+      "modified_at": "2025-11-16T01:07:14.831961+00:00",
+      "imports": [
+        "../../_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/lib/search/querySegmentationTypes.ts",
+      "language": "typescript",
+      "size_bytes": 749,
+      "sha1": "b4c23cbad02c77eae7fa35c9393ac2705d2f0f64",
+      "modified_at": "2025-11-16T01:07:14.833544+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "QuerySegment",
+          "kind": "interface",
+          "line": 6
+        },
+        {
+          "name": "SegmentationResult",
+          "kind": "interface",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "path": "convex/lib/search/segmentExecutorActions.ts",
+      "language": "typescript",
+      "size_bytes": 11858,
+      "sha1": "705f9313f79c321038b5d7ba954149e7804defa0",
+      "modified_at": "2025-11-16T01:09:27.434475+00:00",
+      "imports": [
+        "../../_generated/api",
+        "../../_generated/server",
+        "./querySegmentationTypes",
+        "convex/values"
+      ],
+      "symbols": [
+        {
+          "name": "SegmentExecutionResult",
+          "kind": "interface",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "convex/lib/search/segmentExecutorMutations.ts",
+      "language": "typescript",
+      "size_bytes": 1093,
+      "sha1": "06a2f81869b17ecbb8fe78ff5ff9c71c40a474f5",
+      "modified_at": "2025-11-16T01:07:14.835167+00:00",
+      "imports": [
+        "../../_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/mcp.node.ts",
+      "language": "typescript",
+      "size_bytes": 4516,
+      "sha1": "21da3322d7ecfdbc43d191a8d343148241528452",
+      "modified_at": "2025-11-16T01:07:14.808132+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/mcp.ts",
+      "language": "typescript",
+      "size_bytes": 10081,
+      "sha1": "2dab28e9b82aa6c245c540b154e5d31df0ef4f6f",
+      "modified_at": "2025-11-16T01:07:14.809232+00:00",
+      "imports": [
+        "./_generated/api",
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/mcp_mutations.ts",
+      "language": "typescript",
+      "size_bytes": 6540,
+      "sha1": "157521aecb1e53879f414394aad18181c1a90c74",
+      "modified_at": "2025-11-16T01:07:14.807560+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/modelConfiguration.ts",
+      "language": "typescript",
+      "size_bytes": 4821,
+      "sha1": "45a4259355c86c1753019a443e7e01e83d6fec38",
+      "modified_at": "2025-11-16T01:07:14.810327+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/ocr.ts",
+      "language": "typescript",
+      "size_bytes": 2441,
+      "sha1": "23adeb47ac7f8fb9103241ab7674f347f80ea3a3",
+      "modified_at": "2025-11-16T01:07:14.811327+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": [
+        {
+          "name": "OCRResult",
+          "kind": "type",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "convex/orchestrator.ts",
+      "language": "typescript",
+      "size_bytes": 1080,
+      "sha1": "28453bcb4a661984c59d88a9096874bdf5e099b3",
+      "modified_at": "2025-11-16T01:07:14.812800+00:00",
+      "imports": [
+        "./_generated/api",
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/rag.ts",
+      "language": "typescript",
+      "size_bytes": 13353,
+      "sha1": "2833b60ef3d67806888f149e14ee81819d8eb3d0",
+      "modified_at": "2026-03-17T00:16:07.112004+00:00",
+      "imports": [
+        "./_generated/server",
+        "@convex-dev/auth/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/reasoning.ts",
+      "language": "typescript",
+      "size_bytes": 2940,
+      "sha1": "d05def84dd5100487db597672bc1940419d23a15",
+      "modified_at": "2025-11-16T01:07:14.812800+00:00",
+      "imports": [
+        "./_generated/api",
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/schema.ts",
+      "language": "typescript",
+      "size_bytes": 22471,
+      "sha1": "1d1b579e56bc70e0059587be378fc121f0728f71",
+      "modified_at": "2026-03-11T23:10:24.194595+00:00",
+      "imports": [
+        "@convex-dev/auth/server",
+        "convex/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/search.ts",
+      "language": "typescript",
+      "size_bytes": 8222,
+      "sha1": "838d2e822c3d445cfcffb725e77d8ba1760fc5ff",
+      "modified_at": "2025-11-16T01:09:33.229719+00:00",
+      "imports": [
+        "./_generated/api",
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/searchAnalytics.ts",
+      "language": "typescript",
+      "size_bytes": 2004,
+      "sha1": "88ee57926a12887b0c112827e6674aa9de49ec15",
+      "modified_at": "2026-03-11T21:43:17.323278+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/searchHistory.ts",
+      "language": "typescript",
+      "size_bytes": 6633,
+      "sha1": "a82141b748872aee701956ffcdc108672ed3f7b2",
+      "modified_at": "2026-03-07T19:14:56.218755+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/secureApiKeys.ts",
+      "language": "typescript",
+      "size_bytes": 4832,
+      "sha1": "1b7943a704a8e97693f8a09de9bb13d3b2fa9507",
+      "modified_at": "2025-11-16T01:07:14.817315+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/sessionCleanup.ts",
+      "language": "typescript",
+      "size_bytes": 1711,
+      "sha1": "ce17fbc928f7e6221fea89bf66a72482cac23a93",
+      "modified_at": "2026-03-08T21:12:18.398082+00:00",
+      "imports": [
+        "./_generated/server"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/todos.ts",
+      "language": "typescript",
+      "size_bytes": 931,
+      "sha1": "d4b5ee0e9af8697e1b72dba4b9010858d5b3c657",
+      "modified_at": "2025-11-16T01:07:14.818734+00:00",
+      "imports": [
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/tsconfig.json",
+      "language": "json",
+      "size_bytes": 760,
+      "sha1": "dc920ec4b8e4762cf3308cded9df52f61f01961b",
+      "modified_at": "2025-11-06T22:07:04.968810+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "convex/usageTracking.ts",
+      "language": "typescript",
+      "size_bytes": 26518,
+      "sha1": "335aab8b9c21c878a99bc891797d54e57a3b5110",
+      "modified_at": "2026-03-08T21:16:47.523872+00:00",
+      "imports": [
+        "./_generated/dataModel",
+        "./_generated/server",
+        "convex/values"
+      ],
+      "symbols": [
+        {
+          "name": "ExportFormat",
+          "kind": "type",
+          "line": 19
+        },
+        {
+          "name": "ExportEventType",
+          "kind": "type",
+          "line": 20
+        },
+        {
+          "name": "FineTuneRecordSource",
+          "kind": "type",
+          "line": 25
+        },
+        {
+          "name": "FineTuneExportArgs",
+          "kind": "type",
+          "line": 29
+        },
+        {
+          "name": "FineTuneRecord",
+          "kind": "type",
+          "line": 35
+        },
+        {
+          "name": "normalizeWhitespace",
+          "kind": "function",
+          "line": 59
+        },
+        {
+          "name": "truncateText",
+          "kind": "function",
+          "line": 63
+        },
+        {
+          "name": "extractStringField",
+          "kind": "function",
+          "line": 71
+        },
+        {
+          "name": "extractPreferredAnswer",
+          "kind": "function",
+          "line": 90
+        },
+        {
+          "name": "getSelectedEventTypes",
+          "kind": "function",
+          "line": 116
+        },
+        {
+          "name": "shouldBuildSearchExamples",
+          "kind": "function",
+          "line": 126
+        },
+        {
+          "name": "formatSearchFinding",
+          "kind": "function",
+          "line": 135
+        },
+        {
+          "name": "formatSearchSource",
+          "kind": "function",
+          "line": 156
+        },
+        {
+          "name": "buildSearchResponse",
+          "kind": "function",
+          "line": 169
+        },
+        {
+          "name": "buildApprovedSearchRecord",
+          "kind": "function",
+          "line": 205
+        },
+        {
+          "name": "getTopResultsFromMetadata",
+          "kind": "function",
+          "line": 239
+        },
+        {
+          "name": "buildSearchUsageEventRecord",
+          "kind": "function",
+          "line": 260
+        },
+        {
+          "name": "buildUsageEventRecord",
+          "kind": "function",
+          "line": 299
+        },
+        {
+          "name": "sortRecords",
+          "kind": "function",
+          "line": 335
+        }
+      ]
+    },
+    {
+      "path": "convex/userPreferences.ts",
+      "language": "typescript",
+      "size_bytes": 2046,
+      "sha1": "e0c8dd0d9be2a0825626b1933aa218c0d2ef6c70",
+      "modified_at": "2026-03-08T21:10:20.539134+00:00",
+      "imports": [
+        "./_generated/server",
+        "@convex-dev/auth/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "convex/users.ts",
+      "language": "typescript",
+      "size_bytes": 1301,
+      "sha1": "e5cb8aac647e65d6f11bd5d2ef4a25eb6d00d1b9",
+      "modified_at": "2026-03-08T21:06:38.876622+00:00",
+      "imports": [
+        "./_generated/server",
+        "@convex-dev/auth/server",
+        "convex/values"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "dev-output.log",
+      "language": "text",
+      "size_bytes": 68653,
+      "sha1": "e66dcdf83f222ef261c35a59816baafc4f5b07c8",
+      "modified_at": "2025-11-09T23:39:46.851071+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/AGENTIC_SEARCH.md",
+      "language": "markdown",
+      "size_bytes": 8783,
+      "sha1": "1a094d5864543addd9162299038a83740eb09435",
+      "modified_at": "2025-11-14T02:58:25.943215+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/AGENTIC_SEARCH_PLAN.md",
+      "language": "markdown",
+      "size_bytes": 25333,
+      "sha1": "c0d898c7f28e8c677b704fe9303a514d8f7121a8",
+      "modified_at": "2025-11-06T19:21:57.962409+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/ARCHITECTURE_DECISION_GUIDE.md",
+      "language": "markdown",
+      "size_bytes": 10473,
+      "sha1": "b66e94df8ccf0f1647367cbeecaa9b6c8065848c",
+      "modified_at": "2025-11-06T19:16:50.287606+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/AWS_S3_SETUP.md",
+      "language": "markdown",
+      "size_bytes": 5737,
+      "sha1": "60dd99a637262171fdf3f86cc619e076e4e5f24f",
+      "modified_at": "2025-11-10T22:56:02.513684+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/BUG_FIXES_2025-01-17.md",
+      "language": "markdown",
+      "size_bytes": 5330,
+      "sha1": "d91a6f1ee6a8c8a0846dd735eef9fbf4e2be05ea",
+      "modified_at": "2025-11-17T19:02:13.830068+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/CLAUDE.md",
+      "language": "markdown",
+      "size_bytes": 13125,
+      "sha1": "36ee6883359c686ba053c88ef1da18fe47fa38b0",
+      "modified_at": "2025-11-06T20:08:08.134440+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/CLAUDE_CODE_INTEGRATION.md",
+      "language": "markdown",
+      "size_bytes": 7722,
+      "sha1": "350ae7421fcdf0da9c4c3463c4313cc0dc929530",
+      "modified_at": "2025-11-10T21:54:13.412567+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/CRYPTO_IMPLEMENTATION.md",
+      "language": "markdown",
+      "size_bytes": 8788,
+      "sha1": "3e0fef303f22f5efdd51ae2bbf1ae87a5a51704a",
+      "modified_at": "2025-11-07T17:14:56.039372+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/CSRF-IMPLEMENTATION-SUMMARY.md",
+      "language": "markdown",
+      "size_bytes": 7386,
+      "sha1": "142b655fa180098bb7ed0dd51c3bf4ccef8ddf00",
+      "modified_at": "2025-11-07T18:10:55.936872+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/CSRF-PROTECTION.md",
+      "language": "markdown",
+      "size_bytes": 12874,
+      "sha1": "3781d3bb4d75dce03db63e3def28be64efe76846",
+      "modified_at": "2025-11-07T18:06:47.272886+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/DEPLOYMENT_STATUS.md",
+      "language": "markdown",
+      "size_bytes": 5813,
+      "sha1": "e717dc3a3cfa531f45a74da1eb99c9385b472258",
+      "modified_at": "2025-11-07T20:17:22.269962+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/DeepSeek OCR Compressio.txt",
+      "language": "text",
+      "size_bytes": 1740,
+      "sha1": "8e2cddd34d00c4d0b206c485069ff8a87b546c46",
+      "modified_at": "2025-11-05T19:48:20.747969+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/FIX_TANSTACK_START.md",
+      "language": "markdown",
+      "size_bytes": 5747,
+      "sha1": "64363d39d9f98f3998a0f56a485db89c0170be9b",
+      "modified_at": "2025-11-06T19:26:42.709726+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/HUMAN_IN_THE_LOOP.md",
+      "language": "markdown",
+      "size_bytes": 11169,
+      "sha1": "1dd4bc1ea66fe36aa5418e629c7e218c71c6f299",
+      "modified_at": "2025-11-17T18:46:22.639370+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/IMPLEMENTATION_HUMAN_IN_THE_LOOP.md",
+      "language": "markdown",
+      "size_bytes": 10981,
+      "sha1": "f2d1fed18d7dc24f15ee10ec51d864da661bd294",
+      "modified_at": "2025-11-17T18:47:50.420788+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/IMPLEMENTATION_PLAN.md",
+      "language": "markdown",
+      "size_bytes": 33106,
+      "sha1": "fe43776bdf62d15e30c2a318040ffec5644acbe8",
+      "modified_at": "2025-11-07T21:33:26.052448+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/IMPLEMENTATION_STATUS.md",
+      "language": "markdown",
+      "size_bytes": 11856,
+      "sha1": "e4503e7737df1196b6284b177c9a7a84adcd3a89",
+      "modified_at": "2025-11-10T21:43:20.770529+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/INTERLEAVED_REASONING.md",
+      "language": "markdown",
+      "size_bytes": 11012,
+      "sha1": "356cae1511dc9902f3d05ab84eab1e0e4561abde",
+      "modified_at": "2025-11-14T14:54:04.018501+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/MCP_INTEGRATION.md",
+      "language": "markdown",
+      "size_bytes": 9939,
+      "sha1": "15d8b623b9c484c54584c6333a7ca735e04c0747",
+      "modified_at": "2025-11-07T22:32:42.700387+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/OCR_IMPLEMENTATION.md",
+      "language": "markdown",
+      "size_bytes": 10207,
+      "sha1": "b36b9246c395296aac71e982a6acf1908cb13ec6",
+      "modified_at": "2025-11-07T21:42:57.388340+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/PROJECT_PLAN.md",
+      "language": "markdown",
+      "size_bytes": 9194,
+      "sha1": "2b0363361a0c9d51f37ef09fd4cb4299659c7383",
+      "modified_at": "2025-11-07T22:50:55.745858+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/RESEARCH_AGENTIC_SEARCH_PLATFORM.md",
+      "language": "markdown",
+      "size_bytes": 45958,
+      "sha1": "2f6edd791f07b59094a2a0f5589b3b8b3df51724",
+      "modified_at": "2025-11-06T19:16:16.787291+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/SEARCH_PLATFORM_ROADMAP.md",
+      "language": "markdown",
+      "size_bytes": 12633,
+      "sha1": "c10c96ccc39be06bf346e7181b977ce94690b66b",
+      "modified_at": "2026-03-08T22:24:23.898217+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/SECURITY_ANALYSIS_SUMMARY.md",
+      "language": "markdown",
+      "size_bytes": 16644,
+      "sha1": "9c92b86c3b521e6f99839ca31c8d8b2780fcd7da",
+      "modified_at": "2025-11-07T01:55:27.893806+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/SYSTEM_ARCHITECTURE.md",
+      "language": "markdown",
+      "size_bytes": 20085,
+      "sha1": "b4e985fa0ab626e80f23d2405c6944907fea69b7",
+      "modified_at": "2025-11-11T17:07:06.978560+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/SYSTEM_OVERVIEW.md",
+      "language": "markdown",
+      "size_bytes": 13839,
+      "sha1": "946d46b47ee9e5acea6e2d609dd1e99fd11c1ca4",
+      "modified_at": "2025-11-14T14:58:02.133939+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/TEST_SPECS.md",
+      "language": "markdown",
+      "size_bytes": 10842,
+      "sha1": "666096021e81faa8aeb07a87f3a0ce1dd243e92d",
+      "modified_at": "2026-03-11T23:05:42.628691+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/analysis/analysis.md",
+      "language": "markdown",
+      "size_bytes": 24395,
+      "sha1": "59d129b2dafeca90ddacf6eda9df7c3e0d8b205f",
+      "modified_at": "2026-03-11T20:24:21.925870+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/architecture.md",
+      "language": "markdown",
+      "size_bytes": 21737,
+      "sha1": "fb76660e31f7ad7d861caefa6cd4afc090299f03",
+      "modified_at": "2025-11-06T20:23:25.458161+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/codeRabbit_review02.md",
+      "language": "markdown",
+      "size_bytes": 21149,
+      "sha1": "b5f58fcdcce9b7eb596fbce4ce894cfb88c84949",
+      "modified_at": "2025-11-11T18:09:09.628502+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/codeRabbit_review03.md",
+      "language": "markdown",
+      "size_bytes": 22071,
+      "sha1": "c220d53f28d1bc0f8726b49035efda3e39bf38f2",
+      "modified_at": "2025-11-11T23:33:26.046850+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/code_review/code_review.md",
+      "language": "markdown",
+      "size_bytes": 182734,
+      "sha1": "cc3568c83a5512a7f3f3169957af596c8f1b1d04",
+      "modified_at": "2026-03-16T17:40:53.594012+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/coderabbit_review01.md",
+      "language": "markdown",
+      "size_bytes": 16671,
+      "sha1": "097913b52b4098e724919b0764371763a761bbf3",
+      "modified_at": "2025-11-09T01:57:42.282318+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/console/console_errors.md",
+      "language": "markdown",
+      "size_bytes": 4441,
+      "sha1": "7986fff4c8b20e2685f8009819db7027a224afec",
+      "modified_at": "2026-03-09T21:28:20.366194+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/feature/feature.md",
+      "language": "markdown",
+      "size_bytes": 7757,
+      "sha1": "ac934ccf6ffc69a4c353b1cb8f24ee98620c787a",
+      "modified_at": "2026-03-16T20:45:27.803422+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/model-configuration-usage.md",
+      "language": "markdown",
+      "size_bytes": 7092,
+      "sha1": "3f76cf636b088ef9953e61cb82e4e420e91a91ff",
+      "modified_at": "2025-11-07T01:54:17.286742+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/model-selection-architecture.json",
+      "language": "json",
+      "size_bytes": 31650,
+      "sha1": "044286489ce7b38363527df54e49fb006418b08b",
+      "modified_at": "2025-11-07T01:54:01.996968+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/model-selection-summary.md",
+      "language": "markdown",
+      "size_bytes": 8126,
+      "sha1": "ee9ae84c4866a3c0565aac311afeb8f4c8f754ac",
+      "modified_at": "2025-11-07T01:56:52.932373+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/model-selection-ux-flow.md",
+      "language": "markdown",
+      "size_bytes": 37664,
+      "sha1": "440994adfa5d22de8182862a2c1c0cfc6279e85d",
+      "modified_at": "2025-11-07T01:55:58.192068+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/plan.md",
+      "language": "markdown",
+      "size_bytes": 27341,
+      "sha1": "7246354d31ec838659d973da73eaa8ebc1d8994e",
+      "modified_at": "2026-03-12T16:08:16.545874+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/security_integration_analysis.json",
+      "language": "json",
+      "size_bytes": 18120,
+      "sha1": "af6146f3699cd965de2e386c334ce1ba9a80ba1b",
+      "modified_at": "2025-11-07T01:53:47.069495+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/sentry.md",
+      "language": "markdown",
+      "size_bytes": 3484,
+      "sha1": "3894acc3412a2d3ee1f97af2ec70fdebd60f4543",
+      "modified_at": "2025-11-09T20:42:32.267411+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/server/server_output.md",
+      "language": "markdown",
+      "size_bytes": 57465,
+      "sha1": "f5509eb4cc79c896da9207ed5de3af3553cdc8c3",
+      "modified_at": "2026-03-09T21:34:21.265663+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/server/vite_output.md",
+      "language": "markdown",
+      "size_bytes": 33058,
+      "sha1": "3a8c228d9545c702584b32c27ff49d4b4ff3faf0",
+      "modified_at": "2026-03-17T15:22:03.210712+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/tanstack_react.md",
+      "language": "markdown",
+      "size_bytes": 82752,
+      "sha1": "2248c95414a3c1061f893d91e9a678100ce523c1",
+      "modified_at": "2025-11-09T22:11:23.396494+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/tech-stack.md",
+      "language": "markdown",
+      "size_bytes": 17273,
+      "sha1": "d97127086bb9220bb85af94277661a70f91ec72b",
+      "modified_at": "2025-11-06T20:23:25.874019+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/testing-summary.md",
+      "language": "markdown",
+      "size_bytes": 8042,
+      "sha1": "eb9d5d7ace2f1679b6480511f6873bc25153af8d",
+      "modified_at": "2025-11-07T01:57:14.264153+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "docs/trae.md",
+      "language": "markdown",
+      "size_bytes": 21984,
+      "sha1": "09417e6be3ac326091efba2cc0ce8167b7577a85",
+      "modified_at": "2025-11-06T14:53:50.788676+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "instrument.server.mjs",
+      "language": "javascript",
+      "size_bytes": 366,
+      "sha1": "7bdf3f038184d89c00ba25b749e0bb6429d1b206",
+      "modified_at": "2026-03-17T01:43:18.717479+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "memory/agents/README.md",
+      "language": "markdown",
+      "size_bytes": 1213,
+      "sha1": "fe1a1c05462e4f7eebc09da0990d09fe29b230d2",
+      "modified_at": "2025-11-06T20:08:08.224602+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "memory/claude-flow@alpha-data.json",
+      "language": "json",
+      "size_bytes": 51,
+      "sha1": "142a03ace3c39f41340dc157645da2c6b896ecdc",
+      "modified_at": "2025-11-07T01:56:15.115275+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "memory/sessions/README.md",
+      "language": "markdown",
+      "size_bytes": 1284,
+      "sha1": "308085d6950f3268d3560313c9c9e52d7f0c0eea",
+      "modified_at": "2025-11-06T20:08:08.226109+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "size_bytes": 4214,
+      "sha1": "cc08d9f0feec71b86a94a802865ee29a25761010",
+      "modified_at": "2026-03-17T16:26:04.206233+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "playwright.config.ts",
+      "language": "typescript",
+      "size_bytes": 689,
+      "sha1": "8dfd10b574face7551f0e550fd665b121b15d4af",
+      "modified_at": "2026-03-12T00:06:12.584031+00:00",
+      "imports": [
+        "@playwright/test"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "language": "yaml",
+      "size_bytes": 397313,
+      "sha1": "5e1797928f1f39f41e4772b7cd11d470790ca64f",
+      "modified_at": "2026-03-17T16:26:51.446925+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "public/manifest.json",
+      "language": "json",
+      "size_bytes": 498,
+      "sha1": "3aa9ffc754758414ed12303c9c586905e14924d8",
+      "modified_at": "2025-11-06T22:07:04.698308+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "public/robots.txt",
+      "language": "text",
+      "size_bytes": 67,
+      "sha1": "044ce68f83ee8543475fea16f6e3a73d28a1c6d5",
+      "modified_at": "2025-11-06T22:07:04.699812+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "public/tanstack-word-logo-white.svg",
+      "language": "text",
+      "size_bytes": 15002,
+      "sha1": "f534059bfa4df0065ed592b41b52b2084a239d88",
+      "modified_at": "2025-11-06T22:07:04.701878+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "scripts/run-vite-dev.mjs",
+      "language": "javascript",
+      "size_bytes": 1265,
+      "sha1": "0868f930057bbb2ff07e9f1c0964a20b1864e537",
+      "modified_at": "2026-03-17T02:17:08.053575+00:00",
+      "imports": [
+        "node:child_process",
+        "node:path",
+        "node:url"
+      ],
+      "symbols": [
+        {
+          "name": "sanitizeNodeOptions",
+          "kind": "function",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "path": "src/components/ADDQualityPanel.tsx",
+      "language": "typescript",
+      "size_bytes": 14225,
+      "sha1": "3109522cd387c27f1551f56a5f3f43e97b06ce72",
+      "modified_at": "2026-03-17T16:19:43.704408+00:00",
+      "imports": [
+        "../lib/types",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ADDMetrics",
+          "kind": "interface",
+          "line": 25
+        },
+        {
+          "name": "ADDQualityPanelProps",
+          "kind": "interface",
+          "line": 36
+        },
+        {
+          "name": "ADDQualityPanel",
+          "kind": "function",
+          "line": 60
+        },
+        {
+          "name": "MetricBadge",
+          "kind": "function",
+          "line": 393
+        },
+        {
+          "name": "TooltipHint",
+          "kind": "function",
+          "line": 429
+        }
+      ]
+    },
+    {
+      "path": "src/components/AgenticChat.tsx",
+      "language": "typescript",
+      "size_bytes": 29136,
+      "sha1": "b67caf50f16cce82e85dc549a0dac30f2237d136",
+      "modified_at": "2026-03-16T21:45:46.273673+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../hooks/useCsrfToken.tsx",
+        "../hooks/useSpeech",
+        "../lib/model-store",
+        "../lib/types",
+        "../lib/unified-search-orchestrator",
+        "./ADDQualityPanel",
+        "./ComparisonDashboard",
+        "./EnhancedModelSelector",
+        "./ResultsList",
+        "./SearchCheckpointTimeline",
+        "./SearchProgressPanel",
+        "./SecurityBanner",
+        "./SettingsModal",
+        "@ai-sdk/react",
+        "ai",
+        "convex/react",
+        "react",
+        "react-markdown",
+        "rehype-highlight",
+        "rehype-raw",
+        "rehype-sanitize",
+        "remark-gfm"
+      ],
+      "symbols": [
+        {
+          "name": "SearchCompletionSummary",
+          "kind": "type",
+          "line": 32
+        },
+        {
+          "name": "ChatReasoningStep",
+          "kind": "interface",
+          "line": 48
+        },
+        {
+          "name": "AgenticChatProps",
+          "kind": "interface",
+          "line": 55
+        },
+        {
+          "name": "ReasoningIcon",
+          "kind": "function",
+          "line": 74
+        },
+        {
+          "name": "readSelectedModelsFromStore",
+          "kind": "function",
+          "line": 87
+        },
+        {
+          "name": "AgenticChat",
+          "kind": "function",
+          "line": 113
+        },
+        {
+          "name": "buildSpokenSearchSummary",
+          "kind": "function",
+          "line": 144
+        }
+      ]
+    },
+    {
+      "path": "src/components/AnalyticsPage.tsx",
+      "language": "typescript",
+      "size_bytes": 1037,
+      "sha1": "7631783f3c6961fa4889d441e6845d7ced1ab973",
+      "modified_at": "2026-03-16T16:14:04.881157+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../hooks/useAppAuth",
+        "convex/react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "Summary",
+          "kind": "interface",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "src/components/ApiKeyInput.tsx",
+      "language": "typescript",
+      "size_bytes": 3104,
+      "sha1": "aac8d8c45712096f71b089cb7a6964595ca734e9",
+      "modified_at": "2025-11-08T19:12:46.639724+00:00",
+      "imports": [
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ApiKeyInputProps",
+          "kind": "interface",
+          "line": 9
+        },
+        {
+          "name": "ApiKeyInput",
+          "kind": "function",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "path": "src/components/ApiKeyVerification.tsx",
+      "language": "typescript",
+      "size_bytes": 4859,
+      "sha1": "4e0e222c5265e4efc5c941af76a48f7ed0f60c83",
+      "modified_at": "2026-03-16T16:14:04.880158+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "convex/react",
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ApiKeyVerification",
+          "kind": "function",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "src/components/AuthButton.tsx",
+      "language": "typescript",
+      "size_bytes": 7021,
+      "sha1": "58effdfff09e19dcf53ea530b403179171100f63",
+      "modified_at": "2026-03-16T16:14:04.880158+00:00",
+      "imports": [
+        "../hooks/useAppAuth",
+        "@tanstack/react-router",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "handleClick",
+          "kind": "function",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "path": "src/components/ComparisonDashboard.tsx",
+      "language": "typescript",
+      "size_bytes": 13839,
+      "sha1": "f87f8acf016d6961d8756dab0fbd302f1d260c70",
+      "modified_at": "2026-03-17T16:20:04.924888+00:00",
+      "imports": [
+        "../lib/add-discriminator",
+        "../lib/interleaved-reasoning-engine",
+        "lucide-react"
+      ],
+      "symbols": [
+        {
+          "name": "DashboardProps",
+          "kind": "interface",
+          "line": 26
+        },
+        {
+          "name": "ComparisonDashboard",
+          "kind": "function",
+          "line": 33
+        },
+        {
+          "name": "MetricCard",
+          "kind": "function",
+          "line": 265
+        },
+        {
+          "name": "ModelOutputCard",
+          "kind": "function",
+          "line": 295
+        },
+        {
+          "name": "ReasoningStepCard",
+          "kind": "function",
+          "line": 339
+        },
+        {
+          "name": "ScoreBar",
+          "kind": "function",
+          "line": 428
+        },
+        {
+          "name": "ScoreTooltip",
+          "kind": "function",
+          "line": 467
+        }
+      ]
+    },
+    {
+      "path": "src/components/ConnectionStatus.tsx",
+      "language": "typescript",
+      "size_bytes": 4632,
+      "sha1": "ab8d368a7298f4ea515bbe87e39ee3f7762b93ba",
+      "modified_at": "2025-11-08T19:12:46.641730+00:00",
+      "imports": [
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ConnectionStatusProps",
+          "kind": "interface",
+          "line": 9
+        },
+        {
+          "name": "ConnectionStatus",
+          "kind": "function",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "path": "src/components/DatasetExportDashboard.tsx",
+      "language": "typescript",
+      "size_bytes": 30926,
+      "sha1": "3c7fe770bd72d9f9b99831d7ab85e1ef3858dd7f",
+      "modified_at": "2026-03-16T16:14:04.910165+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../../convex/_generated/dataModel",
+        "convex/react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ExportFormat",
+          "kind": "type",
+          "line": 6
+        },
+        {
+          "name": "UsageEventType",
+          "kind": "type",
+          "line": 7
+        },
+        {
+          "name": "FineTuneJobStatus",
+          "kind": "type",
+          "line": 13
+        },
+        {
+          "name": "OpenAIJobResponse",
+          "kind": "interface",
+          "line": 37
+        },
+        {
+          "name": "getStatusTone",
+          "kind": "function",
+          "line": 69
+        },
+        {
+          "name": "parseHyperparameterValue",
+          "kind": "function",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "path": "src/components/EnhancedModelSelector.tsx",
+      "language": "typescript",
+      "size_bytes": 10298,
+      "sha1": "224baa6e159ed0adec34b842ffa43b45ba5c9fbc",
+      "modified_at": "2026-03-16T16:14:04.885157+00:00",
+      "imports": [
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ModelStore",
+          "kind": "type",
+          "line": 12
+        },
+        {
+          "name": "ModelOption",
+          "kind": "interface",
+          "line": 17
+        },
+        {
+          "name": "ModelSelectorProps",
+          "kind": "interface",
+          "line": 27
+        },
+        {
+          "name": "EnhancedModelSelector",
+          "kind": "function",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "language": "typescript",
+      "size_bytes": 5827,
+      "sha1": "cf4cdd0a2dc4800019e224edb1bf3222bf500b62",
+      "modified_at": "2026-03-16T16:14:04.880158+00:00",
+      "imports": [
+        "./AuthButton",
+        "./SettingsModal",
+        "@tanstack/react-router",
+        "react"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/components/ModelSelector.tsx",
+      "language": "typescript",
+      "size_bytes": 3871,
+      "sha1": "e1c60c09ba4e14e078d467aa82b2ced467f02322",
+      "modified_at": "2025-11-08T19:12:46.636208+00:00",
+      "imports": [
+        "../lib/model-config",
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ModelSelectorProps",
+          "kind": "interface",
+          "line": 10
+        },
+        {
+          "name": "ModelSelector",
+          "kind": "function",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "path": "src/components/ReasoningStep.tsx",
+      "language": "typescript",
+      "size_bytes": 7817,
+      "sha1": "af60f9ed4ff5db6dfb51db36158d331de376bf37",
+      "modified_at": "2026-03-16T16:14:33.224212+00:00",
+      "imports": [
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ReasoningPhase",
+          "kind": "type",
+          "line": 17
+        },
+        {
+          "name": "ReasoningStepData",
+          "kind": "interface",
+          "line": 25
+        },
+        {
+          "name": "ReasoningStepProps",
+          "kind": "interface",
+          "line": 36
+        },
+        {
+          "name": "ReasoningStep",
+          "kind": "function",
+          "line": 60
+        },
+        {
+          "name": "ReasoningTimelineProps",
+          "kind": "interface",
+          "line": 247
+        },
+        {
+          "name": "ReasoningTimeline",
+          "kind": "function",
+          "line": 253
+        }
+      ]
+    },
+    {
+      "path": "src/components/ReasoningStepValidator.tsx",
+      "language": "typescript",
+      "size_bytes": 17404,
+      "sha1": "f1be0b1ebcd617be0e1fe895a342ab696f0baf7b",
+      "modified_at": "2026-03-16T16:14:04.883158+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../../convex/_generated/dataModel",
+        "convex/react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ReasoningStepValidatorProps",
+          "kind": "interface",
+          "line": 6
+        },
+        {
+          "name": "getStepTypeExplanation",
+          "kind": "function",
+          "line": 707
+        }
+      ]
+    },
+    {
+      "path": "src/components/ResultsList.tsx",
+      "language": "typescript",
+      "size_bytes": 10879,
+      "sha1": "8cca7dbae7eda045540328bf6efe90659136eb12",
+      "modified_at": "2026-03-16T16:14:33.232220+00:00",
+      "imports": [
+        "../hooks/useSpeech",
+        "../lib/types",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ResultsListProps",
+          "kind": "interface",
+          "line": 21
+        },
+        {
+          "name": "ResultsList",
+          "kind": "function",
+          "line": 39
+        },
+        {
+          "name": "ResultCard",
+          "kind": "function",
+          "line": 155
+        },
+        {
+          "name": "RagRatingWidget",
+          "kind": "function",
+          "line": 280
+        }
+      ]
+    },
+    {
+      "path": "src/components/SearchBar.tsx",
+      "language": "typescript",
+      "size_bytes": 9103,
+      "sha1": "741a1f5d80acefded860c412c40cfe7a80126084",
+      "modified_at": "2026-03-10T23:18:02.506434+00:00",
+      "imports": [
+        "../hooks/useAutocomplete",
+        "../hooks/useSpeech",
+        "lucide-react"
+      ],
+      "symbols": [
+        {
+          "name": "FormEvent",
+          "kind": "type",
+          "line": 8
+        },
+        {
+          "name": "SearchBarProps",
+          "kind": "interface",
+          "line": 17
+        },
+        {
+          "name": "SearchBar",
+          "kind": "function",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "path": "src/components/SearchCheckpointTimeline.tsx",
+      "language": "typescript",
+      "size_bytes": 9189,
+      "sha1": "fb03dc5c0b46f78ce50b672dbb9a4e438213e373",
+      "modified_at": "2026-03-16T20:38:05.494781+00:00",
+      "imports": [
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "CheckpointPhase",
+          "kind": "type",
+          "line": 17
+        },
+        {
+          "name": "CheckpointSnapshot",
+          "kind": "type",
+          "line": 18
+        },
+        {
+          "name": "SearchCheckpointTimelineProps",
+          "kind": "interface",
+          "line": 23
+        },
+        {
+          "name": "phaseStatus",
+          "kind": "function",
+          "line": 40
+        },
+        {
+          "name": "formatDataSummary",
+          "kind": "function",
+          "line": 59
+        },
+        {
+          "name": "SearchCheckpointTimeline",
+          "kind": "function",
+          "line": 91
+        }
+      ]
+    },
+    {
+      "path": "src/components/SearchComparisonDashboard.tsx",
+      "language": "typescript",
+      "size_bytes": 4879,
+      "sha1": "471343c2e8155fcfc8f68cfaa2e8220e5dd15156",
+      "modified_at": "2026-03-16T16:14:04.880158+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../../convex/_generated/dataModel",
+        "convex/react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SearchComparisonDashboardProps",
+          "kind": "interface",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "src/components/SearchHistory.tsx",
+      "language": "typescript",
+      "size_bytes": 12737,
+      "sha1": "9281f5522ef34267dd23f54ab98a1abc43fa4c5a",
+      "modified_at": "2026-03-16T16:14:04.909164+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../../convex/_generated/dataModel",
+        "convex/react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SearchHistoryProps",
+          "kind": "interface",
+          "line": 6
+        },
+        {
+          "name": "getQualityLevel",
+          "kind": "function",
+          "line": 548
+        }
+      ]
+    },
+    {
+      "path": "src/components/SearchHistoryPage.tsx",
+      "language": "typescript",
+      "size_bytes": 9308,
+      "sha1": "d78410299eaadfdf09d9f566381587576c89a324",
+      "modified_at": "2026-03-16T16:53:27.899417+00:00",
+      "imports": [
+        "../lib/results-storage",
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SearchHistoryPage",
+          "kind": "function",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "src/components/SearchProgressPanel.tsx",
+      "language": "typescript",
+      "size_bytes": 11557,
+      "sha1": "bbfea31f07b41f6789dfa6fdfd635f8b4e4e8602",
+      "modified_at": "2026-03-10T23:17:42.324052+00:00",
+      "imports": [
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SearchProgressStep",
+          "kind": "interface",
+          "line": 19
+        },
+        {
+          "name": "SearchScope",
+          "kind": "interface",
+          "line": 40
+        },
+        {
+          "name": "SearchStepModifications",
+          "kind": "type",
+          "line": 56
+        },
+        {
+          "name": "SearchProgressPanelProps",
+          "kind": "interface",
+          "line": 58
+        },
+        {
+          "name": "SearchProgressPanel",
+          "kind": "function",
+          "line": 74
+        }
+      ]
+    },
+    {
+      "path": "src/components/SecurityBanner.tsx",
+      "language": "typescript",
+      "size_bytes": 3183,
+      "sha1": "9329dc6189f5a178635945e4e197efbdbb8222ef",
+      "modified_at": "2026-03-16T16:14:04.880158+00:00",
+      "imports": [
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SecurityBanner",
+          "kind": "function",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "src/components/SegmentApprovalModal.tsx",
+      "language": "typescript",
+      "size_bytes": 7240,
+      "sha1": "4d7fdd5109544ddf67dd6f384d7acdcbac5a9817",
+      "modified_at": "2026-03-16T16:14:33.229220+00:00",
+      "imports": [
+        "../lib/segment/types",
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SegmentApprovalModalProps",
+          "kind": "interface",
+          "line": 11
+        },
+        {
+          "name": "SegmentApprovalModal",
+          "kind": "function",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "path": "src/components/SegmentApprovalPanel.tsx",
+      "language": "typescript",
+      "size_bytes": 17754,
+      "sha1": "6f513c7a4b6edea3b8df9b45098841982b5c6fd6",
+      "modified_at": "2026-03-16T16:14:04.896159+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../../convex/_generated/dataModel",
+        "convex/react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SegmentApprovalPanelProps",
+          "kind": "interface",
+          "line": 6
+        },
+        {
+          "name": "SegmentType",
+          "kind": "type",
+          "line": 11
+        },
+        {
+          "name": "getSegmentTypeDescription",
+          "kind": "function",
+          "line": 723
+        }
+      ]
+    },
+    {
+      "path": "src/components/SettingsModal.tsx",
+      "language": "typescript",
+      "size_bytes": 41086,
+      "sha1": "4fced3cd8989d5cea7f41bc0fc058e1820f5893a",
+      "modified_at": "2026-03-17T01:08:01.341263+00:00",
+      "imports": [
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ModelStore",
+          "kind": "type",
+          "line": 32
+        },
+        {
+          "name": "RagLevel",
+          "kind": "type",
+          "line": 34
+        },
+        {
+          "name": "SettingsModalProps",
+          "kind": "interface",
+          "line": 44
+        },
+        {
+          "name": "TabId",
+          "kind": "type",
+          "line": 49
+        },
+        {
+          "name": "SettingsModal",
+          "kind": "function",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "path": "src/components/search/ReasoningVisualization.tsx",
+      "language": "typescript",
+      "size_bytes": 12529,
+      "sha1": "36b20306c20bbe5a94e921124f4ae238c64fbf21",
+      "modified_at": "2026-03-16T16:14:04.906164+00:00",
+      "imports": [
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ReasoningAction",
+          "kind": "interface",
+          "line": 20
+        },
+        {
+          "name": "ReasoningStepResult",
+          "kind": "interface",
+          "line": 25
+        },
+        {
+          "name": "ReasoningStep",
+          "kind": "interface",
+          "line": 32
+        },
+        {
+          "name": "ReasoningSession",
+          "kind": "interface",
+          "line": 51
+        },
+        {
+          "name": "ReasoningVisualizationProps",
+          "kind": "interface",
+          "line": 60
+        },
+        {
+          "name": "ReasoningVisualization",
+          "kind": "function",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "path": "src/components/search/SegmentApprovalUI.tsx",
+      "language": "typescript",
+      "size_bytes": 9957,
+      "sha1": "1f5904c542b2e082907d7c4ed0ba141bd6dd73d2",
+      "modified_at": "2026-03-16T16:14:04.903163+00:00",
+      "imports": [
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SegmentType",
+          "kind": "type",
+          "line": 16
+        },
+        {
+          "name": "SegmentComplexity",
+          "kind": "type",
+          "line": 25
+        },
+        {
+          "name": "QuerySegment",
+          "kind": "interface",
+          "line": 27
+        },
+        {
+          "name": "SegmentApprovalUIProps",
+          "kind": "interface",
+          "line": 40
+        },
+        {
+          "name": "SegmentApprovalUI",
+          "kind": "function",
+          "line": 47
+        }
+      ]
+    },
+    {
+      "path": "src/components/workos-user.tsx",
+      "language": "typescript",
+      "size_bytes": 1041,
+      "sha1": "2afd0a7d7e726ba517268412299bad2580f6f2a8",
+      "modified_at": "2025-11-08T19:12:46.632178+00:00",
+      "imports": [
+        "@workos-inc/authkit-react"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/data/demo.punk-songs.ts",
+      "language": "typescript",
+      "size_bytes": 544,
+      "sha1": "ba58b5ad82673dab9d0b43e676a35a2a027011f4",
+      "modified_at": "2025-11-08T19:12:46.630673+00:00",
+      "imports": [
+        "@tanstack/react-start"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/data/example-guitars.ts",
+      "language": "typescript",
+      "size_bytes": 4743,
+      "sha1": "0561667196749bb034749681e633690c9e60002a",
+      "modified_at": "2025-11-08T19:12:46.630673+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "Guitar",
+          "kind": "interface",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "path": "src/env.ts",
+      "language": "typescript",
+      "size_bytes": 1262,
+      "sha1": "f522d217f691dbaf6d378102df448e68ad6e9236",
+      "modified_at": "2026-03-05T18:43:00.100196+00:00",
+      "imports": [
+        "@t3-oss/env-core",
+        "zod"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/hooks/useAppAuth.ts",
+      "language": "typescript",
+      "size_bytes": 876,
+      "sha1": "41c03c9bc12633e881427093d5fa60d131f7a183",
+      "modified_at": "2026-03-16T16:14:04.885157+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "@convex-dev/auth/react",
+        "convex/react"
+      ],
+      "symbols": [
+        {
+          "name": "useAppAuth",
+          "kind": "function",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "path": "src/hooks/useAutocomplete.ts",
+      "language": "typescript",
+      "size_bytes": 3161,
+      "sha1": "598948d0eedebfca4fa46eec40b61502da5a022b",
+      "modified_at": "2026-03-10T23:18:02.506434+00:00",
+      "imports": [
+        "../lib/search/trie",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "createSeededTrie",
+          "kind": "function",
+          "line": 19
+        },
+        {
+          "name": "getOrCreateTrie",
+          "kind": "function",
+          "line": 27
+        },
+        {
+          "name": "persistTrie",
+          "kind": "function",
+          "line": 57
+        },
+        {
+          "name": "UseAutocompleteReturn",
+          "kind": "interface",
+          "line": 69
+        },
+        {
+          "name": "useAutocomplete",
+          "kind": "function",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "path": "src/hooks/useCsrfToken.tsx",
+      "language": "typescript",
+      "size_bytes": 1610,
+      "sha1": "1a5019dd0a7fba99ff4f1ddf3655f38672782f63",
+      "modified_at": "2026-03-05T18:19:51.471976+00:00",
+      "imports": [
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "useCsrfToken",
+          "kind": "function",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "path": "src/hooks/useRag.ts",
+      "language": "typescript",
+      "size_bytes": 5956,
+      "sha1": "ab1459daca8fc6b30ba8d524ae5509da7972d845",
+      "modified_at": "2026-03-16T16:14:33.246221+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../lib/rag/retrieval",
+        "convex/react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "RagLevel",
+          "kind": "type",
+          "line": 14
+        },
+        {
+          "name": "useRag",
+          "kind": "function",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "path": "src/hooks/useReasoningSteps.ts",
+      "language": "typescript",
+      "size_bytes": 4676,
+      "sha1": "ce2b3eccbb5fc92510cc02d24512010963508bb1",
+      "modified_at": "2026-03-16T16:14:04.894159+00:00",
+      "imports": [
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "UseReasoningStepsResult",
+          "kind": "interface",
+          "line": 12
+        },
+        {
+          "name": "useReasoningSteps",
+          "kind": "function",
+          "line": 30
+        },
+        {
+          "name": "createAgenticSearchFlow",
+          "kind": "function",
+          "line": 162
+        }
+      ]
+    },
+    {
+      "path": "src/hooks/useSearchProgress.ts",
+      "language": "typescript",
+      "size_bytes": 14011,
+      "sha1": "5ce06c5d4978e76f41ac68336b39b9cf9a3ba4fc",
+      "modified_at": "2026-03-16T20:33:40.914464+00:00",
+      "imports": [
+        "../lib/model-store",
+        "../lib/results-storage",
+        "../lib/types",
+        "../lib/unified-search-orchestrator",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SearchProgressState",
+          "kind": "interface",
+          "line": 18
+        },
+        {
+          "name": "UseSearchProgressReturn",
+          "kind": "interface",
+          "line": 26
+        },
+        {
+          "name": "SearchCompletionSummary",
+          "kind": "interface",
+          "line": 36
+        },
+        {
+          "name": "useSearchProgress",
+          "kind": "function",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "path": "src/hooks/useSpeech.ts",
+      "language": "typescript",
+      "size_bytes": 6618,
+      "sha1": "a401cec7dbab5054eebc1f5485928cc6758c0ca7",
+      "modified_at": "2026-03-09T03:12:50.711816+00:00",
+      "imports": [
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "pickPreferredVoice",
+          "kind": "function",
+          "line": 10
+        },
+        {
+          "name": "SpeechRecognitionHook",
+          "kind": "interface",
+          "line": 55
+        },
+        {
+          "name": "SpeechRecognitionAlternativeLike",
+          "kind": "interface",
+          "line": 70
+        },
+        {
+          "name": "SpeechRecognitionResultLike",
+          "kind": "interface",
+          "line": 74
+        },
+        {
+          "name": "SpeechRecognitionEventLike",
+          "kind": "interface",
+          "line": 79
+        },
+        {
+          "name": "BrowserSpeechRecognition",
+          "kind": "interface",
+          "line": 83
+        },
+        {
+          "name": "BrowserSpeechRecognitionConstructor",
+          "kind": "type",
+          "line": 94
+        },
+        {
+          "name": "getSpeechRecognitionConstructor",
+          "kind": "function",
+          "line": 96
+        },
+        {
+          "name": "useSpeechRecognition",
+          "kind": "function",
+          "line": 107
+        },
+        {
+          "name": "SpeechSynthesisHook",
+          "kind": "interface",
+          "line": 180
+        },
+        {
+          "name": "useSpeechSynthesis",
+          "kind": "function",
+          "line": 191
+        }
+      ]
+    },
+    {
+      "path": "src/hooks/useUser.tsx",
+      "language": "typescript",
+      "size_bytes": 602,
+      "sha1": "7d8853fbc8378b9e0a83ba8f322af97bc3bfb341",
+      "modified_at": "2026-03-16T16:14:33.238220+00:00",
+      "imports": [
+        "@tanstack/react-router",
+        "@workos-inc/authkit-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "UserOrNull",
+          "kind": "type",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "path": "src/integrations/convex/auth-provider.tsx",
+      "language": "typescript",
+      "size_bytes": 585,
+      "sha1": "8f01ecf7534ee8b1c1cb8b96e72db3d5cebd5512",
+      "modified_at": "2026-03-16T16:14:04.890158+00:00",
+      "imports": [
+        "../../lib/convex",
+        "@convex-dev/auth/react"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/integrations/convex/provider.tsx",
+      "language": "typescript",
+      "size_bytes": 527,
+      "sha1": "01580f08c97c82301632b6ccac23b8d3e797f7e1",
+      "modified_at": "2026-03-16T16:14:04.895159+00:00",
+      "imports": [
+        "./auth-provider",
+        "@convex-dev/react-query",
+        "convex/react"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/integrations/tanstack-query/devtools.tsx",
+      "language": "typescript",
+      "size_bytes": 158,
+      "sha1": "6d0bcd5f542e73a470a9a755ce33c8a6bcccecd2",
+      "modified_at": "2025-11-08T19:12:46.630673+00:00",
+      "imports": [
+        "@tanstack/react-query-devtools"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/integrations/tanstack-query/root-provider.tsx",
+      "language": "typescript",
+      "size_bytes": 388,
+      "sha1": "812e5c92cd998d408552bebd0020e1c26e2e4892",
+      "modified_at": "2025-11-08T19:12:46.632178+00:00",
+      "imports": [
+        "@tanstack/react-query"
+      ],
+      "symbols": [
+        {
+          "name": "getContext",
+          "kind": "function",
+          "line": 3
+        },
+        {
+          "name": "Provider",
+          "kind": "function",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "src/integrations/workos/provider.tsx",
+      "language": "typescript",
+      "size_bytes": 2533,
+      "sha1": "107d928838320440a8c26c94387c3548908d8184",
+      "modified_at": "2026-03-16T16:14:04.895159+00:00",
+      "imports": [
+        "../../lib/sentry",
+        "@tanstack/react-router",
+        "@workos-inc/authkit-react"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/add-discriminator.ts",
+      "language": "typescript",
+      "size_bytes": 11000,
+      "sha1": "fe4856c09b877544453f82369c2bdeaecb9a3215",
+      "modified_at": "2026-03-16T16:14:04.911164+00:00",
+      "imports": [
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "ADDScore",
+          "kind": "interface",
+          "line": 16
+        },
+        {
+          "name": "DriftAnalysis",
+          "kind": "interface",
+          "line": 25
+        },
+        {
+          "name": "ADDMetrics",
+          "kind": "interface",
+          "line": 33
+        },
+        {
+          "name": "ADDConfig",
+          "kind": "interface",
+          "line": 44
+        },
+        {
+          "name": "AdversarialDifferentialDiscriminator",
+          "kind": "class",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "path": "src/lib/agentic-search.ts",
+      "language": "typescript",
+      "size_bytes": 53380,
+      "sha1": "617268d9b4143e0ffc5ab1b011d471635901944f",
+      "modified_at": "2026-03-17T15:25:04.766203+00:00",
+      "imports": [
+        "./search-providers",
+        "./types",
+        "./url-validation"
+      ],
+      "symbols": [
+        {
+          "name": "ModelConfig",
+          "kind": "type",
+          "line": 16
+        },
+        {
+          "name": "hasVersionSegment",
+          "kind": "function",
+          "line": 25
+        },
+        {
+          "name": "stripTrailingSlashes",
+          "kind": "function",
+          "line": 38
+        },
+        {
+          "name": "SearchIntent",
+          "kind": "interface",
+          "line": 43
+        },
+        {
+          "name": "SearchStrategy",
+          "kind": "interface",
+          "line": 56
+        },
+        {
+          "name": "QualityAssessment",
+          "kind": "interface",
+          "line": 64
+        },
+        {
+          "name": "SearchMetrics",
+          "kind": "interface",
+          "line": 74
+        },
+        {
+          "name": "AgenticSearchEngine",
+          "kind": "class",
+          "line": 85
+        },
+        {
+          "name": "classifyRisk",
+          "kind": "function",
+          "line": 1736
+        },
+        {
+          "name": "removeBetween",
+          "kind": "function",
+          "line": 1765
+        },
+        {
+          "name": "stripInstructions",
+          "kind": "function",
+          "line": 1783
+        }
+      ]
+    },
+    {
+      "path": "src/lib/ai/model-detection.ts",
+      "language": "typescript",
+      "size_bytes": 12724,
+      "sha1": "1c3b97b5731b23a655e733f8dc6cc47baed3bd64",
+      "modified_at": "2026-03-16T23:33:12.752046+00:00",
+      "imports": [
+        "../model-config"
+      ],
+      "symbols": [
+        {
+          "name": "isLocalProviderUrl",
+          "kind": "function",
+          "line": 16
+        },
+        {
+          "name": "isLocalBrowserSession",
+          "kind": "function",
+          "line": 24
+        },
+        {
+          "name": "OllamaModel",
+          "kind": "interface",
+          "line": 83
+        },
+        {
+          "name": "OllamaTagsResponse",
+          "kind": "interface",
+          "line": 99
+        },
+        {
+          "name": "DetectedModel",
+          "kind": "interface",
+          "line": 103
+        },
+        {
+          "name": "getFirstAvailableModel",
+          "kind": "function",
+          "line": 252
+        },
+        {
+          "name": "getCloudProviderModels",
+          "kind": "function",
+          "line": 263
+        },
+        {
+          "name": "getRecommendedModelForTask",
+          "kind": "function",
+          "line": 511
+        }
+      ]
+    },
+    {
+      "path": "src/lib/ai/providers.ts",
+      "language": "typescript",
+      "size_bytes": 8616,
+      "sha1": "73451eb2fc2ed18484d4b4ecf05ea99f53edb855",
+      "modified_at": "2026-03-16T20:54:36.225329+00:00",
+      "imports": [
+        "../model-config"
+      ],
+      "symbols": [
+        {
+          "name": "ModelConfig",
+          "kind": "interface",
+          "line": 14
+        },
+        {
+          "name": "getProviderDisplayName",
+          "kind": "function",
+          "line": 268
+        },
+        {
+          "name": "requiresApiKey",
+          "kind": "function",
+          "line": 290
+        },
+        {
+          "name": "getDefaultBaseURL",
+          "kind": "function",
+          "line": 297
+        }
+      ]
+    },
+    {
+      "path": "src/lib/ai/unified-provider.ts",
+      "language": "typescript",
+      "size_bytes": 2662,
+      "sha1": "1b8577aad1377b2d9f8758ce80b463471151d100",
+      "modified_at": "2026-03-17T15:24:23.490514+00:00",
+      "imports": [
+        "../url-validation",
+        "@ai-sdk/anthropic",
+        "@ai-sdk/google",
+        "@ai-sdk/openai"
+      ],
+      "symbols": [
+        {
+          "name": "ModelConfig",
+          "kind": "type",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "src/lib/api-schemas.ts",
+      "language": "typescript",
+      "size_bytes": 1243,
+      "sha1": "d8471744bf4efd9d41fff8132a5e973b16dad034",
+      "modified_at": "2026-03-17T01:08:05.660712+00:00",
+      "imports": [
+        "zod"
+      ],
+      "symbols": [
+        {
+          "name": "SearchRequest",
+          "kind": "type",
+          "line": 40
+        },
+        {
+          "name": "ChatRequest",
+          "kind": "type",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "path": "src/lib/component-validation-pipeline.ts",
+      "language": "typescript",
+      "size_bytes": 13291,
+      "sha1": "39726318f32f21c4620221feb4e4a1fe789e3b4b",
+      "modified_at": "2026-03-16T16:14:33.266221+00:00",
+      "imports": [
+        "./add-discriminator",
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "ComponentValidationResult",
+          "kind": "interface",
+          "line": 18
+        },
+        {
+          "name": "PipelineResult",
+          "kind": "interface",
+          "line": 28
+        },
+        {
+          "name": "ValidationConfig",
+          "kind": "interface",
+          "line": 37
+        },
+        {
+          "name": "ComponentValidator",
+          "kind": "interface",
+          "line": 54
+        },
+        {
+          "name": "RetrievalValidator",
+          "kind": "class",
+          "line": 62
+        },
+        {
+          "name": "ReasoningValidator",
+          "kind": "class",
+          "line": 156
+        },
+        {
+          "name": "ResponseValidator",
+          "kind": "class",
+          "line": 259
+        },
+        {
+          "name": "ComponentValidationPipeline",
+          "kind": "class",
+          "line": 380
+        }
+      ]
+    },
+    {
+      "path": "src/lib/convex.ts",
+      "language": "typescript",
+      "size_bytes": 899,
+      "sha1": "a5d472dd41d43d5439725745b38152a1965ce1ec",
+      "modified_at": "2026-03-16T20:50:00.913672+00:00",
+      "imports": [
+        "convex/react"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/crypto-storage.ts",
+      "language": "typescript",
+      "size_bytes": 5675,
+      "sha1": "2b76585f88af6f5cd6f557f103dc9a35e4a342bf",
+      "modified_at": "2026-03-17T16:24:56.126943+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "getSessionPassword",
+          "kind": "function",
+          "line": 23
+        },
+        {
+          "name": "clearSessionPassword",
+          "kind": "function",
+          "line": 38
+        },
+        {
+          "name": "secureRemoveItem",
+          "kind": "function",
+          "line": 105
+        },
+        {
+          "name": "isSecureStorageAvailable",
+          "kind": "function",
+          "line": 113
+        }
+      ]
+    },
+    {
+      "path": "src/lib/crypto-utils.ts",
+      "language": "typescript",
+      "size_bytes": 6507,
+      "sha1": "cd91b9f8d8ec6eefd5cd1b6a8a8db86f28f389d9",
+      "modified_at": "2026-03-16T20:43:50.991028+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "isCryptoAvailable",
+          "kind": "function",
+          "line": 17
+        },
+        {
+          "name": "generateSalt",
+          "kind": "function",
+          "line": 28
+        },
+        {
+          "name": "generateIV",
+          "kind": "function",
+          "line": 35
+        },
+        {
+          "name": "maskApiKey",
+          "kind": "function",
+          "line": 187
+        },
+        {
+          "name": "generateSessionPassword",
+          "kind": "function",
+          "line": 206
+        },
+        {
+          "name": "arrayBufferToBase64",
+          "kind": "function",
+          "line": 215
+        },
+        {
+          "name": "base64ToArrayBuffer",
+          "kind": "function",
+          "line": 227
+        },
+        {
+          "name": "isEncryptedData",
+          "kind": "function",
+          "line": 240
+        }
+      ]
+    },
+    {
+      "path": "src/lib/csrf-protection.ts",
+      "language": "typescript",
+      "size_bytes": 7221,
+      "sha1": "bfa4bfa0e11217aaa53a12174499bec265f24cd8",
+      "modified_at": "2026-03-16T16:14:33.274219+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "generateCsrfToken",
+          "kind": "function",
+          "line": 12
+        },
+        {
+          "name": "validateCsrfToken",
+          "kind": "function",
+          "line": 34
+        },
+        {
+          "name": "CsrfCookieOptions",
+          "kind": "interface",
+          "line": 59
+        },
+        {
+          "name": "setCsrfCookie",
+          "kind": "function",
+          "line": 85
+        },
+        {
+          "name": "getCsrfTokenFromCookie",
+          "kind": "function",
+          "line": 129
+        },
+        {
+          "name": "getCsrfTokenFromHeader",
+          "kind": "function",
+          "line": 151
+        },
+        {
+          "name": "requiresCsrfProtection",
+          "kind": "function",
+          "line": 162
+        },
+        {
+          "name": "CsrfValidationResult",
+          "kind": "interface",
+          "line": 170
+        },
+        {
+          "name": "validateCsrfRequest",
+          "kind": "function",
+          "line": 182
+        },
+        {
+          "name": "createCsrfErrorResponse",
+          "kind": "function",
+          "line": 225
+        },
+        {
+          "name": "CsrfMiddlewareOptions",
+          "kind": "interface",
+          "line": 244
+        },
+        {
+          "name": "createCsrfMiddleware",
+          "kind": "function",
+          "line": 250
+        },
+        {
+          "name": "ensureCsrfToken",
+          "kind": "function",
+          "line": 286
+        }
+      ]
+    },
+    {
+      "path": "src/lib/demo-store-devtools.tsx",
+      "language": "typescript",
+      "size_bytes": 1496,
+      "sha1": "db08a5bd0c37e2baa599d771c3ac5dcf7b6c2bd6",
+      "modified_at": "2025-11-08T19:12:46.637712+00:00",
+      "imports": [
+        "./demo-store",
+        "@tanstack/devtools-event-client",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "EventMap",
+          "kind": "type",
+          "line": 6
+        },
+        {
+          "name": "StoreDevtoolsEventClient",
+          "kind": "class",
+          "line": 14
+        },
+        {
+          "name": "DevtoolPanel",
+          "kind": "function",
+          "line": 32
+        }
+      ]
+    },
+    {
+      "path": "src/lib/demo-store.ts",
+      "language": "typescript",
+      "size_bytes": 269,
+      "sha1": "1645d60f1791d139a3648425ec10aa37aee3fb51",
+      "modified_at": "2025-11-08T19:12:46.634703+00:00",
+      "imports": [
+        "@tanstack/store"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/finetuning-dataset-exporter.ts",
+      "language": "typescript",
+      "size_bytes": 11778,
+      "sha1": "fa4e38d6742d17a712c910272cc3c49738c2ab79",
+      "modified_at": "2026-03-16T16:14:04.930677+00:00",
+      "imports": [
+        "./s3-storage",
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "TrainingExample",
+          "kind": "interface",
+          "line": 16
+        },
+        {
+          "name": "ExportConfig",
+          "kind": "interface",
+          "line": 37
+        },
+        {
+          "name": "PIIDetector",
+          "kind": "class",
+          "line": 58
+        },
+        {
+          "name": "DatasetAnonymizer",
+          "kind": "class",
+          "line": 143
+        },
+        {
+          "name": "FineTuningDatasetExporter",
+          "kind": "class",
+          "line": 169
+        }
+      ]
+    },
+    {
+      "path": "src/lib/firecrawl-client.ts",
+      "language": "typescript",
+      "size_bytes": 8898,
+      "sha1": "a5b938f990d61f31e91580f93fcf7d74690435e9",
+      "modified_at": "2026-03-16T16:14:04.909164+00:00",
+      "imports": [
+        "zod"
+      ],
+      "symbols": [
+        {
+          "name": "FirecrawlSearchResult",
+          "kind": "type",
+          "line": 54
+        },
+        {
+          "name": "FirecrawlSearchResponse",
+          "kind": "type",
+          "line": 55
+        },
+        {
+          "name": "FirecrawlScrapeResponse",
+          "kind": "type",
+          "line": 58
+        },
+        {
+          "name": "FirecrawlClientConfig",
+          "kind": "interface",
+          "line": 63
+        },
+        {
+          "name": "FirecrawlSearchOptions",
+          "kind": "interface",
+          "line": 71
+        },
+        {
+          "name": "FirecrawlScrapeOptions",
+          "kind": "interface",
+          "line": 79
+        },
+        {
+          "name": "FirecrawlClient",
+          "kind": "class",
+          "line": 91
+        },
+        {
+          "name": "createFirecrawlClient",
+          "kind": "function",
+          "line": 354
+        }
+      ]
+    },
+    {
+      "path": "src/lib/interleaved-reasoning-engine.ts",
+      "language": "typescript",
+      "size_bytes": 16919,
+      "sha1": "20fcd66bed877f1391c73efd18abbf20d0a7ca3d",
+      "modified_at": "2026-03-17T00:07:41.974811+00:00",
+      "imports": [
+        "./add-discriminator",
+        "./security/input-sanitization",
+        "./types",
+        "@ai-sdk/openai",
+        "ai"
+      ],
+      "symbols": [
+        {
+          "name": "ReasoningStep",
+          "kind": "interface",
+          "line": 20
+        },
+        {
+          "name": "ReasoningResult",
+          "kind": "interface",
+          "line": 32
+        },
+        {
+          "name": "ReasoningHyperparameters",
+          "kind": "interface",
+          "line": 42
+        },
+        {
+          "name": "ReasoningConfig",
+          "kind": "interface",
+          "line": 48
+        },
+        {
+          "name": "SecurityValidator",
+          "kind": "class",
+          "line": 79
+        },
+        {
+          "name": "RateLimiter",
+          "kind": "class",
+          "line": 123
+        },
+        {
+          "name": "InterleavedReasoningEngine",
+          "kind": "class",
+          "line": 147
+        }
+      ]
+    },
+    {
+      "path": "src/lib/knowledge-graph/extractor.ts",
+      "language": "typescript",
+      "size_bytes": 14334,
+      "sha1": "1d0995eab8fd24199470f1f278297e0fab8404c5",
+      "modified_at": "2026-03-11T23:14:59.752212+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "EntityExtractor",
+          "kind": "class",
+          "line": 234
+        }
+      ]
+    },
+    {
+      "path": "src/lib/knowledge-graph/graph.ts",
+      "language": "typescript",
+      "size_bytes": 16181,
+      "sha1": "9385fce623ca6200240e3ab6de9a5765bcf0e5f0",
+      "modified_at": "2026-03-11T23:08:54.268467+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "KnowledgeGraph",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "src/lib/knowledge-graph/index.ts",
+      "language": "typescript",
+      "size_bytes": 954,
+      "sha1": "e74a3d79a4253e4a12302fda984275cb19c2d3ec",
+      "modified_at": "2026-03-11T23:09:59.720464+00:00",
+      "imports": [
+        "./extractor",
+        "./graph"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/knowledge-graph/types.ts",
+      "language": "typescript",
+      "size_bytes": 2018,
+      "sha1": "dfb807128bf26bef2bf4125235e44e684b659cba",
+      "modified_at": "2026-03-11T23:07:14.885352+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "EntityType",
+          "kind": "type",
+          "line": 1
+        },
+        {
+          "name": "RelationshipType",
+          "kind": "type",
+          "line": 9
+        },
+        {
+          "name": "Entity",
+          "kind": "interface",
+          "line": 19
+        },
+        {
+          "name": "EntitySource",
+          "kind": "interface",
+          "line": 30
+        },
+        {
+          "name": "Relationship",
+          "kind": "interface",
+          "line": 39
+        },
+        {
+          "name": "GraphQuery",
+          "kind": "interface",
+          "line": 50
+        },
+        {
+          "name": "GraphPath",
+          "kind": "interface",
+          "line": 60
+        },
+        {
+          "name": "GraphStats",
+          "kind": "interface",
+          "line": 66
+        },
+        {
+          "name": "SerializedGraph",
+          "kind": "interface",
+          "line": 74
+        },
+        {
+          "name": "ExtractionResult",
+          "kind": "interface",
+          "line": 81
+        },
+        {
+          "name": "EntityPattern",
+          "kind": "interface",
+          "line": 88
+        },
+        {
+          "name": "RelationshipPattern",
+          "kind": "interface",
+          "line": 95
+        },
+        {
+          "name": "KnowledgeGraphConfig",
+          "kind": "interface",
+          "line": 103
+        }
+      ]
+    },
+    {
+      "path": "src/lib/mcp/client.ts",
+      "language": "typescript",
+      "size_bytes": 4488,
+      "sha1": "f4fe401e94ead3f0e9b6eb2910c85ba7e8cbea05",
+      "modified_at": "2025-11-08T19:12:46.643730+00:00",
+      "imports": [
+        "@modelcontextprotocol/sdk/client/index.js",
+        "@modelcontextprotocol/sdk/client/stdio.js",
+        "@modelcontextprotocol/sdk/shared/transport.js"
+      ],
+      "symbols": [
+        {
+          "name": "MCPServerConfig",
+          "kind": "interface",
+          "line": 13
+        },
+        {
+          "name": "MCPTool",
+          "kind": "interface",
+          "line": 20
+        },
+        {
+          "name": "MCPResource",
+          "kind": "interface",
+          "line": 26
+        },
+        {
+          "name": "MCPClientManager",
+          "kind": "class",
+          "line": 37
+        },
+        {
+          "name": "getMCPManager",
+          "kind": "function",
+          "line": 197
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-config.ts",
+      "language": "typescript",
+      "size_bytes": 19447,
+      "sha1": "3ceb3b3e96ca1beb63f79da6b789e6773919c2f7",
+      "modified_at": "2026-03-17T15:25:15.368887+00:00",
+      "imports": [
+        "./url-validation",
+        "zod"
+      ],
+      "symbols": [
+        {
+          "name": "stripTrailingSlashes",
+          "kind": "function",
+          "line": 17
+        },
+        {
+          "name": "hasVersionSegment",
+          "kind": "function",
+          "line": 25
+        },
+        {
+          "name": "ModelProvider",
+          "kind": "enum",
+          "line": 38
+        },
+        {
+          "name": "ModelConfig",
+          "kind": "type",
+          "line": 67
+        },
+        {
+          "name": "normalizeAnthropicBaseUrl",
+          "kind": "function",
+          "line": 69
+        },
+        {
+          "name": "normalizeBaseUrlForProvider",
+          "kind": "function",
+          "line": 85
+        },
+        {
+          "name": "buildModelConfigFromClient",
+          "kind": "function",
+          "line": 101
+        },
+        {
+          "name": "AvailableModels",
+          "kind": "type",
+          "line": 207
+        },
+        {
+          "name": "ModelProviderName",
+          "kind": "type",
+          "line": 208
+        },
+        {
+          "name": "ModelForProvider",
+          "kind": "type",
+          "line": 209
+        },
+        {
+          "name": "ModelConfigManager",
+          "kind": "class",
+          "line": 297
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-routing/complexity.ts",
+      "language": "typescript",
+      "size_bytes": 7959,
+      "sha1": "ad7ec67952b19b2279af28fd347e432aa935ce28",
+      "modified_at": "2026-03-11T23:08:48.147802+00:00",
+      "imports": [
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "QueryComplexityAnalyzer",
+          "kind": "class",
+          "line": 203
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-routing/cost-tracker.ts",
+      "language": "typescript",
+      "size_bytes": 6498,
+      "sha1": "29210c6f52d6200c66650b04d66c3189d847cb34",
+      "modified_at": "2026-03-11T23:08:48.169812+00:00",
+      "imports": [
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "CostEstimate",
+          "kind": "interface",
+          "line": 4
+        },
+        {
+          "name": "CostReport",
+          "kind": "interface",
+          "line": 14
+        },
+        {
+          "name": "CostTracker",
+          "kind": "class",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-routing/ensemble.ts",
+      "language": "typescript",
+      "size_bytes": 8834,
+      "sha1": "14bc215f892e724abe25150d576db4a669f60927",
+      "modified_at": "2026-03-16T20:52:50.578560+00:00",
+      "imports": [
+        "../model-config",
+        "./cost-tracker",
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "ModelExecutor",
+          "kind": "type",
+          "line": 6
+        },
+        {
+          "name": "EnsemblePredictor",
+          "kind": "class",
+          "line": 12
+        },
+        {
+          "name": "createEnsemblePredictor",
+          "kind": "function",
+          "line": 332
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-routing/index.ts",
+      "language": "typescript",
+      "size_bytes": 731,
+      "sha1": "07797e33284917888650db705b638abeeae4cb38",
+      "modified_at": "2026-03-11T23:10:20.982560+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "ComplexityAnalysis",
+          "kind": "type",
+          "line": 9
+        },
+        {
+          "name": "CostBudget",
+          "kind": "type",
+          "line": 10
+        },
+        {
+          "name": "FallbackChain",
+          "kind": "type",
+          "line": 12
+        },
+        {
+          "name": "ModelCapabilities",
+          "kind": "type",
+          "line": 15
+        },
+        {
+          "name": "ModelRegistry",
+          "kind": "type",
+          "line": 16
+        },
+        {
+          "name": "QueryComplexity",
+          "kind": "type",
+          "line": 17
+        },
+        {
+          "name": "RoutingDecision",
+          "kind": "type",
+          "line": 18
+        },
+        {
+          "name": "RoutingHistoryEntry",
+          "kind": "type",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-routing/router.ts",
+      "language": "typescript",
+      "size_bytes": 12717,
+      "sha1": "7f0f72967c6e93be68249bfc9edf5584c7818068",
+      "modified_at": "2026-03-16T20:52:29.476365+00:00",
+      "imports": [
+        "../model-config",
+        "../observability",
+        "./complexity",
+        "./cost-tracker"
+      ],
+      "symbols": [
+        {
+          "name": "ComplexityAnalysis",
+          "kind": "type",
+          "line": 7
+        },
+        {
+          "name": "FallbackChain",
+          "kind": "type",
+          "line": 9
+        },
+        {
+          "name": "RoutingDecision",
+          "kind": "type",
+          "line": 11
+        },
+        {
+          "name": "RoutingHistoryEntry",
+          "kind": "type",
+          "line": 12
+        },
+        {
+          "name": "RouterConfig",
+          "kind": "interface",
+          "line": 15
+        },
+        {
+          "name": "AvailableModels",
+          "kind": "interface",
+          "line": 25
+        },
+        {
+          "name": "ModelRouter",
+          "kind": "class",
+          "line": 34
+        },
+        {
+          "name": "createModelRouter",
+          "kind": "function",
+          "line": 480
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-routing/types.ts",
+      "language": "typescript",
+      "size_bytes": 7540,
+      "sha1": "123f38ac8e44a5e5b7bdf8cba301c8f9e1dcf428",
+      "modified_at": "2026-03-16T20:53:25.415233+00:00",
+      "imports": [
+        "../model-config"
+      ],
+      "symbols": [
+        {
+          "name": "QueryComplexity",
+          "kind": "type",
+          "line": 3
+        },
+        {
+          "name": "ComplexityAnalysis",
+          "kind": "interface",
+          "line": 5
+        },
+        {
+          "name": "RoutingDecision",
+          "kind": "interface",
+          "line": 19
+        },
+        {
+          "name": "ModelCapabilities",
+          "kind": "interface",
+          "line": 30
+        },
+        {
+          "name": "FallbackChain",
+          "kind": "interface",
+          "line": 41
+        },
+        {
+          "name": "ModelRegistry",
+          "kind": "interface",
+          "line": 56
+        },
+        {
+          "name": "RoutingHistoryEntry",
+          "kind": "interface",
+          "line": 60
+        },
+        {
+          "name": "CostBudget",
+          "kind": "interface",
+          "line": 69
+        },
+        {
+          "name": "EnsembleResult",
+          "kind": "interface",
+          "line": 80
+        },
+        {
+          "name": "EnsembleConfig",
+          "kind": "interface",
+          "line": 94
+        },
+        {
+          "name": "getModelCapabilities",
+          "kind": "function",
+          "line": 234
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-storage-convex.ts",
+      "language": "typescript",
+      "size_bytes": 4989,
+      "sha1": "6f063387cced5471055f351d5c13df4e87019ac3",
+      "modified_at": "2026-03-11T00:18:47.058192+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../../convex/_generated/dataModel",
+        "./model-config",
+        "convex/react"
+      ],
+      "symbols": [
+        {
+          "name": "ConvexModelProvider",
+          "kind": "type",
+          "line": 19
+        },
+        {
+          "name": "toConvexModelProvider",
+          "kind": "function",
+          "line": 27
+        },
+        {
+          "name": "useSaveModelConfig",
+          "kind": "function",
+          "line": 48
+        },
+        {
+          "name": "useLoadModelConfig",
+          "kind": "function",
+          "line": 84
+        },
+        {
+          "name": "useListModelConfigs",
+          "kind": "function",
+          "line": 104
+        },
+        {
+          "name": "useActiveModelConfig",
+          "kind": "function",
+          "line": 111
+        },
+        {
+          "name": "useSetActiveConfig",
+          "kind": "function",
+          "line": 136
+        },
+        {
+          "name": "useDeleteModelConfig",
+          "kind": "function",
+          "line": 143
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-storage.ts",
+      "language": "typescript",
+      "size_bytes": 12112,
+      "sha1": "b42b89bba5fb4b5c44705986a979fab887717635",
+      "modified_at": "2026-03-17T16:27:25.879848+00:00",
+      "imports": [
+        "./model-config"
+      ],
+      "symbols": [
+        {
+          "name": "StoredConfig",
+          "kind": "interface",
+          "line": 25
+        },
+        {
+          "name": "loadAllConfigs",
+          "kind": "function",
+          "line": 142
+        },
+        {
+          "name": "deleteModelConfig",
+          "kind": "function",
+          "line": 184
+        },
+        {
+          "name": "setActiveConfig",
+          "kind": "function",
+          "line": 221
+        },
+        {
+          "name": "listConfigIds",
+          "kind": "function",
+          "line": 256
+        },
+        {
+          "name": "clearAllConfigs",
+          "kind": "function",
+          "line": 270
+        },
+        {
+          "name": "exportConfigs",
+          "kind": "function",
+          "line": 288
+        },
+        {
+          "name": "importConfigs",
+          "kind": "function",
+          "line": 313
+        },
+        {
+          "name": "createDefaultStorage",
+          "kind": "function",
+          "line": 342
+        },
+        {
+          "name": "isStorageAvailable",
+          "kind": "function",
+          "line": 433
+        }
+      ]
+    },
+    {
+      "path": "src/lib/model-store.ts",
+      "language": "typescript",
+      "size_bytes": 28683,
+      "sha1": "eab4165520d93e48711ced9607235af8d27a1397",
+      "modified_at": "2026-03-17T01:09:00.823720+00:00",
+      "imports": [
+        "./ai/model-detection",
+        "./model-config",
+        "zod"
+      ],
+      "symbols": [
+        {
+          "name": "RagLevel",
+          "kind": "type",
+          "line": 70
+        },
+        {
+          "name": "ActiveModelEntry",
+          "kind": "type",
+          "line": 71
+        },
+        {
+          "name": "LocalProvider",
+          "kind": "type",
+          "line": 72
+        },
+        {
+          "name": "CustomProvider",
+          "kind": "type",
+          "line": 73
+        },
+        {
+          "name": "ModelStore",
+          "kind": "type",
+          "line": 74
+        },
+        {
+          "name": "normalizeBaseUrl",
+          "kind": "function",
+          "line": 87
+        },
+        {
+          "name": "uniqueStrings",
+          "kind": "function",
+          "line": 91
+        },
+        {
+          "name": "cleanProviderUrl",
+          "kind": "function",
+          "line": 95
+        },
+        {
+          "name": "tryParseProviderUrl",
+          "kind": "function",
+          "line": 99
+        },
+        {
+          "name": "buildDetectedModelList",
+          "kind": "function",
+          "line": 107
+        },
+        {
+          "name": "extractModelIds",
+          "kind": "function",
+          "line": 115
+        },
+        {
+          "name": "buildOpenAIModelUrls",
+          "kind": "function",
+          "line": 140
+        },
+        {
+          "name": "buildOpenAICompletionUrls",
+          "kind": "function",
+          "line": 157
+        },
+        {
+          "name": "buildAnthropicMessageUrls",
+          "kind": "function",
+          "line": 177
+        },
+        {
+          "name": "ProviderDetectionHints",
+          "kind": "interface",
+          "line": 187
+        },
+        {
+          "name": "getProviderDetectionHints",
+          "kind": "function",
+          "line": 192
+        },
+        {
+          "name": "getModelStore",
+          "kind": "function",
+          "line": 269
+        },
+        {
+          "name": "setModelStore",
+          "kind": "function",
+          "line": 277
+        },
+        {
+          "name": "getActiveModelConfig",
+          "kind": "function",
+          "line": 289
+        },
+        {
+          "name": "ResolvedModelConfig",
+          "kind": "interface",
+          "line": 352
+        },
+        {
+          "name": "resolveModelConfig",
+          "kind": "function",
+          "line": 364
+        },
+        {
+          "name": "getActiveModelConfigs",
+          "kind": "function",
+          "line": 408
+        },
+        {
+          "name": "toggleActiveModel",
+          "kind": "function",
+          "line": 443
+        },
+        {
+          "name": "updateActiveModelRole",
+          "kind": "function",
+          "line": 483
+        },
+        {
+          "name": "isModelActive",
+          "kind": "function",
+          "line": 501
+        },
+        {
+          "name": "getFirecrawlApiKey",
+          "kind": "function",
+          "line": 516
+        },
+        {
+          "name": "getSearchApiKeys",
+          "kind": "function",
+          "line": 524
+        },
+        {
+          "name": "setSearchApiKey",
+          "kind": "function",
+          "line": 542
+        },
+        {
+          "name": "getClientSearchConfig",
+          "kind": "function",
+          "line": 561
+        },
+        {
+          "name": "classifyDetectionError",
+          "kind": "function",
+          "line": 879
+        },
+        {
+          "name": "addCustomProvider",
+          "kind": "function",
+          "line": 896
+        },
+        {
+          "name": "updateCustomProvider",
+          "kind": "function",
+          "line": 918
+        },
+        {
+          "name": "removeCustomProvider",
+          "kind": "function",
+          "line": 933
+        },
+        {
+          "name": "setActiveModel",
+          "kind": "function",
+          "line": 950
+        },
+        {
+          "name": "setFirecrawlApiKey",
+          "kind": "function",
+          "line": 969
+        },
+        {
+          "name": "getRagLevel",
+          "kind": "function",
+          "line": 978
+        },
+        {
+          "name": "setRagLevel",
+          "kind": "function",
+          "line": 983
+        },
+        {
+          "name": "getRagKnowledgeBaseId",
+          "kind": "function",
+          "line": 990
+        },
+        {
+          "name": "setRagKnowledgeBaseId",
+          "kind": "function",
+          "line": 995
+        },
+        {
+          "name": "getRagEmbeddingConfig",
+          "kind": "function",
+          "line": 1002
+        },
+        {
+          "name": "setRagEmbeddingConfig",
+          "kind": "function",
+          "line": 1011
+        },
+        {
+          "name": "migrateFromOldStorage",
+          "kind": "function",
+          "line": 1023
+        },
+        {
+          "name": "createDefaultStore",
+          "kind": "function",
+          "line": 1029
+        }
+      ]
+    },
+    {
+      "path": "src/lib/observability/index.ts",
+      "language": "typescript",
+      "size_bytes": 90,
+      "sha1": "c0eb94782df240f0ea2dee245c600733cb6404c2",
+      "modified_at": "2026-03-11T21:22:41.383138+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/observability/service.ts",
+      "language": "typescript",
+      "size_bytes": 6945,
+      "sha1": "49881b1921b3746304c32f3d9e7bb8f8e3d5eee1",
+      "modified_at": "2026-03-11T21:22:34.933213+00:00",
+      "imports": [
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "ObservabilityService",
+          "kind": "class",
+          "line": 12
+        },
+        {
+          "name": "getEnvVar",
+          "kind": "function",
+          "line": 276
+        },
+        {
+          "name": "isDevelopment",
+          "kind": "function",
+          "line": 284
+        }
+      ]
+    },
+    {
+      "path": "src/lib/observability/types.ts",
+      "language": "typescript",
+      "size_bytes": 1490,
+      "sha1": "60a216ac398e0d59af61ad156b61cf278abb521c",
+      "modified_at": "2026-03-11T21:21:12.027078+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "SpanAttributes",
+          "kind": "interface",
+          "line": 1
+        },
+        {
+          "name": "Span",
+          "kind": "interface",
+          "line": 5
+        },
+        {
+          "name": "TraceContext",
+          "kind": "interface",
+          "line": 17
+        },
+        {
+          "name": "MetricsRecord",
+          "kind": "interface",
+          "line": 23
+        },
+        {
+          "name": "ObservabilityConfig",
+          "kind": "interface",
+          "line": 31
+        },
+        {
+          "name": "SearchTrace",
+          "kind": "interface",
+          "line": 41
+        },
+        {
+          "name": "ModelCallTrace",
+          "kind": "interface",
+          "line": 54
+        }
+      ]
+    },
+    {
+      "path": "src/lib/ocr/deepseek-vision.ts",
+      "language": "typescript",
+      "size_bytes": 5232,
+      "sha1": "a9120a1edd8a1e1d6fe517a746ef475823cd1e17",
+      "modified_at": "2026-03-16T16:14:04.918677+00:00",
+      "imports": [
+        "../ai/unified-provider",
+        "../model-config",
+        "ai"
+      ],
+      "symbols": [
+        {
+          "name": "VisionOCRConfig",
+          "kind": "interface",
+          "line": 18
+        },
+        {
+          "name": "VisionOCRResult",
+          "kind": "interface",
+          "line": 30
+        },
+        {
+          "name": "estimateTokens",
+          "kind": "function",
+          "line": 39
+        },
+        {
+          "name": "isVisionCapable",
+          "kind": "function",
+          "line": 56
+        },
+        {
+          "name": "calculateConfidence",
+          "kind": "function",
+          "line": 158
+        }
+      ]
+    },
+    {
+      "path": "src/lib/openai-fine-tuning.ts",
+      "language": "typescript",
+      "size_bytes": 6058,
+      "sha1": "a3ad3d9406ae4c1e572950e0041d5b7d85afb99b",
+      "modified_at": "2026-03-16T20:36:54.662800+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "FineTuneExportFormat",
+          "kind": "type",
+          "line": 1
+        },
+        {
+          "name": "OpenAIFineTuneHyperparameters",
+          "kind": "interface",
+          "line": 6
+        },
+        {
+          "name": "OpenAIFineTuneLaunchRequest",
+          "kind": "interface",
+          "line": 12
+        },
+        {
+          "name": "OpenAIFileObject",
+          "kind": "interface",
+          "line": 21
+        },
+        {
+          "name": "OpenAIFineTuneJob",
+          "kind": "interface",
+          "line": 30
+        },
+        {
+          "name": "ensureOpenAIKey",
+          "kind": "function",
+          "line": 45
+        },
+        {
+          "name": "getOpenAIBaseUrl",
+          "kind": "function",
+          "line": 55
+        },
+        {
+          "name": "normalizeOpenAIRecord",
+          "kind": "function",
+          "line": 85
+        },
+        {
+          "name": "buildOpenAIJsonl",
+          "kind": "function",
+          "line": 142
+        }
+      ]
+    },
+    {
+      "path": "src/lib/parallel-model-orchestrator.ts",
+      "language": "typescript",
+      "size_bytes": 26864,
+      "sha1": "4f6e554420c1ea032661a8a8f8e8cf3b58ef2054",
+      "modified_at": "2026-03-16T20:48:52.455919+00:00",
+      "imports": [
+        "./ai/unified-provider",
+        "./model-config",
+        "./url-validation",
+        "ai"
+      ],
+      "symbols": [
+        {
+          "name": "SearchEvidenceBundle",
+          "kind": "type",
+          "line": 14
+        },
+        {
+          "name": "ParallelModelConfig",
+          "kind": "interface",
+          "line": 18
+        },
+        {
+          "name": "ModelResponse",
+          "kind": "interface",
+          "line": 24
+        },
+        {
+          "name": "ConsensusAnalysis",
+          "kind": "interface",
+          "line": 40
+        },
+        {
+          "name": "ParallelPromptResult",
+          "kind": "interface",
+          "line": 55
+        },
+        {
+          "name": "ParallelModelOrchestrator",
+          "kind": "class",
+          "line": 74
+        }
+      ]
+    },
+    {
+      "path": "src/lib/query-enhancement/index.ts",
+      "language": "typescript",
+      "size_bytes": 257,
+      "sha1": "36bc092ca27c5e539b426373f9a6b69a9194f3d4",
+      "modified_at": "2026-03-11T21:10:24.368487+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/query-enhancement/pipeline.ts",
+      "language": "typescript",
+      "size_bytes": 10099,
+      "sha1": "55212264d6a3124ba4365f66a57e2a27405d447f",
+      "modified_at": "2026-03-11T23:13:09.608904+00:00",
+      "imports": [
+        "../model-config",
+        "../translation/query-translator"
+      ],
+      "symbols": [
+        {
+          "name": "EnhancementOptions",
+          "kind": "type",
+          "line": 5
+        },
+        {
+          "name": "Entity",
+          "kind": "type",
+          "line": 6
+        },
+        {
+          "name": "LanguageDetection",
+          "kind": "type",
+          "line": 7
+        },
+        {
+          "name": "QueryEnhancement",
+          "kind": "type",
+          "line": 8
+        },
+        {
+          "name": "QueryExpansion",
+          "kind": "type",
+          "line": 9
+        },
+        {
+          "name": "SpellingCorrection",
+          "kind": "type",
+          "line": 10
+        },
+        {
+          "name": "UserContext",
+          "kind": "type",
+          "line": 14
+        },
+        {
+          "name": "QueryEnhancementPipeline",
+          "kind": "class",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "src/lib/query-enhancement/types.ts",
+      "language": "typescript",
+      "size_bytes": 6317,
+      "sha1": "82fe773dc01d898799dbb910cdad332ca9669d5a",
+      "modified_at": "2026-03-11T23:12:36.140522+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "Entity",
+          "kind": "interface",
+          "line": 1
+        },
+        {
+          "name": "QueryEnhancement",
+          "kind": "interface",
+          "line": 17
+        },
+        {
+          "name": "SpellingCorrection",
+          "kind": "interface",
+          "line": 35
+        },
+        {
+          "name": "QueryExpansion",
+          "kind": "interface",
+          "line": 43
+        },
+        {
+          "name": "LanguageDetection",
+          "kind": "interface",
+          "line": 50
+        },
+        {
+          "name": "EnhancementOptions",
+          "kind": "interface",
+          "line": 58
+        },
+        {
+          "name": "UserContext",
+          "kind": "interface",
+          "line": 69
+        },
+        {
+          "name": "EnhancementResult",
+          "kind": "interface",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "path": "src/lib/rag/index.ts",
+      "language": "typescript",
+      "size_bytes": 352,
+      "sha1": "2899e83b57da5f2eb653fedcc05f13544bd44c4e",
+      "modified_at": "2026-03-16T16:14:04.921676+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/rag/retrieval.ts",
+      "language": "typescript",
+      "size_bytes": 7821,
+      "sha1": "5529559e1c023fffda28d0325edbd1e9a41ede33",
+      "modified_at": "2026-03-16T16:14:33.272219+00:00",
+      "imports": [
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "estimateTokenCount",
+          "kind": "function",
+          "line": 17
+        },
+        {
+          "name": "TextChunk",
+          "kind": "interface",
+          "line": 23
+        },
+        {
+          "name": "chunkText",
+          "kind": "function",
+          "line": 34
+        },
+        {
+          "name": "bm25Score",
+          "kind": "function",
+          "line": 74
+        },
+        {
+          "name": "cosineSimilarity",
+          "kind": "function",
+          "line": 109
+        },
+        {
+          "name": "rankChunks",
+          "kind": "function",
+          "line": 179
+        },
+        {
+          "name": "buildRagContext",
+          "kind": "function",
+          "line": 266
+        }
+      ]
+    },
+    {
+      "path": "src/lib/rag/types.ts",
+      "language": "typescript",
+      "size_bytes": 1986,
+      "sha1": "ed42f5c7b2e1680e26e2a716102baf2192343802",
+      "modified_at": "2026-03-16T16:14:04.921676+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "RagLevel",
+          "kind": "type",
+          "line": 7
+        },
+        {
+          "name": "RagChunk",
+          "kind": "interface",
+          "line": 10
+        },
+        {
+          "name": "RagRetrievalResult",
+          "kind": "interface",
+          "line": 28
+        },
+        {
+          "name": "RagSearchOptions",
+          "kind": "interface",
+          "line": 37
+        },
+        {
+          "name": "RagAnalyticsEvent",
+          "kind": "interface",
+          "line": 53
+        },
+        {
+          "name": "DocumentUploadRequest",
+          "kind": "interface",
+          "line": 70
+        },
+        {
+          "name": "CrawlJobRequest",
+          "kind": "interface",
+          "line": 80
+        }
+      ]
+    },
+    {
+      "path": "src/lib/results-storage.ts",
+      "language": "typescript",
+      "size_bytes": 17674,
+      "sha1": "16d552fe2db84f499394e3f3b1232b5a9ac5fafa",
+      "modified_at": "2026-03-16T16:14:04.945677+00:00",
+      "imports": [
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "ResearchAnnotation",
+          "kind": "interface",
+          "line": 20
+        },
+        {
+          "name": "ResearchSegment",
+          "kind": "interface",
+          "line": 30
+        },
+        {
+          "name": "ResearchProvenance",
+          "kind": "interface",
+          "line": 46
+        },
+        {
+          "name": "StoredResearchResult",
+          "kind": "interface",
+          "line": 53
+        },
+        {
+          "name": "PersistenceMode",
+          "kind": "type",
+          "line": 82
+        },
+        {
+          "name": "ErrnoLikeError",
+          "kind": "type",
+          "line": 83
+        },
+        {
+          "name": "PersistenceAdapter",
+          "kind": "interface",
+          "line": 90
+        },
+        {
+          "name": "ResearchStorage",
+          "kind": "class",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "path": "src/lib/s3-storage.ts",
+      "language": "typescript",
+      "size_bytes": 5267,
+      "sha1": "93b8add61e766839ba31c06f6ae56c266151c960",
+      "modified_at": "2026-03-16T20:55:25.877569+00:00",
+      "imports": [
+        "@aws-sdk/s3-request-presigner"
+      ],
+      "symbols": [
+        {
+          "name": "UploadResult",
+          "kind": "interface",
+          "line": 45
+        },
+        {
+          "name": "isS3Configured",
+          "kind": "function",
+          "line": 177
+        },
+        {
+          "name": "shouldUseS3",
+          "kind": "function",
+          "line": 191
+        }
+      ]
+    },
+    {
+      "path": "src/lib/search-providers.ts",
+      "language": "typescript",
+      "size_bytes": 656,
+      "sha1": "bb0d774c09dd72b2731ac7fa2bd8c35aac882bb4",
+      "modified_at": "2026-03-09T00:03:33.478283+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/search/checkpoint-engine.ts",
+      "language": "typescript",
+      "size_bytes": 11515,
+      "sha1": "9d19acd0f1611952995584266828f8436d0da39f",
+      "modified_at": "2026-03-16T20:25:50.610459+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "CheckpointPhase",
+          "kind": "type",
+          "line": 20
+        },
+        {
+          "name": "CheckpointState",
+          "kind": "type",
+          "line": 51
+        },
+        {
+          "name": "CheckpointSnapshot",
+          "kind": "interface",
+          "line": 53
+        },
+        {
+          "name": "CorrectionEntry",
+          "kind": "interface",
+          "line": 62
+        },
+        {
+          "name": "TrainingExport",
+          "kind": "interface",
+          "line": 74
+        },
+        {
+          "name": "SearchCheckpointConfig",
+          "kind": "interface",
+          "line": 82
+        },
+        {
+          "name": "CheckpointEngine",
+          "kind": "class",
+          "line": 103
+        }
+      ]
+    },
+    {
+      "path": "src/lib/search/domain-authority.ts",
+      "language": "typescript",
+      "size_bytes": 2987,
+      "sha1": "d75b3be6f5385fd763321da1301b2966b167dc8e",
+      "modified_at": "2026-03-10T22:32:41.066200+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "calculateDomainAuthority",
+          "kind": "function",
+          "line": 55
+        }
+      ]
+    },
+    {
+      "path": "src/lib/search/evidence.ts",
+      "language": "typescript",
+      "size_bytes": 5114,
+      "sha1": "1a7541c0e82c097d89ee16e07d28c53341696b75",
+      "modified_at": "2026-03-10T17:55:51.701283+00:00",
+      "imports": [
+        "../types"
+      ],
+      "symbols": [
+        {
+          "name": "SearchEvidenceItem",
+          "kind": "interface",
+          "line": 3
+        },
+        {
+          "name": "SearchEvidenceBundle",
+          "kind": "interface",
+          "line": 17
+        },
+        {
+          "name": "normalizeWhitespace",
+          "kind": "function",
+          "line": 23
+        },
+        {
+          "name": "splitIntoClaims",
+          "kind": "function",
+          "line": 27
+        },
+        {
+          "name": "dedupeClaims",
+          "kind": "function",
+          "line": 34
+        },
+        {
+          "name": "computeEvidenceScore",
+          "kind": "function",
+          "line": 48
+        },
+        {
+          "name": "extractEvidenceClaims",
+          "kind": "function",
+          "line": 63
+        },
+        {
+          "name": "formatEvidenceItem",
+          "kind": "function",
+          "line": 80
+        },
+        {
+          "name": "buildSearchEvidence",
+          "kind": "function",
+          "line": 102
+        },
+        {
+          "name": "buildEvidenceVerificationPrompt",
+          "kind": "function",
+          "line": 140
+        }
+      ]
+    },
+    {
+      "path": "src/lib/search/execution-policy.ts",
+      "language": "typescript",
+      "size_bytes": 3216,
+      "sha1": "4fae563b47492fd8d8b68d39a9333cdf58cd9c23",
+      "modified_at": "2026-03-08T22:43:41.741826+00:00",
+      "imports": [
+        "../model-config"
+      ],
+      "symbols": [
+        {
+          "name": "SearchExecutionMode",
+          "kind": "type",
+          "line": 3
+        },
+        {
+          "name": "SearchExecutionRole",
+          "kind": "type",
+          "line": 8
+        },
+        {
+          "name": "SearchExecutionPolicy",
+          "kind": "interface",
+          "line": 14
+        },
+        {
+          "name": "SearchExecutionSummary",
+          "kind": "interface",
+          "line": 23
+        },
+        {
+          "name": "RoleAssignedModelConfig",
+          "kind": "interface",
+          "line": 29
+        },
+        {
+          "name": "resolveSearchExecutionPolicy",
+          "kind": "function",
+          "line": 35
+        },
+        {
+          "name": "assignExecutionRoles",
+          "kind": "function",
+          "line": 102
+        }
+      ]
+    },
+    {
+      "path": "src/lib/search/free-providers.ts",
+      "language": "typescript",
+      "size_bytes": 15178,
+      "sha1": "8ee02ce76d25e74932c2af112d5445f9d614d119",
+      "modified_at": "2026-03-16T16:14:04.960677+00:00",
+      "imports": [
+        "./domain-authority",
+        "./types",
+        "he"
+      ],
+      "symbols": [
+        {
+          "name": "stripHtml",
+          "kind": "function",
+          "line": 30
+        },
+        {
+          "name": "decodeDdgUrl",
+          "kind": "function",
+          "line": 49
+        },
+        {
+          "name": "WikiSearchResult",
+          "kind": "interface",
+          "line": 168
+        },
+        {
+          "name": "WikiSearchResponse",
+          "kind": "interface",
+          "line": 177
+        },
+        {
+          "name": "WikiSummary",
+          "kind": "interface",
+          "line": 181
+        },
+        {
+          "name": "SemanticScholarPaper",
+          "kind": "interface",
+          "line": 289
+        },
+        {
+          "name": "SemanticScholarResponse",
+          "kind": "interface",
+          "line": 303
+        }
+      ]
+    },
+    {
+      "path": "src/lib/search/provider-registry.ts",
+      "language": "typescript",
+      "size_bytes": 11965,
+      "sha1": "470d7ad6810265151fc0f85958cfadb413b6a0ab",
+      "modified_at": "2026-03-10T19:05:23.779717+00:00",
+      "imports": [
+        "../results-storage"
+      ],
+      "symbols": [
+        {
+          "name": "normalizeUrl",
+          "kind": "function",
+          "line": 147
+        },
+        {
+          "name": "fuseResults",
+          "kind": "function",
+          "line": 176
+        },
+        {
+          "name": "toApiKeys",
+          "kind": "function",
+          "line": 247
+        },
+        {
+          "name": "getSearchProviderRegistry",
+          "kind": "function",
+          "line": 280
+        },
+        {
+          "name": "getFreeProviderRegistry",
+          "kind": "function",
+          "line": 284
+        },
+        {
+          "name": "getAvailableProviders",
+          "kind": "function",
+          "line": 293
+        }
+      ]
+    },
+    {
+      "path": "src/lib/search/provider-runners.ts",
+      "language": "typescript",
+      "size_bytes": 7639,
+      "sha1": "ae8095df61959fe1ec7ecc47fd1f8dc005e6df9e",
+      "modified_at": "2026-03-16T16:14:04.932677+00:00",
+      "imports": [
+        "./domain-authority",
+        "./types",
+        "zod"
+      ],
+      "symbols": [
+        {
+          "name": "FirecrawlSearchResult",
+          "kind": "type",
+          "line": 4
+        },
+        {
+          "name": "mapTavilyResult",
+          "kind": "function",
+          "line": 66
+        },
+        {
+          "name": "mapExaResult",
+          "kind": "function",
+          "line": 149
+        },
+        {
+          "name": "mapBraveResult",
+          "kind": "function",
+          "line": 248
+        }
+      ]
+    },
+    {
+      "path": "src/lib/search/trie.ts",
+      "language": "typescript",
+      "size_bytes": 5255,
+      "sha1": "f1fb03611c17d617eed52786aa622d4e1e8b5be9",
+      "modified_at": "2026-03-10T23:18:02.506434+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "TrieNode",
+          "kind": "interface",
+          "line": 10
+        },
+        {
+          "name": "createNode",
+          "kind": "function",
+          "line": 18
+        },
+        {
+          "name": "SearchTrie",
+          "kind": "class",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "path": "src/lib/search/types.ts",
+      "language": "typescript",
+      "size_bytes": 1869,
+      "sha1": "8f82496454e318a4ab20a700e67de8f486d8eb01",
+      "modified_at": "2026-03-16T16:14:04.927678+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "PaidSearchProviderType",
+          "kind": "type",
+          "line": 2
+        },
+        {
+          "name": "FreeSearchProviderType",
+          "kind": "type",
+          "line": 3
+        },
+        {
+          "name": "SearchProviderType",
+          "kind": "type",
+          "line": 8
+        },
+        {
+          "name": "WebSearchResult",
+          "kind": "interface",
+          "line": 12
+        },
+        {
+          "name": "SearchProviderConfig",
+          "kind": "interface",
+          "line": 26
+        },
+        {
+          "name": "SearchApiKeys",
+          "kind": "interface",
+          "line": 32
+        },
+        {
+          "name": "SearchProviderCapabilities",
+          "kind": "interface",
+          "line": 39
+        },
+        {
+          "name": "SearchProviderDefinition",
+          "kind": "interface",
+          "line": 49
+        },
+        {
+          "name": "FreeSearchProviderDefinition",
+          "kind": "interface",
+          "line": 62
+        },
+        {
+          "name": "ExecuteWebSearchOptions",
+          "kind": "interface",
+          "line": 69
+        }
+      ]
+    },
+    {
+      "path": "src/lib/security/index.ts",
+      "language": "typescript",
+      "size_bytes": 38,
+      "sha1": "7982a81d32a2931e22c31bf3914670a35aad1cf0",
+      "modified_at": "2026-03-12T17:04:36.665611+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/security/input-sanitization.ts",
+      "language": "typescript",
+      "size_bytes": 10026,
+      "sha1": "7d8edeb7f35db6ee91e6105569cf436bc2dd0330",
+      "modified_at": "2026-03-17T01:22:53.418097+00:00",
+      "imports": [
+        "xss"
+      ],
+      "symbols": [
+        {
+          "name": "sanitizeInput",
+          "kind": "function",
+          "line": 20
+        },
+        {
+          "name": "stripHtml",
+          "kind": "function",
+          "line": 71
+        },
+        {
+          "name": "sanitizeFilename",
+          "kind": "function",
+          "line": 83
+        },
+        {
+          "name": "sanitizeUrl",
+          "kind": "function",
+          "line": 160
+        },
+        {
+          "name": "sanitizeApiKey",
+          "kind": "function",
+          "line": 202
+        },
+        {
+          "name": "sanitizeModelConfig",
+          "kind": "function",
+          "line": 229
+        },
+        {
+          "name": "sanitizeSearchQuery",
+          "kind": "function",
+          "line": 295
+        },
+        {
+          "name": "getSecurityHeaders",
+          "kind": "function",
+          "line": 313
+        },
+        {
+          "name": "validateRequestBodySize",
+          "kind": "function",
+          "line": 329
+        },
+        {
+          "name": "checkRateLimit",
+          "kind": "function",
+          "line": 347
+        },
+        {
+          "name": "escapeJsonString",
+          "kind": "function",
+          "line": 379
+        },
+        {
+          "name": "createSecureJsonResponse",
+          "kind": "function",
+          "line": 386
+        },
+        {
+          "name": "createSecureErrorResponse",
+          "kind": "function",
+          "line": 399
+        }
+      ]
+    },
+    {
+      "path": "src/lib/segment/index.ts",
+      "language": "typescript",
+      "size_bytes": 219,
+      "sha1": "32373913f8b73152050080843a9d72eb9ea55687",
+      "modified_at": "2026-03-16T16:14:04.928677+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/segment/query-segmenter.ts",
+      "language": "typescript",
+      "size_bytes": 11361,
+      "sha1": "31dd3fbec687bd8fb7b01169471e7c01d9e003b7",
+      "modified_at": "2026-03-16T16:52:48.866299+00:00",
+      "imports": [
+        "../model-config",
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "QuerySegmenter",
+          "kind": "class",
+          "line": 18
+        },
+        {
+          "name": "QueryAnalysis",
+          "kind": "interface",
+          "line": 407
+        }
+      ]
+    },
+    {
+      "path": "src/lib/segment/segment-coordinator.ts",
+      "language": "typescript",
+      "size_bytes": 13045,
+      "sha1": "8e486d8f4dd2279b252e147fd559640044f2fc1e",
+      "modified_at": "2026-03-16T16:14:33.289220+00:00",
+      "imports": [
+        "../model-config",
+        "../types",
+        "./segment-executor"
+      ],
+      "symbols": [
+        {
+          "name": "SegmentCoordinator",
+          "kind": "class",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "path": "src/lib/segment/segment-executor.ts",
+      "language": "typescript",
+      "size_bytes": 15962,
+      "sha1": "c064dc9098474088455334f5e331e0db6308bdd4",
+      "modified_at": "2026-03-16T16:14:33.296219+00:00",
+      "imports": [
+        "../agentic-search",
+        "../model-config",
+        "../types"
+      ],
+      "symbols": [
+        {
+          "name": "VerificationCache",
+          "kind": "interface",
+          "line": 17
+        },
+        {
+          "name": "SegmentExecutor",
+          "kind": "class",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "path": "src/lib/segment/types.ts",
+      "language": "typescript",
+      "size_bytes": 6675,
+      "sha1": "4dd99f9ae695e0143f7a729c5f59e574e02def57",
+      "modified_at": "2026-03-16T16:14:33.273219+00:00",
+      "imports": [
+        "../types"
+      ],
+      "symbols": [
+        {
+          "name": "SegmentType",
+          "kind": "type",
+          "line": 12
+        },
+        {
+          "name": "SegmentSearchStrategy",
+          "kind": "type",
+          "line": 24
+        },
+        {
+          "name": "SegmentComplexity",
+          "kind": "type",
+          "line": 33
+        },
+        {
+          "name": "QuerySegment",
+          "kind": "interface",
+          "line": 42
+        },
+        {
+          "name": "ExecutionGraph",
+          "kind": "interface",
+          "line": 58
+        },
+        {
+          "name": "SegmentationResult",
+          "kind": "interface",
+          "line": 67
+        },
+        {
+          "name": "SegmentContext",
+          "kind": "interface",
+          "line": 80
+        },
+        {
+          "name": "CoordinationState",
+          "kind": "interface",
+          "line": 99
+        },
+        {
+          "name": "SegmentExecutionResult",
+          "kind": "interface",
+          "line": 134
+        },
+        {
+          "name": "CoordinatedSearchResult",
+          "kind": "interface",
+          "line": 147
+        },
+        {
+          "name": "SegmentTemplate",
+          "kind": "interface",
+          "line": 175
+        },
+        {
+          "name": "SegmentationCacheEntry",
+          "kind": "interface",
+          "line": 192
+        },
+        {
+          "name": "SegmentationConfig",
+          "kind": "interface",
+          "line": 205
+        }
+      ]
+    },
+    {
+      "path": "src/lib/semantic-cache/cache.ts",
+      "language": "typescript",
+      "size_bytes": 6645,
+      "sha1": "747821084b3ca1ae2ddc97a04079a3b551dd9cec",
+      "modified_at": "2026-03-16T16:14:33.276219+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "SemanticCache",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "src/lib/semantic-cache/index.ts",
+      "language": "typescript",
+      "size_bytes": 66,
+      "sha1": "db9c4ffed64bc2297f3d48f33ca20620c2b68d22",
+      "modified_at": "2026-03-11T21:13:56.262406+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/semantic-cache/types.ts",
+      "language": "typescript",
+      "size_bytes": 1158,
+      "sha1": "7ee81e479d05d2e7c438b7f89a34606c0f00cb3f",
+      "modified_at": "2026-03-16T16:14:33.274219+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "CacheEntry",
+          "kind": "interface",
+          "line": 1
+        },
+        {
+          "name": "CacheHit",
+          "kind": "interface",
+          "line": 18
+        },
+        {
+          "name": "CacheMiss",
+          "kind": "interface",
+          "line": 25
+        },
+        {
+          "name": "CacheResult",
+          "kind": "type",
+          "line": 30
+        },
+        {
+          "name": "CacheTier",
+          "kind": "type",
+          "line": 32
+        },
+        {
+          "name": "SemanticCacheOptions",
+          "kind": "interface",
+          "line": 34
+        },
+        {
+          "name": "CacheStats",
+          "kind": "interface",
+          "line": 41
+        },
+        {
+          "name": "QueryVector",
+          "kind": "interface",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "path": "src/lib/sentry.ts",
+      "language": "typescript",
+      "size_bytes": 2652,
+      "sha1": "275f316b50d32f5aa844ca14fbb366beb5ccbbe1",
+      "modified_at": "2026-03-17T01:46:53.677338+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "isBrowserSentryRuntime",
+          "kind": "function",
+          "line": 13
+        },
+        {
+          "name": "SentryConfig",
+          "kind": "interface",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "path": "src/lib/server/lazy-runtime.ts",
+      "language": "typescript",
+      "size_bytes": 1844,
+      "sha1": "752059a63ca06febd22a167e0ae5ff4d52a34f35",
+      "modified_at": "2026-03-17T15:24:30.927306+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/translation/detector.ts",
+      "language": "typescript",
+      "size_bytes": 14433,
+      "sha1": "d8babb1735d9e30b29bcbe6c84cb13c5be167713",
+      "modified_at": "2026-03-16T16:14:04.944677+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "LanguageDetector",
+          "kind": "class",
+          "line": 821
+        }
+      ]
+    },
+    {
+      "path": "src/lib/translation/index.ts",
+      "language": "typescript",
+      "size_bytes": 303,
+      "sha1": "1b2ae7af6ae4c4b4cd94b5f5b88d6bec445fe75e",
+      "modified_at": "2026-03-11T23:09:05.402416+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/translation/query-translator.ts",
+      "language": "typescript",
+      "size_bytes": 7041,
+      "sha1": "7c2bfba3c73b8d08908f7f955b650d323fb54b81",
+      "modified_at": "2026-03-16T16:16:31.072210+00:00",
+      "imports": [
+        "../model-config",
+        "./detector",
+        "./service"
+      ],
+      "symbols": [
+        {
+          "name": "TranslatedQuery",
+          "kind": "interface",
+          "line": 10
+        },
+        {
+          "name": "EnhancedQuery",
+          "kind": "interface",
+          "line": 19
+        },
+        {
+          "name": "QueryTranslator",
+          "kind": "class",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "path": "src/lib/translation/service.ts",
+      "language": "typescript",
+      "size_bytes": 7982,
+      "sha1": "9bc9cdfc82744b6ffbde6cc6ae4257f107946de0",
+      "modified_at": "2026-03-16T16:14:33.284220+00:00",
+      "imports": [
+        "../model-config",
+        "./detector",
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "TranslationService",
+          "kind": "class",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "src/lib/translation/types.ts",
+      "language": "typescript",
+      "size_bytes": 1501,
+      "sha1": "7673fa8c853ad77477b4f486647cf57f8d8e7d49",
+      "modified_at": "2026-03-11T23:08:42.631325+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "SupportedLanguage",
+          "kind": "type",
+          "line": 1
+        },
+        {
+          "name": "LanguageDetection",
+          "kind": "interface",
+          "line": 13
+        },
+        {
+          "name": "TranslationResult",
+          "kind": "interface",
+          "line": 20
+        },
+        {
+          "name": "TranslationOptions",
+          "kind": "interface",
+          "line": 29
+        },
+        {
+          "name": "CacheEntry",
+          "kind": "interface",
+          "line": 35
+        },
+        {
+          "name": "EntityMatch",
+          "kind": "interface",
+          "line": 43
+        },
+        {
+          "name": "DetectionPattern",
+          "kind": "interface",
+          "line": 50
+        }
+      ]
+    },
+    {
+      "path": "src/lib/types.ts",
+      "language": "typescript",
+      "size_bytes": 2743,
+      "sha1": "071bc0056de91042eecc09fa195b594fb160a69d",
+      "modified_at": "2026-03-10T23:17:42.325051+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "SearchResult",
+          "kind": "interface",
+          "line": 7
+        },
+        {
+          "name": "OCRResult",
+          "kind": "interface",
+          "line": 43
+        },
+        {
+          "name": "SearchStatus",
+          "kind": "type",
+          "line": 52
+        },
+        {
+          "name": "Search",
+          "kind": "interface",
+          "line": 60
+        },
+        {
+          "name": "ToolCall",
+          "kind": "interface",
+          "line": 74
+        },
+        {
+          "name": "LearningPattern",
+          "kind": "interface",
+          "line": 86
+        },
+        {
+          "name": "UserConfig",
+          "kind": "interface",
+          "line": 96
+        },
+        {
+          "name": "APIKeyStatus",
+          "kind": "interface",
+          "line": 114
+        },
+        {
+          "name": "SearchProgress",
+          "kind": "interface",
+          "line": 122
+        }
+      ]
+    },
+    {
+      "path": "src/lib/unified-search-orchestrator.ts",
+      "language": "typescript",
+      "size_bytes": 34165,
+      "sha1": "e0e9bcf4a640e19199f218785b56a66228307815",
+      "modified_at": "2026-03-17T01:12:42.824034+00:00",
+      "imports": [
+        "./add-discriminator",
+        "./agentic-search",
+        "./component-validation-pipeline",
+        "./interleaved-reasoning-engine",
+        "./model-routing/router",
+        "./model-routing/types",
+        "./observability",
+        "./parallel-model-orchestrator",
+        "./results-storage",
+        "./search/checkpoint-engine",
+        "./search/evidence",
+        "./segment",
+        "./semantic-cache",
+        "./types"
+      ],
+      "symbols": [
+        {
+          "name": "ModelConfig",
+          "kind": "type",
+          "line": 12
+        },
+        {
+          "name": "ModelProvider",
+          "kind": "type",
+          "line": 13
+        },
+        {
+          "name": "CostEstimate",
+          "kind": "type",
+          "line": 17
+        },
+        {
+          "name": "CostTracker",
+          "kind": "type",
+          "line": 18
+        },
+        {
+          "name": "EnhancementOptions",
+          "kind": "type",
+          "line": 26
+        },
+        {
+          "name": "QueryEnhancement",
+          "kind": "type",
+          "line": 27
+        },
+        {
+          "name": "SearchExecutionSummary",
+          "kind": "type",
+          "line": 35
+        },
+        {
+          "name": "UnifiedSearchResult",
+          "kind": "interface",
+          "line": 56
+        },
+        {
+          "name": "SearchOptions",
+          "kind": "interface",
+          "line": 148
+        },
+        {
+          "name": "UnifiedSearchOrchestrator",
+          "kind": "class",
+          "line": 168
+        }
+      ]
+    },
+    {
+      "path": "src/lib/url-validation.ts",
+      "language": "typescript",
+      "size_bytes": 8349,
+      "sha1": "664ab628436ef760c0a11868c44412511f0cb032",
+      "modified_at": "2026-03-16T23:19:29.297103+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "allowLocalHosts",
+          "kind": "function",
+          "line": 71
+        },
+        {
+          "name": "isPrivateIPv4",
+          "kind": "function",
+          "line": 82
+        },
+        {
+          "name": "isPrivateIPv6",
+          "kind": "function",
+          "line": 113
+        },
+        {
+          "name": "validateServerFetchUrl",
+          "kind": "function",
+          "line": 151
+        },
+        {
+          "name": "isInternalIP",
+          "kind": "function",
+          "line": 203
+        }
+      ]
+    },
+    {
+      "path": "src/lib/usage-tracker.ts",
+      "language": "typescript",
+      "size_bytes": 1844,
+      "sha1": "9840d2b1c364855fe8628721766a68f6543d8b9b",
+      "modified_at": "2026-03-16T16:14:33.279221+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "./convex"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "language": "typescript",
+      "size_bytes": 168,
+      "sha1": "97d44425e99eb8cdbdbc4fce61a957d4b2c18d78",
+      "modified_at": "2025-11-08T19:12:46.639724+00:00",
+      "imports": [
+        "clsx",
+        "tailwind-merge"
+      ],
+      "symbols": [
+        {
+          "name": "cn",
+          "kind": "function",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "path": "src/lib/vector-storage/index.ts",
+      "language": "typescript",
+      "size_bytes": 310,
+      "sha1": "abe63e9844c76c8571381755b849ee784ca9cc7f",
+      "modified_at": "2026-03-11T23:08:57.986643+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/lib/vector-storage/storage.ts",
+      "language": "typescript",
+      "size_bytes": 13581,
+      "sha1": "e4e5146d2cf45084975427eed1ec34d4a2c6ec9b",
+      "modified_at": "2026-03-16T16:14:33.302219+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "LanceDBConnection",
+          "kind": "type",
+          "line": 16
+        },
+        {
+          "name": "LanceDBTable",
+          "kind": "type",
+          "line": 18
+        },
+        {
+          "name": "cosineSimilarity",
+          "kind": "function",
+          "line": 21
+        },
+        {
+          "name": "matchesFilter",
+          "kind": "function",
+          "line": 39
+        },
+        {
+          "name": "InMemoryVectorStore",
+          "kind": "class",
+          "line": 51
+        },
+        {
+          "name": "VectorStorage",
+          "kind": "class",
+          "line": 179
+        }
+      ]
+    },
+    {
+      "path": "src/lib/vector-storage/types.ts",
+      "language": "typescript",
+      "size_bytes": 2422,
+      "sha1": "34fd6b5e53328d4647ff437c0ca8d9c89a206bc8",
+      "modified_at": "2026-03-11T23:12:54.512827+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "VectorDocument",
+          "kind": "interface",
+          "line": 2
+        },
+        {
+          "name": "SearchOptions",
+          "kind": "interface",
+          "line": 18
+        },
+        {
+          "name": "SearchResult",
+          "kind": "interface",
+          "line": 28
+        },
+        {
+          "name": "VectorStorageConfig",
+          "kind": "interface",
+          "line": 36
+        },
+        {
+          "name": "BatchInsertResult",
+          "kind": "interface",
+          "line": 46
+        },
+        {
+          "name": "StorageStats",
+          "kind": "interface",
+          "line": 56
+        },
+        {
+          "name": "VectorFilter",
+          "kind": "type",
+          "line": 68
+        }
+      ]
+    },
+    {
+      "path": "src/logo.svg",
+      "language": "text",
+      "size_bytes": 19290,
+      "sha1": "d9d5e43fb08799221882f05e41cb9dff58a36cbe",
+      "modified_at": "2025-11-06T22:07:04.783692+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/mcp-todos.ts",
+      "language": "typescript",
+      "size_bytes": 1059,
+      "sha1": "262f7f2917eb53aeb11a288c47b87b5305585444",
+      "modified_at": "2025-11-08T19:12:46.640730+00:00",
+      "imports": [
+        "node:fs"
+      ],
+      "symbols": [
+        {
+          "name": "Todo",
+          "kind": "type",
+          "line": 18
+        },
+        {
+          "name": "getTodos",
+          "kind": "function",
+          "line": 24
+        },
+        {
+          "name": "addTodo",
+          "kind": "function",
+          "line": 29
+        },
+        {
+          "name": "subscribeToTodos",
+          "kind": "function",
+          "line": 36
+        },
+        {
+          "name": "notifySubscribers",
+          "kind": "function",
+          "line": 45
+        }
+      ]
+    },
+    {
+      "path": "src/middleware/csrf.ts",
+      "language": "typescript",
+      "size_bytes": 4040,
+      "sha1": "f3967ad8cd81e9257277dd7e4a1ab1e0541b3ebe",
+      "modified_at": "2025-11-12T19:21:23.182911+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "CsrfCookieOptions",
+          "kind": "type",
+          "line": 10
+        },
+        {
+          "name": "CsrfMiddlewareConfig",
+          "kind": "interface",
+          "line": 22
+        },
+        {
+          "name": "createCsrfMiddleware",
+          "kind": "function",
+          "line": 60
+        },
+        {
+          "name": "validateCsrf",
+          "kind": "function",
+          "line": 149
+        },
+        {
+          "name": "withCsrfToken",
+          "kind": "function",
+          "line": 157
+        }
+      ]
+    },
+    {
+      "path": "src/orpc/client.ts",
+      "language": "typescript",
+      "size_bytes": 873,
+      "sha1": "ba629b0f601e2e9131622670a6ca7158161dae03",
+      "modified_at": "2025-11-12T19:21:57.841397+00:00",
+      "imports": [
+        "@/orpc/router",
+        "@orpc/client",
+        "@orpc/client/fetch",
+        "@orpc/server",
+        "@orpc/tanstack-query",
+        "@tanstack/react-start",
+        "@tanstack/react-start/server"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/orpc/router.ts",
+      "language": "typescript",
+      "size_bytes": 202,
+      "sha1": "12ef16d81329a4f0e37cb93c170c862392a6f799",
+      "modified_at": "2026-03-16T16:14:04.940678+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/orpc/router/index.ts",
+      "language": "typescript",
+      "size_bytes": 89,
+      "sha1": "81cda7f5a90a44837294ecb4e23dca5f12de6f84",
+      "modified_at": "2025-11-08T19:12:46.642730+00:00",
+      "imports": [
+        "./todos"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/orpc/router/todos.ts",
+      "language": "typescript",
+      "size_bytes": 479,
+      "sha1": "5b946f65aaed6c3333fee992012d6abebfbe0a4c",
+      "modified_at": "2025-11-08T19:12:46.641730+00:00",
+      "imports": [
+        "@orpc/server",
+        "zod"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/orpc/schema.ts",
+      "language": "typescript",
+      "size_bytes": 116,
+      "sha1": "bc4a712d8564fce383d31891a5b2edbdad424b54",
+      "modified_at": "2025-11-08T19:12:46.643730+00:00",
+      "imports": [
+        "zod"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/polyfill.ts",
+      "language": "typescript",
+      "size_bytes": 474,
+      "sha1": "81cccd3862205611727eea0200cfd688281ee768",
+      "modified_at": "2026-03-10T23:17:42.326050+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/routeTree.gen.ts",
+      "language": "typescript",
+      "size_bytes": 15004,
+      "sha1": "9469848462e5e828ff16e7131f8174a0f81c284c",
+      "modified_at": "2026-03-08T21:15:34.964950+00:00",
+      "imports": [
+        "./router.tsx",
+        "./routes/__root",
+        "./routes/analytics",
+        "./routes/api.$",
+        "./routes/api.rpc.$",
+        "./routes/api/chat",
+        "./routes/api/csrf-token",
+        "./routes/api/detect-models",
+        "./routes/api/fine-tune/openai",
+        "./routes/api/search",
+        "./routes/api/search/control",
+        "./routes/api/search/progress",
+        "./routes/api/search/stream",
+        "./routes/api/test-key",
+        "./routes/comparison",
+        "./routes/export",
+        "./routes/history",
+        "./routes/index",
+        "./routes/mcp",
+        "./routes/profile",
+        "./routes/search",
+        "./routes/settings",
+        "@tanstack/react-start"
+      ],
+      "symbols": [
+        {
+          "name": "FileRoutesByFullPath",
+          "kind": "interface",
+          "line": 134
+        },
+        {
+          "name": "FileRoutesByTo",
+          "kind": "interface",
+          "line": 156
+        },
+        {
+          "name": "FileRoutesById",
+          "kind": "interface",
+          "line": 178
+        },
+        {
+          "name": "FileRouteTypes",
+          "kind": "interface",
+          "line": 201
+        },
+        {
+          "name": "RootRouteChildren",
+          "kind": "interface",
+          "line": 270
+        },
+        {
+          "name": "FileRoutesByPath",
+          "kind": "interface",
+          "line": 291
+        },
+        {
+          "name": "ApiSearchRouteChildren",
+          "kind": "interface",
+          "line": 435
+        },
+        {
+          "name": "Register",
+          "kind": "interface",
+          "line": 477
+        }
+      ]
+    },
+    {
+      "path": "src/router.tsx",
+      "language": "typescript",
+      "size_bytes": 803,
+      "sha1": "88d490483020eec0dc94d26be691d49c570e3dbe",
+      "modified_at": "2026-03-10T23:53:29.667459+00:00",
+      "imports": [
+        "./integrations/tanstack-query/root-provider",
+        "./routeTree.gen",
+        "@tanstack/react-router",
+        "@tanstack/react-router-ssr-query"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/routes/__root.tsx",
+      "language": "typescript",
+      "size_bytes": 3527,
+      "sha1": "ca5bc3c6d1ef0428539244d772da47e4e41c1155",
+      "modified_at": "2026-03-16T20:10:25.937817+00:00",
+      "imports": [
+        "../components/Header",
+        "../integrations/convex/auth-provider",
+        "../lib/model-store",
+        "../styles.css?url",
+        "@tanstack/react-query",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "MyRouterContext",
+          "kind": "interface",
+          "line": 15
+        },
+        {
+          "name": "RootDocument",
+          "kind": "function",
+          "line": 57
+        }
+      ]
+    },
+    {
+      "path": "src/routes/analytics.tsx",
+      "language": "typescript",
+      "size_bytes": 10357,
+      "sha1": "3ba94477abb930afc894349d0a92bccf958f6c50",
+      "modified_at": "2026-03-16T16:14:33.293221+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../hooks/useAppAuth",
+        "@tanstack/react-router",
+        "convex/react"
+      ],
+      "symbols": [
+        {
+          "name": "AnalyticsPage",
+          "kind": "function",
+          "line": 30
+        },
+        {
+          "name": "OverviewCards",
+          "kind": "function",
+          "line": 99
+        },
+        {
+          "name": "ExternalApiStats",
+          "kind": "function",
+          "line": 155
+        },
+        {
+          "name": "CostBreakdown",
+          "kind": "function",
+          "line": 226
+        },
+        {
+          "name": "UsageTimeSeries",
+          "kind": "function",
+          "line": 283
+        },
+        {
+          "name": "RecentSearches",
+          "kind": "function",
+          "line": 338
+        }
+      ]
+    },
+    {
+      "path": "src/routes/api.$.ts",
+      "language": "typescript",
+      "size_bytes": 2356,
+      "sha1": "a47c2c820aa4324e95e352b19f5cf22bbe53fd6d",
+      "modified_at": "2026-03-09T03:06:19.209338+00:00",
+      "imports": [
+        "@/orpc/router",
+        "@/orpc/schema",
+        "@orpc/json-schema",
+        "@orpc/openapi/fetch",
+        "@orpc/openapi/plugins",
+        "@orpc/server",
+        "@orpc/zod/zod4",
+        "@tanstack/react-router"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/routes/api.rpc.$.ts",
+      "language": "typescript",
+      "size_bytes": 1293,
+      "sha1": "b6623164ef8053000e6a84f29bed431aa1177173",
+      "modified_at": "2025-11-12T19:21:59.468039+00:00",
+      "imports": [
+        "@/orpc/router",
+        "@orpc/server/fetch",
+        "@tanstack/react-router"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/routes/api/chat.ts",
+      "language": "typescript",
+      "size_bytes": 9644,
+      "sha1": "716c8e5c45c317e066e80fe138ae8b6d108c9977",
+      "modified_at": "2026-03-17T15:24:40.348331+00:00",
+      "imports": [
+        "@/lib/api-schemas",
+        "@/lib/server/lazy-runtime",
+        "@tanstack/react-router"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/routes/api/csrf-token.ts",
+      "language": "typescript",
+      "size_bytes": 482,
+      "sha1": "d71914391420a82e46f9316cdfb087c76f654a7d",
+      "modified_at": "2026-03-16T16:14:04.944677+00:00",
+      "imports": [
+        "@/lib/csrf-protection",
+        "@tanstack/react-router"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/routes/api/detect-models.ts",
+      "language": "typescript",
+      "size_bytes": 5689,
+      "sha1": "4cd45caf696d0e7aeccefb51c0f3bb63dffa0aa4",
+      "modified_at": "2026-03-16T23:33:02.361325+00:00",
+      "imports": [
+        "@/lib/url-validation",
+        "@tanstack/react-router"
+      ],
+      "symbols": [
+        {
+          "name": "parseCookies",
+          "kind": "function",
+          "line": 26
+        },
+        {
+          "name": "hasAuthenticatedSession",
+          "kind": "function",
+          "line": 40
+        },
+        {
+          "name": "isLocalProviderUrl",
+          "kind": "function",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "path": "src/routes/api/fine-tune/openai.ts",
+      "language": "typescript",
+      "size_bytes": 6313,
+      "sha1": "6d2b758b8322ce4653418569b5a02124411f293d",
+      "modified_at": "2026-03-17T02:17:08.052576+00:00",
+      "imports": [
+        "@/lib/server/lazy-runtime",
+        "@tanstack/react-router",
+        "zod"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/routes/api/search.ts",
+      "language": "typescript",
+      "size_bytes": 7298,
+      "sha1": "1014630c4c03d1a9527d6c646b9536add009a3b5",
+      "modified_at": "2026-03-17T02:17:08.050571+00:00",
+      "imports": [
+        "@/lib/api-schemas",
+        "@/lib/server/lazy-runtime",
+        "@tanstack/react-router"
+      ],
+      "symbols": [
+        {
+          "name": "_getEnvVar",
+          "kind": "function",
+          "line": 20
+        },
+        {
+          "name": "SearchResult",
+          "kind": "interface",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "path": "src/routes/api/search/control.ts",
+      "language": "typescript",
+      "size_bytes": 6631,
+      "sha1": "f5aa259da4612f9bd7254db6c36e6e81ae505a54",
+      "modified_at": "2026-03-16T16:14:33.292221+00:00",
+      "imports": [
+        "@/components/SearchProgressPanel",
+        "@tanstack/react-router"
+      ],
+      "symbols": [
+        {
+          "name": "StreamSession",
+          "kind": "interface",
+          "line": 23
+        },
+        {
+          "name": "updateStreamSession",
+          "kind": "function",
+          "line": 37
+        },
+        {
+          "name": "getSearchScope",
+          "kind": "function",
+          "line": 229
+        },
+        {
+          "name": "isStepApproved",
+          "kind": "function",
+          "line": 236
+        },
+        {
+          "name": "getStepModifications",
+          "kind": "function",
+          "line": 243
+        }
+      ]
+    },
+    {
+      "path": "src/routes/api/search/progress.ts",
+      "language": "typescript",
+      "size_bytes": 7054,
+      "sha1": "0569827298ac2700f6951e7f42aeea1b7e6c7de5",
+      "modified_at": "2026-03-16T20:35:40.310485+00:00",
+      "imports": [
+        "@/components/SearchProgressPanel",
+        "@tanstack/react-router"
+      ],
+      "symbols": [
+        {
+          "name": "SearchSession",
+          "kind": "interface",
+          "line": 19
+        },
+        {
+          "name": "EventBuffer",
+          "kind": "interface",
+          "line": 24
+        },
+        {
+          "name": "sendProgressUpdate",
+          "kind": "function",
+          "line": 127
+        },
+        {
+          "name": "isSearchPaused",
+          "kind": "function",
+          "line": 167
+        },
+        {
+          "name": "isSearchStopped",
+          "kind": "function",
+          "line": 175
+        },
+        {
+          "name": "setSearchPaused",
+          "kind": "function",
+          "line": 183
+        },
+        {
+          "name": "stopSearch",
+          "kind": "function",
+          "line": 196
+        },
+        {
+          "name": "sendStepUpdate",
+          "kind": "function",
+          "line": 214
+        },
+        {
+          "name": "sendResults",
+          "kind": "function",
+          "line": 221
+        },
+        {
+          "name": "sendError",
+          "kind": "function",
+          "line": 241
+        }
+      ]
+    },
+    {
+      "path": "src/routes/api/search/stream.ts",
+      "language": "typescript",
+      "size_bytes": 21016,
+      "sha1": "62c1a74eeae042ccef0b5218af57a1eaacc0df3d",
+      "modified_at": "2026-03-17T02:17:08.051576+00:00",
+      "imports": [
+        "./control",
+        "@/lib/server/lazy-runtime",
+        "@tanstack/react-router"
+      ],
+      "symbols": [
+        {
+          "name": "StreamSession",
+          "kind": "interface",
+          "line": 30
+        },
+        {
+          "name": "sendStepUpdate",
+          "kind": "function",
+          "line": 44
+        },
+        {
+          "name": "sendResults",
+          "kind": "function",
+          "line": 49
+        },
+        {
+          "name": "sendError",
+          "kind": "function",
+          "line": 54
+        },
+        {
+          "name": "isSearchPaused",
+          "kind": "function",
+          "line": 59
+        },
+        {
+          "name": "isSearchStopped",
+          "kind": "function",
+          "line": 63
+        },
+        {
+          "name": "mergeSearchApiKeys",
+          "kind": "function",
+          "line": 82
+        }
+      ]
+    },
+    {
+      "path": "src/routes/api/test-key.ts",
+      "language": "typescript",
+      "size_bytes": 2300,
+      "sha1": "c161ccb4d2dbcd40f466deae34d2519bc8a24656",
+      "modified_at": "2026-03-16T16:14:04.950677+00:00",
+      "imports": [
+        "@tanstack/react-router"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/routes/comparison.tsx",
+      "language": "typescript",
+      "size_bytes": 636,
+      "sha1": "6ead02f38e61466243b885230db9bbfe9be747fc",
+      "modified_at": "2026-03-16T16:14:04.949677+00:00",
+      "imports": [
+        "../components/SearchComparisonDashboard",
+        "@tanstack/react-router"
+      ],
+      "symbols": [
+        {
+          "name": "ComparisonPage",
+          "kind": "function",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "src/routes/export.tsx",
+      "language": "typescript",
+      "size_bytes": 664,
+      "sha1": "7958e14db625cd8045797f09af71a83ae9636dcc",
+      "modified_at": "2026-03-16T16:14:04.949677+00:00",
+      "imports": [
+        "../components/DatasetExportDashboard",
+        "@tanstack/react-router"
+      ],
+      "symbols": [
+        {
+          "name": "DatasetExportPage",
+          "kind": "function",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "src/routes/history.tsx",
+      "language": "typescript",
+      "size_bytes": 647,
+      "sha1": "22ffeda35dd796bf963feb9f88b3eef7fe724388",
+      "modified_at": "2026-03-16T16:14:04.950677+00:00",
+      "imports": [
+        "../components/SearchHistory",
+        "@tanstack/react-router"
+      ],
+      "symbols": [
+        {
+          "name": "SearchHistoryPage",
+          "kind": "function",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "src/routes/index.tsx",
+      "language": "typescript",
+      "size_bytes": 12033,
+      "sha1": "7fc8041d0cfa251081aec9b20573dfcedadb896a",
+      "modified_at": "2026-03-16T16:14:04.960677+00:00",
+      "imports": [
+        "../components/AgenticChat",
+        "@tanstack/react-router",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "Home",
+          "kind": "function",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "path": "src/routes/mcp.ts",
+      "language": "typescript",
+      "size_bytes": 1498,
+      "sha1": "6657229f802f0f63855bc7b8d79f4105980b3f80",
+      "modified_at": "2026-03-11T00:18:16.432317+00:00",
+      "imports": [
+        "../utils/mcp-handler",
+        "@modelcontextprotocol/sdk/server/mcp.js",
+        "@tanstack/react-router",
+        "zod"
+      ],
+      "symbols": [
+        {
+          "name": "addTodo",
+          "kind": "function",
+          "line": 11
+        },
+        {
+          "name": "AddTodoInput",
+          "kind": "interface",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "path": "src/routes/profile.tsx",
+      "language": "typescript",
+      "size_bytes": 9312,
+      "sha1": "270194c1f619a72c2f92ec084839fdf20083f429",
+      "modified_at": "2026-03-16T16:14:33.263219+00:00",
+      "imports": [
+        "../../convex/_generated/api",
+        "../hooks/useAppAuth",
+        "@tanstack/react-router",
+        "convex/react",
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "ProfilePage",
+          "kind": "function",
+          "line": 19
+        },
+        {
+          "name": "AccountInfoCard",
+          "kind": "function",
+          "line": 113
+        },
+        {
+          "name": "ApiKeysCard",
+          "kind": "function",
+          "line": 148
+        },
+        {
+          "name": "PreferencesCard",
+          "kind": "function",
+          "line": 195
+        },
+        {
+          "name": "UsageSummaryCard",
+          "kind": "function",
+          "line": 258
+        }
+      ]
+    },
+    {
+      "path": "src/routes/search.tsx",
+      "language": "typescript",
+      "size_bytes": 4762,
+      "sha1": "d452a7153fb40530846b2b53b2e9964321c607bc",
+      "modified_at": "2026-03-17T02:17:08.052576+00:00",
+      "imports": [
+        "../lib/model-store",
+        "@tanstack/react-router",
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SearchResult",
+          "kind": "interface",
+          "line": 8
+        },
+        {
+          "name": "SearchPage",
+          "kind": "function",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "path": "src/routes/settings.tsx",
+      "language": "typescript",
+      "size_bytes": 4771,
+      "sha1": "4369c63322240584f4f35d6b21ba53045f4ebfdb",
+      "modified_at": "2026-03-16T16:14:04.916677+00:00",
+      "imports": [
+        "../components/SettingsModal",
+        "@tanstack/react-router",
+        "lucide-react",
+        "react"
+      ],
+      "symbols": [
+        {
+          "name": "SettingsPage",
+          "kind": "function",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "src/styles.css",
+      "language": "css",
+      "size_bytes": 4959,
+      "sha1": "ddca6501b602b55d146286e237a40c49d077f2de",
+      "modified_at": "2025-11-06T22:07:05.006415+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "src/types/cloudflare-workers.d.ts",
+      "language": "typescript",
+      "size_bytes": 156,
+      "sha1": "9590414494c9104de1c5ed4989b43f8d72b56927",
+      "modified_at": "2026-03-10T23:17:42.327052+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "waitUntil",
+          "kind": "function",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "src/utils/demo.tools.ts",
+      "language": "typescript",
+      "size_bytes": 1352,
+      "sha1": "fa2cc319f59bf7035da263ca29d4af09ca5e6376",
+      "modified_at": "2025-11-09T21:33:55.594612+00:00",
+      "imports": [
+        "../data/example-guitars",
+        "ai",
+        "zod"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "src/utils/mcp-handler.ts",
+      "language": "typescript",
+      "size_bytes": 1441,
+      "sha1": "57c1798919688464a23e4b8bc3fb933ac5d863db",
+      "modified_at": "2025-11-08T19:12:46.633697+00:00",
+      "imports": [
+        "@modelcontextprotocol/sdk/inMemory.js",
+        "@modelcontextprotocol/sdk/server/mcp.js",
+        "@modelcontextprotocol/sdk/types.js"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/ModelConfigManager.test.ts",
+      "language": "typescript",
+      "size_bytes": 15999,
+      "sha1": "4b3ec5a7c684a4bd3c739775e5270a4af78f63aa",
+      "modified_at": "2026-03-17T15:25:41.617923+00:00",
+      "imports": [
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "ModelConfig",
+          "kind": "type",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "tests/add-quality-test.ts",
+      "language": "typescript",
+      "size_bytes": 5402,
+      "sha1": "c5dab877509aa5c2b664d18651c0fde4e6ae9aa5",
+      "modified_at": "2025-11-17T18:30:12.217196+00:00",
+      "imports": [
+        "../src/lib/add-discriminator",
+        "../src/lib/types"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/backend/convex-functions.test.ts",
+      "language": "typescript",
+      "size_bytes": 9435,
+      "sha1": "463babe09e83817f44529bb6dfee1cd5f07cc48d",
+      "modified_at": "2025-11-06T20:23:05.255738+00:00",
+      "imports": [
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/backend/langchain-workflow.test.ts",
+      "language": "typescript",
+      "size_bytes": 10735,
+      "sha1": "e1f718cc570974d61eaa81989ac5896f9dc13fbc",
+      "modified_at": "2025-11-06T20:23:05.647732+00:00",
+      "imports": [
+        "../utils/test-helpers",
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/csrf-protection.test.ts",
+      "language": "typescript",
+      "size_bytes": 8537,
+      "sha1": "0e1f2d29a655c3994c39f179fc498094d4fc4f15",
+      "modified_at": "2026-03-08T19:07:46.923710+00:00",
+      "imports": [
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/e2e/history-flow.spec.ts",
+      "language": "typescript",
+      "size_bytes": 1394,
+      "sha1": "da2f0428bf5e1d78c5c9622d553da2f20158da1f",
+      "modified_at": "2026-03-12T00:06:32.922127+00:00",
+      "imports": [
+        "@playwright/test"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/e2e/search-flow.spec.ts",
+      "language": "typescript",
+      "size_bytes": 1781,
+      "sha1": "4e10c787dedf0a84bec0dc23c3eaec5528b94644",
+      "modified_at": "2026-03-12T00:06:19.890111+00:00",
+      "imports": [
+        "@playwright/test"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/e2e/settings-flow.spec.ts",
+      "language": "typescript",
+      "size_bytes": 1249,
+      "sha1": "c99865e97e5b54e05fa2c52d35da579feb41d514",
+      "modified_at": "2026-03-12T00:06:25.794670+00:00",
+      "imports": [
+        "@playwright/test"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/fixtures/mock-responses.ts",
+      "language": "typescript",
+      "size_bytes": 7255,
+      "sha1": "8c47d01d04acae7ec14fdb6af008009f5f69c00e",
+      "modified_at": "2025-11-08T19:16:46.718666+00:00",
+      "imports": [],
+      "symbols": [
+        {
+          "name": "createMockFetchResponse",
+          "kind": "function",
+          "line": 274
+        },
+        {
+          "name": "delay",
+          "kind": "function",
+          "line": 288
+        },
+        {
+          "name": "generateMockSearchResult",
+          "kind": "function",
+          "line": 293
+        }
+      ]
+    },
+    {
+      "path": "tests/interleaved-reasoning.test.ts",
+      "language": "typescript",
+      "size_bytes": 11865,
+      "sha1": "d4701034470b8c6769feb7fa874434fb153d0800",
+      "modified_at": "2026-03-16T17:23:49.337926+00:00",
+      "imports": [
+        "../src/lib/interleaved-reasoning-engine",
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/add-discriminator.test.ts",
+      "language": "typescript",
+      "size_bytes": 7159,
+      "sha1": "436ff7a41e0c8ab78aed71e9b39a24f897a3dbf4",
+      "modified_at": "2026-03-12T00:07:42.171434+00:00",
+      "imports": [
+        "../../src/lib/types",
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "ADDScore",
+          "kind": "type",
+          "line": 4
+        },
+        {
+          "name": "createResult",
+          "kind": "function",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/agentic-search.test.ts",
+      "language": "typescript",
+      "size_bytes": 1122,
+      "sha1": "a51c19190a6d18a271198885a6a9323ed8286311",
+      "modified_at": "2026-03-17T15:26:22.332061+00:00",
+      "imports": [
+        "../../src/lib/agentic-search",
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/checkpoint-engine.test.ts",
+      "language": "typescript",
+      "size_bytes": 13162,
+      "sha1": "bfb2ab583559ae6d1496366a691dbb196da12a83",
+      "modified_at": "2026-03-16T20:22:14.411295+00:00",
+      "imports": [
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "CheckpointPhase",
+          "kind": "type",
+          "line": 9
+        },
+        {
+          "name": "CheckpointState",
+          "kind": "type",
+          "line": 10
+        },
+        {
+          "name": "CheckpointSnapshot",
+          "kind": "type",
+          "line": 11
+        },
+        {
+          "name": "SearchCheckpointConfig",
+          "kind": "type",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/convex-auth.test.ts",
+      "language": "typescript",
+      "size_bytes": 4665,
+      "sha1": "b77e2c575880be8f73ec024f719866f30d31e6e9",
+      "modified_at": "2026-03-16T21:41:38.011612+00:00",
+      "imports": [
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/deepseek-vision.test.ts",
+      "language": "typescript",
+      "size_bytes": 4562,
+      "sha1": "b8339d09ac0c0b9c58ba8bf62432aa43c7c001e7",
+      "modified_at": "2026-03-12T02:09:58.308194+00:00",
+      "imports": [
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "VisionOCRConfig",
+          "kind": "type",
+          "line": 17
+        },
+        {
+          "name": "VisionOCRResult",
+          "kind": "type",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/input-sanitization.test.ts",
+      "language": "typescript",
+      "size_bytes": 654,
+      "sha1": "ac4fcbd110577712a71800a7876444391448679f",
+      "modified_at": "2026-03-17T01:23:11.002774+00:00",
+      "imports": [
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/knowledge-graph.test.ts",
+      "language": "typescript",
+      "size_bytes": 20726,
+      "sha1": "0fc2f542ae645b75144726f4ad8a5428b7c6d218",
+      "modified_at": "2026-03-11T23:13:31.143381+00:00",
+      "imports": [
+        "../../src/lib/knowledge-graph",
+        "../../src/lib/knowledge-graph/extractor",
+        "../../src/lib/knowledge-graph/graph",
+        "../../src/lib/knowledge-graph/types",
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/model-routing.test.ts",
+      "language": "typescript",
+      "size_bytes": 21379,
+      "sha1": "79e6f3a1b3460107a28840cb90f020ffa3bb8c15",
+      "modified_at": "2026-03-11T23:17:12.993864+00:00",
+      "imports": [
+        "../../src/lib/model-routing/complexity",
+        "../../src/lib/model-routing/cost-tracker",
+        "../../src/lib/model-routing/ensemble",
+        "../../src/lib/model-routing/router",
+        "../../src/lib/model-routing/types",
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/model-storage.test.ts",
+      "language": "typescript",
+      "size_bytes": 3928,
+      "sha1": "cd63915f2a21693008c23b0e43912b4d2b44e7d3",
+      "modified_at": "2026-03-17T16:27:40.423344+00:00",
+      "imports": [
+        "../../src/lib/model-config",
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "createStorageMock",
+          "kind": "function",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/model-store.test.ts",
+      "language": "typescript",
+      "size_bytes": 2286,
+      "sha1": "da9fe72b76918a5d41d23013e85a0723f02c5eb5",
+      "modified_at": "2026-03-17T01:09:17.822490+00:00",
+      "imports": [
+        "../../src/lib/api-schemas",
+        "../../src/lib/model-store",
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/results-storage-persistence.test.ts",
+      "language": "typescript",
+      "size_bytes": 10512,
+      "sha1": "cfbce04eab58b352c8413eba1da53c12e59fb254",
+      "modified_at": "2026-03-12T00:29:45.621717+00:00",
+      "imports": [
+        "../../src/lib/results-storage",
+        "../../src/lib/types",
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "createMockResult",
+          "kind": "function",
+          "line": 20
+        },
+        {
+          "name": "createMockAdapter",
+          "kind": "function",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/translation.test.ts",
+      "language": "typescript",
+      "size_bytes": 18999,
+      "sha1": "f87c0ba81211fa2e5038728cd61777539469d3b7",
+      "modified_at": "2026-03-11T23:30:06.854060+00:00",
+      "imports": [
+        "../../src/lib/model-config",
+        "../../src/lib/translation/detector",
+        "../../src/lib/translation/query-translator",
+        "../../src/lib/translation/service",
+        "../../src/lib/translation/types",
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/unified-provider.test.ts",
+      "language": "typescript",
+      "size_bytes": 6220,
+      "sha1": "9036a5c92627ce6f68292320d393ee41b5f6597c",
+      "modified_at": "2026-03-17T15:25:24.732208+00:00",
+      "imports": [
+        "../../src/lib/ai/unified-provider",
+        "../../src/lib/model-config",
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "makeConfig",
+          "kind": "function",
+          "line": 59
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/url-validation.test.ts",
+      "language": "typescript",
+      "size_bytes": 6438,
+      "sha1": "ac9f4a4cbaaa1c66b14043ceb987846b2a19d813",
+      "modified_at": "2026-03-16T23:19:15.679981+00:00",
+      "imports": [
+        "vitest"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/vector-storage.test.ts",
+      "language": "typescript",
+      "size_bytes": 10829,
+      "sha1": "c790726921583ad60c47e8c34508dfae23fb9e47",
+      "modified_at": "2026-03-11T23:09:52.527417+00:00",
+      "imports": [
+        "../../src/lib/vector-storage/storage",
+        "../../src/lib/vector-storage/types",
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "createTestEmbedding",
+          "kind": "function",
+          "line": 6
+        },
+        {
+          "name": "createTestDocument",
+          "kind": "function",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "path": "tests/utils/setup.ts",
+      "language": "typescript",
+      "size_bytes": 1521,
+      "sha1": "ec50bc16f27f62fc9e454421179d872e5854e002",
+      "modified_at": "2026-03-08T18:53:45.804612+00:00",
+      "imports": [
+        "@testing-library/react",
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "Assertion",
+          "kind": "interface",
+          "line": 48
+        },
+        {
+          "name": "AsymmetricMatchersContaining",
+          "kind": "interface",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "path": "tests/utils/test-helpers.ts",
+      "language": "typescript",
+      "size_bytes": 6615,
+      "sha1": "e9c489d8945f976a8f6e3c618e349f1c06c347a6",
+      "modified_at": "2026-03-08T19:06:20.108288+00:00",
+      "imports": [
+        "convex/browser",
+        "vitest"
+      ],
+      "symbols": [
+        {
+          "name": "createMockConvexClient",
+          "kind": "function",
+          "line": 9
+        },
+        {
+          "name": "setupTestEnvironment",
+          "kind": "function",
+          "line": 19
+        },
+        {
+          "name": "mockFetch",
+          "kind": "function",
+          "line": 35
+        },
+        {
+          "name": "PerformanceTimer",
+          "kind": "class",
+          "line": 60
+        },
+        {
+          "name": "MockLogger",
+          "kind": "class",
+          "line": 97
+        },
+        {
+          "name": "MockLocalLLM",
+          "kind": "class",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "path": "tsconfig.json",
+      "language": "json",
+      "size_bytes": 814,
+      "sha1": "2c5aa21f858d2643689a425297323272f0bfe93f",
+      "modified_at": "2025-11-16T01:04:56.807558+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "vite-debug.log",
+      "language": "text",
+      "size_bytes": 66860,
+      "sha1": "7557cf3801c9d2323b08aae11e302506235a3bb6",
+      "modified_at": "2026-03-07T23:49:57.553932+00:00",
+      "imports": [],
+      "symbols": []
+    },
+    {
+      "path": "vite.config.ts",
+      "language": "typescript",
+      "size_bytes": 1575,
+      "sha1": "c53a7cd4d0adffa010b07adc723ad5bfc7785d4b",
+      "modified_at": "2026-03-17T02:27:40.568924+00:00",
+      "imports": [
+        "@cloudflare/vite-plugin",
+        "@tailwindcss/vite",
+        "@tanstack/react-start/plugin/vite",
+        "@vitejs/plugin-react",
+        "node:path",
+        "vite",
+        "vite-tsconfig-paths"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "vitest.config.ts",
+      "language": "typescript",
+      "size_bytes": 465,
+      "sha1": "f4bfc0f18328b9ab55677668556d01a836d066ea",
+      "modified_at": "2026-03-16T21:56:08.841535+00:00",
+      "imports": [
+        "node:path",
+        "vitest/config"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "wrangler.toml",
+      "language": "toml",
+      "size_bytes": 393,
+      "sha1": "57bbc19e1e5b22feaceee824a794827031cf9070",
+      "modified_at": "2026-03-16T23:35:00.010931+00:00",
+      "imports": [],
+      "symbols": []
+    }
+  ],
+  "skipped": [
+    {
+      "path": "desktop-3000.png",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "docs/analysis/image.png",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "docs/console/image.png",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "docs/tanstack-router-8a5edab282632443.txt",
+      "reason": "size_gt_1048576"
+    },
+    {
+      "path": "docs/test-screenshot-1.png",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "docs/test-screenshot-2.png",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "playwright-mcp/trace-current.png",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/example-guitar-flowers.jpg",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/example-guitar-motherboard.jpg",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/example-guitar-racing.jpg",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/example-guitar-steamer-trunk.jpg",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/example-guitar-superhero.jpg",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/example-guitar-traveling.jpg",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/example-guitar-video-games.jpg",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/favicon.ico",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/logo192.png",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/logo512.png",
+      "reason": "binary_or_unreadable"
+    },
+    {
+      "path": "public/tanstack-circle-logo.png",
+      "reason": "binary_or_unreadable"
+    }
+  ]
+}

@@ -65,7 +65,7 @@ export const listSearchHistory = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return [];
     }
 
     const limit = args.limit || 20;
@@ -94,14 +94,14 @@ export const getSearch = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return null;
     }
 
     const search = await ctx.db.get(args.searchId);
 
     // Verify ownership
     if (search && search.userId !== userIdentity.subject) {
-      throw new Error("Unauthorized: You do not own this search");
+      return null;
     }
 
     return search;
@@ -114,12 +114,15 @@ export const getSearch = query({
 export const approveSearch = mutation({
   args: {
     searchId: v.id("searchHistory"),
+    userApproved: v.optional(v.boolean()),
+    userRating: v.optional(v.number()),
+    feedback: v.optional(v.string()),
     modifications: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return [];
     }
 
     const search = await ctx.db.get(args.searchId);
@@ -129,8 +132,38 @@ export const approveSearch = mutation({
     }
 
     await ctx.db.patch(args.searchId, {
-      userApproved: true,
+      userApproved: args.userApproved ?? true,
+      userRating: args.userRating,
+      feedback: args.feedback,
       userModifications: args.modifications,
+    });
+
+    const feedbackLabel =
+      args.userRating !== undefined
+        ? args.userRating >= 4
+          ? "positive"
+          : args.userRating <= 2
+            ? "negative"
+            : "neutral"
+        : args.userApproved === false
+          ? "negative"
+          : "positive";
+
+    await ctx.db.insert("usageEvents", {
+      userId: userIdentity.subject,
+      eventType: "user_feedback",
+      query: search.query,
+      modelUsed: search.modelUsed,
+      success: true,
+      quality: search.quality,
+      userFeedback: feedbackLabel,
+      metadata: {
+        searchId: args.searchId,
+        rating: args.userRating,
+        feedback: args.feedback,
+        modifications: args.modifications,
+      },
+      createdAt: Date.now(),
     });
   },
 });
@@ -146,7 +179,7 @@ export const searchHistory = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return [];
     }
 
     const limit = args.limit || 20;
@@ -175,7 +208,14 @@ export const getSearchStats = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return {
+        totalSearches: 0,
+        avgQuality: 0,
+        avgExecutionTime: 0,
+        totalTokens: 0,
+        approvalRate: 0,
+        modelDistribution: {},
+      };
     }
 
     const timeRange = args.timeRangeMs || 30 * 24 * 60 * 60 * 1000; // 30 days

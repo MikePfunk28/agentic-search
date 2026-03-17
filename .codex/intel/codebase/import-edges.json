@@ -1,0 +1,2787 @@
+{
+  "generated_at": "2026-03-17T16:41:42.790169+00:00",
+  "root": "C:\\Users\\mikep\\ts-hackathon\\agentic-search",
+  "edge_count": 556,
+  "edges": [
+    {
+      "from": "convex.config.ts",
+      "import": "convex/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../auth.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../costEstimation.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../crons.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../documents.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../externalApiTracking.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../http.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../indexing.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../interactiveSegmentation.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../knowledgeGraph.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/indexing/documentIndexing.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/indexing/documentIndexingActions.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/indexing/documentIndexingQueries.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/ocr/processDocument.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/reasoning/interleavedReasoningActions.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/search/index.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/search/orchestrator.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/search/querySegmentationActions.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/search/querySegmentationQueries.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/search/querySegmentationTypes.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/search/segmentExecutorActions.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../lib/search/segmentExecutorMutations.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../mcp.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../mcp_mutations.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../modelConfiguration.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../ocr.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../orchestrator.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../rag.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../reasoning.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../search.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../searchAnalytics.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../searchHistory.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../secureApiKeys.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../sessionCleanup.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../todos.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../usageTracking.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../userPreferences.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.d.ts",
+      "import": "../users.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/api.js",
+      "import": "convex/server",
+      "language": "javascript"
+    },
+    {
+      "from": "convex/_generated/dataModel.d.ts",
+      "import": "../schema.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/dataModel.d.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/_generated/server.d.ts",
+      "import": "./dataModel.js",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/auth.ts",
+      "import": "@auth/core/providers/github",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/auth.ts",
+      "import": "@convex-dev/auth/providers/Anonymous",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/auth.ts",
+      "import": "@convex-dev/auth/providers/Password",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/auth.ts",
+      "import": "@convex-dev/auth/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/costEstimation.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/costEstimation.ts",
+      "import": "@convex-dev/auth/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/costEstimation.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/crons.ts",
+      "import": "./_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/crons.ts",
+      "import": "convex/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/documents.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/documents.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/externalApiTracking.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/externalApiTracking.ts",
+      "import": "@convex-dev/auth/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/externalApiTracking.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/http.ts",
+      "import": "./auth",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/http.ts",
+      "import": "convex/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/indexing.ts",
+      "import": "./_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/indexing.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/indexing.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/interactiveSegmentation.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/interactiveSegmentation.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/knowledgeGraph.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/knowledgeGraph.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/indexing/documentIndexing.ts",
+      "import": "../../_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/indexing/documentIndexing.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/indexing/documentIndexing.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/indexing/documentIndexingActions.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/indexing/documentIndexingActions.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/indexing/documentIndexingQueries.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/indexing/documentIndexingQueries.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/ocr/processDocument.ts",
+      "import": "../../_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/ocr/processDocument.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/ocr/processDocument.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/ocr/processDocument.ts",
+      "import": "stream/consumers",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/reasoning/interleavedReasoningActions.ts",
+      "import": "../../_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/reasoning/interleavedReasoningActions.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/reasoning/interleavedReasoningActions.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/orchestrator.ts",
+      "import": "../../_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/orchestrator.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/orchestrator.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/querySegmentationActions.ts",
+      "import": "../../_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/querySegmentationActions.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/querySegmentationActions.ts",
+      "import": "./querySegmentationTypes",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/querySegmentationActions.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/querySegmentationActions.ts",
+      "import": "crypto",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/querySegmentationQueries.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/querySegmentationQueries.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/segmentExecutorActions.ts",
+      "import": "../../_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/segmentExecutorActions.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/segmentExecutorActions.ts",
+      "import": "./querySegmentationTypes",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/segmentExecutorActions.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/segmentExecutorMutations.ts",
+      "import": "../../_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/lib/search/segmentExecutorMutations.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/mcp.node.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/mcp.node.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/mcp.ts",
+      "import": "./_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/mcp.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/mcp.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/mcp_mutations.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/mcp_mutations.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/modelConfiguration.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/modelConfiguration.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/ocr.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/ocr.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/orchestrator.ts",
+      "import": "./_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/orchestrator.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/orchestrator.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/rag.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/rag.ts",
+      "import": "@convex-dev/auth/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/rag.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/reasoning.ts",
+      "import": "./_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/reasoning.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/reasoning.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/schema.ts",
+      "import": "@convex-dev/auth/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/schema.ts",
+      "import": "convex/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/schema.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/search.ts",
+      "import": "./_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/search.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/search.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/searchAnalytics.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/searchAnalytics.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/searchHistory.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/searchHistory.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/secureApiKeys.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/secureApiKeys.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/sessionCleanup.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/todos.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/todos.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/usageTracking.ts",
+      "import": "./_generated/dataModel",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/usageTracking.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/usageTracking.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/userPreferences.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/userPreferences.ts",
+      "import": "@convex-dev/auth/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/userPreferences.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/users.ts",
+      "import": "./_generated/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/users.ts",
+      "import": "@convex-dev/auth/server",
+      "language": "typescript"
+    },
+    {
+      "from": "convex/users.ts",
+      "import": "convex/values",
+      "language": "typescript"
+    },
+    {
+      "from": "playwright.config.ts",
+      "import": "@playwright/test",
+      "language": "typescript"
+    },
+    {
+      "from": "scripts/run-vite-dev.mjs",
+      "import": "node:child_process",
+      "language": "javascript"
+    },
+    {
+      "from": "scripts/run-vite-dev.mjs",
+      "import": "node:path",
+      "language": "javascript"
+    },
+    {
+      "from": "scripts/run-vite-dev.mjs",
+      "import": "node:url",
+      "language": "javascript"
+    },
+    {
+      "from": "src/components/ADDQualityPanel.tsx",
+      "import": "../lib/types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ADDQualityPanel.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "../hooks/useCsrfToken.tsx",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "../hooks/useSpeech",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "../lib/model-store",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "../lib/types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "../lib/unified-search-orchestrator",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "./ADDQualityPanel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "./ComparisonDashboard",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "./EnhancedModelSelector",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "./ResultsList",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "./SearchCheckpointTimeline",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "./SearchProgressPanel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "./SecurityBanner",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "./SettingsModal",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "@ai-sdk/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "ai",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "react-markdown",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "rehype-highlight",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "rehype-raw",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "rehype-sanitize",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AgenticChat.tsx",
+      "import": "remark-gfm",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AnalyticsPage.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AnalyticsPage.tsx",
+      "import": "../hooks/useAppAuth",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AnalyticsPage.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AnalyticsPage.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ApiKeyInput.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ApiKeyInput.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ApiKeyVerification.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ApiKeyVerification.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ApiKeyVerification.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ApiKeyVerification.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AuthButton.tsx",
+      "import": "../hooks/useAppAuth",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AuthButton.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/AuthButton.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ComparisonDashboard.tsx",
+      "import": "../lib/add-discriminator",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ComparisonDashboard.tsx",
+      "import": "../lib/interleaved-reasoning-engine",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ComparisonDashboard.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ConnectionStatus.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ConnectionStatus.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/DatasetExportDashboard.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/DatasetExportDashboard.tsx",
+      "import": "../../convex/_generated/dataModel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/DatasetExportDashboard.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/DatasetExportDashboard.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/EnhancedModelSelector.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/EnhancedModelSelector.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/Header.tsx",
+      "import": "./AuthButton",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/Header.tsx",
+      "import": "./SettingsModal",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/Header.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/Header.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ModelSelector.tsx",
+      "import": "../lib/model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ModelSelector.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ModelSelector.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ReasoningStep.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ReasoningStepValidator.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ReasoningStepValidator.tsx",
+      "import": "../../convex/_generated/dataModel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ReasoningStepValidator.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ReasoningStepValidator.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ResultsList.tsx",
+      "import": "../hooks/useSpeech",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ResultsList.tsx",
+      "import": "../lib/types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/ResultsList.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchBar.tsx",
+      "import": "../hooks/useAutocomplete",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchBar.tsx",
+      "import": "../hooks/useSpeech",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchBar.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchCheckpointTimeline.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchCheckpointTimeline.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchComparisonDashboard.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchComparisonDashboard.tsx",
+      "import": "../../convex/_generated/dataModel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchComparisonDashboard.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchComparisonDashboard.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchHistory.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchHistory.tsx",
+      "import": "../../convex/_generated/dataModel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchHistory.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchHistory.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchHistoryPage.tsx",
+      "import": "../lib/results-storage",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchHistoryPage.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchHistoryPage.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SearchProgressPanel.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SecurityBanner.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SecurityBanner.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SegmentApprovalModal.tsx",
+      "import": "../lib/segment/types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SegmentApprovalModal.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SegmentApprovalModal.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SegmentApprovalPanel.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SegmentApprovalPanel.tsx",
+      "import": "../../convex/_generated/dataModel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SegmentApprovalPanel.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SegmentApprovalPanel.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/SettingsModal.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/search/ReasoningVisualization.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/search/SegmentApprovalUI.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/components/workos-user.tsx",
+      "import": "@workos-inc/authkit-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/data/demo.punk-songs.ts",
+      "import": "@tanstack/react-start",
+      "language": "typescript"
+    },
+    {
+      "from": "src/env.ts",
+      "import": "@t3-oss/env-core",
+      "language": "typescript"
+    },
+    {
+      "from": "src/env.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useAppAuth.ts",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useAppAuth.ts",
+      "import": "@convex-dev/auth/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useAppAuth.ts",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useAutocomplete.ts",
+      "import": "../lib/search/trie",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useAutocomplete.ts",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useCsrfToken.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useRag.ts",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useRag.ts",
+      "import": "../lib/rag/retrieval",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useRag.ts",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useRag.ts",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useReasoningSteps.ts",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useSearchProgress.ts",
+      "import": "../lib/model-store",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useSearchProgress.ts",
+      "import": "../lib/results-storage",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useSearchProgress.ts",
+      "import": "../lib/types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useSearchProgress.ts",
+      "import": "../lib/unified-search-orchestrator",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useSearchProgress.ts",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useSpeech.ts",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useUser.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useUser.tsx",
+      "import": "@workos-inc/authkit-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/hooks/useUser.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/convex/auth-provider.tsx",
+      "import": "../../lib/convex",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/convex/auth-provider.tsx",
+      "import": "@convex-dev/auth/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/convex/provider.tsx",
+      "import": "./auth-provider",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/convex/provider.tsx",
+      "import": "@convex-dev/react-query",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/convex/provider.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/tanstack-query/devtools.tsx",
+      "import": "@tanstack/react-query-devtools",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/tanstack-query/root-provider.tsx",
+      "import": "@tanstack/react-query",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/workos/provider.tsx",
+      "import": "../../lib/sentry",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/workos/provider.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/integrations/workos/provider.tsx",
+      "import": "@workos-inc/authkit-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/add-discriminator.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/agentic-search.ts",
+      "import": "./search-providers",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/agentic-search.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/agentic-search.ts",
+      "import": "./url-validation",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/ai/model-detection.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/ai/providers.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/ai/unified-provider.ts",
+      "import": "../url-validation",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/ai/unified-provider.ts",
+      "import": "@ai-sdk/anthropic",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/ai/unified-provider.ts",
+      "import": "@ai-sdk/google",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/ai/unified-provider.ts",
+      "import": "@ai-sdk/openai",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/api-schemas.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/component-validation-pipeline.ts",
+      "import": "./add-discriminator",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/component-validation-pipeline.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/convex.ts",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/demo-store-devtools.tsx",
+      "import": "./demo-store",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/demo-store-devtools.tsx",
+      "import": "@tanstack/devtools-event-client",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/demo-store-devtools.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/demo-store.ts",
+      "import": "@tanstack/store",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/finetuning-dataset-exporter.ts",
+      "import": "./s3-storage",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/finetuning-dataset-exporter.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/firecrawl-client.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/interleaved-reasoning-engine.ts",
+      "import": "./add-discriminator",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/interleaved-reasoning-engine.ts",
+      "import": "./security/input-sanitization",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/interleaved-reasoning-engine.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/interleaved-reasoning-engine.ts",
+      "import": "@ai-sdk/openai",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/interleaved-reasoning-engine.ts",
+      "import": "ai",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/knowledge-graph/index.ts",
+      "import": "./extractor",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/knowledge-graph/index.ts",
+      "import": "./graph",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/mcp/client.ts",
+      "import": "@modelcontextprotocol/sdk/client/index.js",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/mcp/client.ts",
+      "import": "@modelcontextprotocol/sdk/client/stdio.js",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/mcp/client.ts",
+      "import": "@modelcontextprotocol/sdk/shared/transport.js",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-config.ts",
+      "import": "./url-validation",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-config.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/complexity.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/cost-tracker.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/ensemble.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/ensemble.ts",
+      "import": "./cost-tracker",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/ensemble.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/router.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/router.ts",
+      "import": "../observability",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/router.ts",
+      "import": "./complexity",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/router.ts",
+      "import": "./cost-tracker",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-routing/types.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-storage-convex.ts",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-storage-convex.ts",
+      "import": "../../convex/_generated/dataModel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-storage-convex.ts",
+      "import": "./model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-storage-convex.ts",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-storage.ts",
+      "import": "./model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-store.ts",
+      "import": "./ai/model-detection",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-store.ts",
+      "import": "./model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/model-store.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/observability/service.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/ocr/deepseek-vision.ts",
+      "import": "../ai/unified-provider",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/ocr/deepseek-vision.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/ocr/deepseek-vision.ts",
+      "import": "ai",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/parallel-model-orchestrator.ts",
+      "import": "./ai/unified-provider",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/parallel-model-orchestrator.ts",
+      "import": "./model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/parallel-model-orchestrator.ts",
+      "import": "./url-validation",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/parallel-model-orchestrator.ts",
+      "import": "ai",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/query-enhancement/pipeline.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/query-enhancement/pipeline.ts",
+      "import": "../translation/query-translator",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/rag/retrieval.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/results-storage.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/s3-storage.ts",
+      "import": "@aws-sdk/s3-request-presigner",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/search/evidence.ts",
+      "import": "../types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/search/execution-policy.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/search/free-providers.ts",
+      "import": "./domain-authority",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/search/free-providers.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/search/free-providers.ts",
+      "import": "he",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/search/provider-registry.ts",
+      "import": "../results-storage",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/search/provider-runners.ts",
+      "import": "./domain-authority",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/search/provider-runners.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/search/provider-runners.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/security/input-sanitization.ts",
+      "import": "xss",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/segment/query-segmenter.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/segment/query-segmenter.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/segment/segment-coordinator.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/segment/segment-coordinator.ts",
+      "import": "../types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/segment/segment-coordinator.ts",
+      "import": "./segment-executor",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/segment/segment-executor.ts",
+      "import": "../agentic-search",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/segment/segment-executor.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/segment/segment-executor.ts",
+      "import": "../types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/segment/types.ts",
+      "import": "../types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/translation/query-translator.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/translation/query-translator.ts",
+      "import": "./detector",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/translation/query-translator.ts",
+      "import": "./service",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/translation/service.ts",
+      "import": "../model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/translation/service.ts",
+      "import": "./detector",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/translation/service.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./add-discriminator",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./agentic-search",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./component-validation-pipeline",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./interleaved-reasoning-engine",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./model-routing/router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./model-routing/types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./observability",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./parallel-model-orchestrator",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./results-storage",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./search/checkpoint-engine",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./search/evidence",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./segment",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./semantic-cache",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/unified-search-orchestrator.ts",
+      "import": "./types",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/usage-tracker.ts",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/usage-tracker.ts",
+      "import": "./convex",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/utils.ts",
+      "import": "clsx",
+      "language": "typescript"
+    },
+    {
+      "from": "src/lib/utils.ts",
+      "import": "tailwind-merge",
+      "language": "typescript"
+    },
+    {
+      "from": "src/mcp-todos.ts",
+      "import": "node:fs",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/client.ts",
+      "import": "@/orpc/router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/client.ts",
+      "import": "@orpc/client",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/client.ts",
+      "import": "@orpc/client/fetch",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/client.ts",
+      "import": "@orpc/server",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/client.ts",
+      "import": "@orpc/tanstack-query",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/client.ts",
+      "import": "@tanstack/react-start",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/client.ts",
+      "import": "@tanstack/react-start/server",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/router/index.ts",
+      "import": "./todos",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/router/todos.ts",
+      "import": "@orpc/server",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/router/todos.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/orpc/schema.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./router.tsx",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/__root",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/analytics",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api.$",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api.rpc.$",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api/chat",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api/csrf-token",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api/detect-models",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api/fine-tune/openai",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api/search",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api/search/control",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api/search/progress",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api/search/stream",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/api/test-key",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/comparison",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/export",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/history",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/index",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/mcp",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/profile",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/search",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "./routes/settings",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routeTree.gen.ts",
+      "import": "@tanstack/react-start",
+      "language": "typescript"
+    },
+    {
+      "from": "src/router.tsx",
+      "import": "./integrations/tanstack-query/root-provider",
+      "language": "typescript"
+    },
+    {
+      "from": "src/router.tsx",
+      "import": "./routeTree.gen",
+      "language": "typescript"
+    },
+    {
+      "from": "src/router.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/router.tsx",
+      "import": "@tanstack/react-router-ssr-query",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/__root.tsx",
+      "import": "../components/Header",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/__root.tsx",
+      "import": "../integrations/convex/auth-provider",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/__root.tsx",
+      "import": "../lib/model-store",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/__root.tsx",
+      "import": "../styles.css?url",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/__root.tsx",
+      "import": "@tanstack/react-query",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/__root.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/analytics.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/analytics.tsx",
+      "import": "../hooks/useAppAuth",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/analytics.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/analytics.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.$.ts",
+      "import": "@/orpc/router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.$.ts",
+      "import": "@/orpc/schema",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.$.ts",
+      "import": "@orpc/json-schema",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.$.ts",
+      "import": "@orpc/openapi/fetch",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.$.ts",
+      "import": "@orpc/openapi/plugins",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.$.ts",
+      "import": "@orpc/server",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.$.ts",
+      "import": "@orpc/zod/zod4",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.$.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.rpc.$.ts",
+      "import": "@/orpc/router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.rpc.$.ts",
+      "import": "@orpc/server/fetch",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api.rpc.$.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/chat.ts",
+      "import": "@/lib/api-schemas",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/chat.ts",
+      "import": "@/lib/server/lazy-runtime",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/chat.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/csrf-token.ts",
+      "import": "@/lib/csrf-protection",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/csrf-token.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/detect-models.ts",
+      "import": "@/lib/url-validation",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/detect-models.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/fine-tune/openai.ts",
+      "import": "@/lib/server/lazy-runtime",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/fine-tune/openai.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/fine-tune/openai.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search.ts",
+      "import": "@/lib/api-schemas",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search.ts",
+      "import": "@/lib/server/lazy-runtime",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search/control.ts",
+      "import": "@/components/SearchProgressPanel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search/control.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search/progress.ts",
+      "import": "@/components/SearchProgressPanel",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search/progress.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search/stream.ts",
+      "import": "./control",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search/stream.ts",
+      "import": "@/lib/server/lazy-runtime",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/search/stream.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/api/test-key.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/comparison.tsx",
+      "import": "../components/SearchComparisonDashboard",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/comparison.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/export.tsx",
+      "import": "../components/DatasetExportDashboard",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/export.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/history.tsx",
+      "import": "../components/SearchHistory",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/history.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/index.tsx",
+      "import": "../components/AgenticChat",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/index.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/index.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/mcp.ts",
+      "import": "../utils/mcp-handler",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/mcp.ts",
+      "import": "@modelcontextprotocol/sdk/server/mcp.js",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/mcp.ts",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/mcp.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/profile.tsx",
+      "import": "../../convex/_generated/api",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/profile.tsx",
+      "import": "../hooks/useAppAuth",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/profile.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/profile.tsx",
+      "import": "convex/react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/profile.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/profile.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/search.tsx",
+      "import": "../lib/model-store",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/search.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/search.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/search.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/settings.tsx",
+      "import": "../components/SettingsModal",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/settings.tsx",
+      "import": "@tanstack/react-router",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/settings.tsx",
+      "import": "lucide-react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/routes/settings.tsx",
+      "import": "react",
+      "language": "typescript"
+    },
+    {
+      "from": "src/utils/demo.tools.ts",
+      "import": "../data/example-guitars",
+      "language": "typescript"
+    },
+    {
+      "from": "src/utils/demo.tools.ts",
+      "import": "ai",
+      "language": "typescript"
+    },
+    {
+      "from": "src/utils/demo.tools.ts",
+      "import": "zod",
+      "language": "typescript"
+    },
+    {
+      "from": "src/utils/mcp-handler.ts",
+      "import": "@modelcontextprotocol/sdk/inMemory.js",
+      "language": "typescript"
+    },
+    {
+      "from": "src/utils/mcp-handler.ts",
+      "import": "@modelcontextprotocol/sdk/server/mcp.js",
+      "language": "typescript"
+    },
+    {
+      "from": "src/utils/mcp-handler.ts",
+      "import": "@modelcontextprotocol/sdk/types.js",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/ModelConfigManager.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/add-quality-test.ts",
+      "import": "../src/lib/add-discriminator",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/add-quality-test.ts",
+      "import": "../src/lib/types",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/backend/convex-functions.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/backend/langchain-workflow.test.ts",
+      "import": "../utils/test-helpers",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/backend/langchain-workflow.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/csrf-protection.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/e2e/history-flow.spec.ts",
+      "import": "@playwright/test",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/e2e/search-flow.spec.ts",
+      "import": "@playwright/test",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/e2e/settings-flow.spec.ts",
+      "import": "@playwright/test",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/interleaved-reasoning.test.ts",
+      "import": "../src/lib/interleaved-reasoning-engine",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/interleaved-reasoning.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/add-discriminator.test.ts",
+      "import": "../../src/lib/types",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/add-discriminator.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/agentic-search.test.ts",
+      "import": "../../src/lib/agentic-search",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/agentic-search.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/checkpoint-engine.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/convex-auth.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/deepseek-vision.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/input-sanitization.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/knowledge-graph.test.ts",
+      "import": "../../src/lib/knowledge-graph",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/knowledge-graph.test.ts",
+      "import": "../../src/lib/knowledge-graph/extractor",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/knowledge-graph.test.ts",
+      "import": "../../src/lib/knowledge-graph/graph",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/knowledge-graph.test.ts",
+      "import": "../../src/lib/knowledge-graph/types",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/knowledge-graph.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-routing.test.ts",
+      "import": "../../src/lib/model-routing/complexity",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-routing.test.ts",
+      "import": "../../src/lib/model-routing/cost-tracker",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-routing.test.ts",
+      "import": "../../src/lib/model-routing/ensemble",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-routing.test.ts",
+      "import": "../../src/lib/model-routing/router",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-routing.test.ts",
+      "import": "../../src/lib/model-routing/types",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-routing.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-storage.test.ts",
+      "import": "../../src/lib/model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-storage.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-store.test.ts",
+      "import": "../../src/lib/api-schemas",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-store.test.ts",
+      "import": "../../src/lib/model-store",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/model-store.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/results-storage-persistence.test.ts",
+      "import": "../../src/lib/results-storage",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/results-storage-persistence.test.ts",
+      "import": "../../src/lib/types",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/results-storage-persistence.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/translation.test.ts",
+      "import": "../../src/lib/model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/translation.test.ts",
+      "import": "../../src/lib/translation/detector",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/translation.test.ts",
+      "import": "../../src/lib/translation/query-translator",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/translation.test.ts",
+      "import": "../../src/lib/translation/service",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/translation.test.ts",
+      "import": "../../src/lib/translation/types",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/translation.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/unified-provider.test.ts",
+      "import": "../../src/lib/ai/unified-provider",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/unified-provider.test.ts",
+      "import": "../../src/lib/model-config",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/unified-provider.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/url-validation.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/vector-storage.test.ts",
+      "import": "../../src/lib/vector-storage/storage",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/vector-storage.test.ts",
+      "import": "../../src/lib/vector-storage/types",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/unit/vector-storage.test.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/utils/setup.ts",
+      "import": "@testing-library/react",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/utils/setup.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/utils/test-helpers.ts",
+      "import": "convex/browser",
+      "language": "typescript"
+    },
+    {
+      "from": "tests/utils/test-helpers.ts",
+      "import": "vitest",
+      "language": "typescript"
+    },
+    {
+      "from": "vite.config.ts",
+      "import": "@cloudflare/vite-plugin",
+      "language": "typescript"
+    },
+    {
+      "from": "vite.config.ts",
+      "import": "@tailwindcss/vite",
+      "language": "typescript"
+    },
+    {
+      "from": "vite.config.ts",
+      "import": "@tanstack/react-start/plugin/vite",
+      "language": "typescript"
+    },
+    {
+      "from": "vite.config.ts",
+      "import": "@vitejs/plugin-react",
+      "language": "typescript"
+    },
+    {
+      "from": "vite.config.ts",
+      "import": "node:path",
+      "language": "typescript"
+    },
+    {
+      "from": "vite.config.ts",
+      "import": "vite",
+      "language": "typescript"
+    },
+    {
+      "from": "vite.config.ts",
+      "import": "vite-tsconfig-paths",
+      "language": "typescript"
+    },
+    {
+      "from": "vitest.config.ts",
+      "import": "node:path",
+      "language": "typescript"
+    },
+    {
+      "from": "vitest.config.ts",
+      "import": "vitest/config",
+      "language": "typescript"
+    }
+  ]
+}

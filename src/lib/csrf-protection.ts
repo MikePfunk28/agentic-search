@@ -12,15 +12,12 @@
 export function generateCsrfToken(): string {
 	// Use crypto.randomUUID which provides 128-bit (16 bytes) UUID v4
 	// For enhanced security, we'll concatenate two UUIDs to get 256 bits (32 bytes)
-	if (typeof crypto !== "undefined" && crypto.randomUUID) {
+	if (crypto?.randomUUID) {
 		return `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
 	}
 
 	// Fallback for Node.js environments
-	if (
-		typeof globalThis.crypto !== "undefined" &&
-		globalThis.crypto.randomUUID
-	) {
+	if (globalThis.crypto?.randomUUID) {
 		return `${globalThis.crypto.randomUUID()}${globalThis.crypto.randomUUID()}`.replace(
 			/-/g,
 			"",
@@ -176,11 +173,20 @@ export interface CsrfValidationResult {
 }
 
 /**
- * Validate CSRF token for a request
+ * Validate CSRF token for a request.
+ * Skips validation in development (consistent with the CSRF middleware
+ * which sets enabled: process.env.NODE_ENV === "production").
+ * In the Cloudflare/miniflare dev proxy, Set-Cookie headers are not
+ * reliably forwarded, so cookie-based CSRF cannot work in dev.
  */
 export function validateCsrfRequest(request: Request): CsrfValidationResult {
 	// Skip validation for safe methods
 	if (!requiresCsrfProtection(request.method)) {
+		return { valid: true };
+	}
+
+	// Skip CSRF in development - miniflare proxy doesn't forward cookies reliably
+	if (!import.meta.env.PROD) {
 		return { valid: true };
 	}
 
@@ -285,7 +291,7 @@ export function ensureCsrfToken(
 	const cookieName = cookieOptions?.name || DEFAULT_CSRF_COOKIE_OPTIONS.name;
 
 	// Check if CSRF cookie is already being set
-	if (cookieHeader && cookieHeader.includes(cookieName)) {
+	if (cookieHeader?.includes(cookieName)) {
 		return response;
 	}
 

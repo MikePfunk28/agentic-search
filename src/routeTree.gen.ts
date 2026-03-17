@@ -11,13 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ExportRouteImport } from './routes/export'
 import { Route as ComparisonRouteImport } from './routes/comparison'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTestKeyRouteImport } from './routes/api/test-key'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
+import { Route as ApiDetectModelsRouteImport } from './routes/api/detect-models'
 import { Route as ApiCsrfTokenRouteImport } from './routes/api/csrf-token'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
@@ -25,6 +28,7 @@ import { Route as ApiSearchStreamRouteImport } from './routes/api/search/stream'
 import { Route as ApiSearchProgressRouteImport } from './routes/api/search/progress'
 import { Route as ApiSearchControlRouteImport } from './routes/api/search/control'
 import { Route as ApiRpcSplatRouteImport } from './routes/api.rpc.$'
+import { Route as ApiFineTuneOpenaiRouteImport } from './routes/api/fine-tune/openai'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -34,6 +38,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -56,6 +65,11 @@ const ComparisonRoute = ComparisonRouteImport.update({
   path: '/comparison',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -69,6 +83,11 @@ const ApiTestKeyRoute = ApiTestKeyRouteImport.update({
 const ApiSearchRoute = ApiSearchRouteImport.update({
   id: '/api/search',
   path: '/api/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDetectModelsRoute = ApiDetectModelsRouteImport.update({
+  id: '/api/detect-models',
+  path: '/api/detect-models',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCsrfTokenRoute = ApiCsrfTokenRouteImport.update({
@@ -106,20 +125,29 @@ const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
   path: '/api/rpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiFineTuneOpenaiRoute = ApiFineTuneOpenaiRouteImport.update({
+  id: '/api/fine-tune/openai',
+  path: '/api/fine-tune/openai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/comparison': typeof ComparisonRoute
   '/export': typeof ExportRoute
   '/history': typeof HistoryRoute
   '/mcp': typeof McpRoute
+  '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
   '/api/csrf-token': typeof ApiCsrfTokenRoute
+  '/api/detect-models': typeof ApiDetectModelsRoute
   '/api/search': typeof ApiSearchRouteWithChildren
   '/api/test-key': typeof ApiTestKeyRoute
+  '/api/fine-tune/openai': typeof ApiFineTuneOpenaiRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/search/control': typeof ApiSearchControlRoute
   '/api/search/progress': typeof ApiSearchProgressRoute
@@ -127,17 +155,21 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/comparison': typeof ComparisonRoute
   '/export': typeof ExportRoute
   '/history': typeof HistoryRoute
   '/mcp': typeof McpRoute
+  '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
   '/api/csrf-token': typeof ApiCsrfTokenRoute
+  '/api/detect-models': typeof ApiDetectModelsRoute
   '/api/search': typeof ApiSearchRouteWithChildren
   '/api/test-key': typeof ApiTestKeyRoute
+  '/api/fine-tune/openai': typeof ApiFineTuneOpenaiRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/search/control': typeof ApiSearchControlRoute
   '/api/search/progress': typeof ApiSearchProgressRoute
@@ -146,17 +178,21 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/comparison': typeof ComparisonRoute
   '/export': typeof ExportRoute
   '/history': typeof HistoryRoute
   '/mcp': typeof McpRoute
+  '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
   '/api/csrf-token': typeof ApiCsrfTokenRoute
+  '/api/detect-models': typeof ApiDetectModelsRoute
   '/api/search': typeof ApiSearchRouteWithChildren
   '/api/test-key': typeof ApiTestKeyRoute
+  '/api/fine-tune/openai': typeof ApiFineTuneOpenaiRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/search/control': typeof ApiSearchControlRoute
   '/api/search/progress': typeof ApiSearchProgressRoute
@@ -166,17 +202,21 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analytics'
     | '/comparison'
     | '/export'
     | '/history'
     | '/mcp'
+    | '/profile'
     | '/search'
     | '/settings'
     | '/api/$'
     | '/api/chat'
     | '/api/csrf-token'
+    | '/api/detect-models'
     | '/api/search'
     | '/api/test-key'
+    | '/api/fine-tune/openai'
     | '/api/rpc/$'
     | '/api/search/control'
     | '/api/search/progress'
@@ -184,17 +224,21 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analytics'
     | '/comparison'
     | '/export'
     | '/history'
     | '/mcp'
+    | '/profile'
     | '/search'
     | '/settings'
     | '/api/$'
     | '/api/chat'
     | '/api/csrf-token'
+    | '/api/detect-models'
     | '/api/search'
     | '/api/test-key'
+    | '/api/fine-tune/openai'
     | '/api/rpc/$'
     | '/api/search/control'
     | '/api/search/progress'
@@ -202,17 +246,21 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/analytics'
     | '/comparison'
     | '/export'
     | '/history'
     | '/mcp'
+    | '/profile'
     | '/search'
     | '/settings'
     | '/api/$'
     | '/api/chat'
     | '/api/csrf-token'
+    | '/api/detect-models'
     | '/api/search'
     | '/api/test-key'
+    | '/api/fine-tune/openai'
     | '/api/rpc/$'
     | '/api/search/control'
     | '/api/search/progress'
@@ -221,17 +269,21 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   ComparisonRoute: typeof ComparisonRoute
   ExportRoute: typeof ExportRoute
   HistoryRoute: typeof HistoryRoute
   McpRoute: typeof McpRoute
+  ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiCsrfTokenRoute: typeof ApiCsrfTokenRoute
+  ApiDetectModelsRoute: typeof ApiDetectModelsRoute
   ApiSearchRoute: typeof ApiSearchRouteWithChildren
   ApiTestKeyRoute: typeof ApiTestKeyRoute
+  ApiFineTuneOpenaiRoute: typeof ApiFineTuneOpenaiRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
 }
 
@@ -249,6 +301,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -279,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComparisonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -298,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/api/search'
       fullPath: '/api/search'
       preLoaderRoute: typeof ApiSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/detect-models': {
+      id: '/api/detect-models'
+      path: '/api/detect-models'
+      fullPath: '/api/detect-models'
+      preLoaderRoute: typeof ApiDetectModelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/csrf-token': {
@@ -349,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/fine-tune/openai': {
+      id: '/api/fine-tune/openai'
+      path: '/api/fine-tune/openai'
+      fullPath: '/api/fine-tune/openai'
+      preLoaderRoute: typeof ApiFineTuneOpenaiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -370,17 +450,21 @@ const ApiSearchRouteWithChildren = ApiSearchRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
   ComparisonRoute: ComparisonRoute,
   ExportRoute: ExportRoute,
   HistoryRoute: HistoryRoute,
   McpRoute: McpRoute,
+  ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiChatRoute: ApiChatRoute,
   ApiCsrfTokenRoute: ApiCsrfTokenRoute,
+  ApiDetectModelsRoute: ApiDetectModelsRoute,
   ApiSearchRoute: ApiSearchRouteWithChildren,
   ApiTestKeyRoute: ApiTestKeyRoute,
+  ApiFineTuneOpenaiRoute: ApiFineTuneOpenaiRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,
 }
 export const routeTree = rootRouteImport

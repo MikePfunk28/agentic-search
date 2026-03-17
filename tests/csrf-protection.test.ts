@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   generateCsrfToken,
   validateCsrfToken,
@@ -153,6 +153,15 @@ describe('CSRF Protection Library', () => {
   })
 
   describe('Request Validation', () => {
+    // CSRF validation is skipped when import.meta.env.PROD is falsy (dev mode).
+    // Stub it to true so the validation logic actually runs in tests.
+    beforeEach(() => {
+      vi.stubEnv('PROD', 'true')
+    })
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
     it('allows GET requests without CSRF token', () => {
       const request = new Request('http://localhost', {
         method: 'GET',

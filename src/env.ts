@@ -20,7 +20,10 @@ export const env = createEnv({
 	 * What object holds the environment variables at runtime. This is usually
 	 * `process.env` or `import.meta.env`.
 	 */
-	runtimeEnv: import.meta.env,
+	runtimeEnv: {
+		SERVER_URL: import.meta.env.SERVER_URL,
+		VITE_APP_TITLE: import.meta.env.VITE_APP_TITLE,
+	},
 
 	/**
 	 * By default, this library will feed the environment variables directly to

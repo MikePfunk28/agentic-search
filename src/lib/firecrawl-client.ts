@@ -354,12 +354,10 @@ ${result.markdown || result.content || "No content available"}
 export function createFirecrawlClient(
 	config?: Partial<FirecrawlClientConfig>,
 ): FirecrawlClient {
-	const apiKey = config?.apiKey || process.env.FIRECRAWL_API_KEY;
+	const apiKey = config?.apiKey;
 
 	if (!apiKey) {
-		throw new Error(
-			"Firecrawl API key is required. Set FIRECRAWL_API_KEY environment variable or pass apiKey in config.",
-		);
+		throw new Error("Firecrawl API key is required. Pass apiKey in config.");
 	}
 
 	return new FirecrawlClient({

@@ -1,9 +1,9 @@
 /**
  * Adversarial Differential Discriminator (ADD)
- * 
+ *
  * Validates search quality by comparing results over time, detecting drift,
  * and triggering adjustments when accuracy degrades.
- * 
+ *
  * Key features:
  * - Historical quality tracking
  * - Drift detection via statistical analysis
@@ -52,7 +52,7 @@ export interface ADDConfig {
 const DEFAULT_ADD_CONFIG: ADDConfig = {
 	driftThreshold: 0.15,
 	adjustmentThreshold: 0.25,
-	retrainThreshold: 0.40,
+	retrainThreshold: 0.4,
 	historicalWindow: 100,
 	minSamplesForAnalysis: 10,
 };
@@ -109,16 +109,13 @@ export class AdversarialDifferentialDiscriminator {
 	 * Analyze drift based on historical data
 	 */
 	analyzeDrift(): DriftAnalysis {
-		if (
-			this.historicalScores.length < this.config.minSamplesForAnalysis
-		) {
+		if (this.historicalScores.length < this.config.minSamplesForAnalysis) {
 			return {
 				isDrifting: false,
 				driftMagnitude: 0,
 				confidence: 0,
 				recommendation: "maintain",
-				details:
-					"Insufficient historical data for drift analysis",
+				details: "Insufficient historical data for drift analysis",
 			};
 		}
 
@@ -128,10 +125,7 @@ export class AdversarialDifferentialDiscriminator {
 			.slice(-recentWindow)
 			.map((s) => s.overallScore);
 		const olderScores = this.historicalScores
-			.slice(
-				-(this.config.historicalWindow * 2),
-				-recentWindow,
-			)
+			.slice(-(this.config.historicalWindow * 2), -recentWindow)
 			.map((s) => s.overallScore);
 
 		if (olderScores.length === 0) {
@@ -152,24 +146,17 @@ export class AdversarialDifferentialDiscriminator {
 		const degradationRatio = Math.abs(driftMagnitude) / historicalAvg;
 
 		// Determine if drifting
-		const isDrifting =
-			degradationRatio >= this.config.driftThreshold;
+		const isDrifting = degradationRatio >= this.config.driftThreshold;
 
 		// Calculate confidence in drift detection
 		const variance = this.calculateVariance(recentScores);
-		const confidence = Math.max(
-			0,
-			Math.min(1, 1 - variance * 2),
-		);
+		const confidence = Math.max(0, Math.min(1, 1 - variance * 2));
 
 		// Determine recommendation
 		let recommendation: DriftAnalysis["recommendation"] = "maintain";
 		let details = "Performance is stable";
 
-		if (
-			isDrifting &&
-			degradationRatio >= this.config.retrainThreshold
-		) {
+		if (isDrifting && degradationRatio >= this.config.retrainThreshold) {
 			recommendation = "retrain";
 			details = `Significant degradation detected (${(degradationRatio * 100).toFixed(1)}%). Model retraining recommended.`;
 		} else if (
@@ -197,15 +184,16 @@ export class AdversarialDifferentialDiscriminator {
 	 * Get comprehensive metrics
 	 */
 	getMetrics(): ADDMetrics {
-		const currentScore =
-			this.historicalScores[this.historicalScores.length - 1] ?? {
-				overallScore: 0,
-				relevanceScore: 0,
-				diversityScore: 0,
-				freshnessScore: 0,
-				consistencyScore: 0,
-				timestamp: Date.now(),
-			};
+		const currentScore = this.historicalScores[
+			this.historicalScores.length - 1
+		] ?? {
+			overallScore: 0,
+			relevanceScore: 0,
+			diversityScore: 0,
+			freshnessScore: 0,
+			consistencyScore: 0,
+			timestamp: Date.now(),
+		};
 
 		const historicalAverage = this.average(
 			this.historicalScores.map((s) => s.overallScore),
@@ -238,9 +226,7 @@ export class AdversarialDifferentialDiscriminator {
 		for (const result of results) {
 			const content = `${result.title} ${result.snippet}`.toLowerCase();
 
-			const matchingTerms = queryTerms.filter((term) =>
-				content.includes(term),
-			);
+			const matchingTerms = queryTerms.filter((term) => content.includes(term));
 			const relevance = matchingTerms.length / queryTerms.length;
 
 			totalRelevance += relevance;
@@ -274,8 +260,7 @@ export class AdversarialDifferentialDiscriminator {
 			}
 		}
 
-		const avgSimilarity =
-			comparisons > 0 ? totalSimilarity / comparisons : 0;
+		const avgSimilarity = comparisons > 0 ? totalSimilarity / comparisons : 0;
 		const contentDiversity = 1 - avgSimilarity;
 
 		return (sourceDiversity + contentDiversity) / 2;
@@ -288,8 +273,7 @@ export class AdversarialDifferentialDiscriminator {
 		if (results.length === 0) return 0.5;
 
 		// If addScore exists, use it as a proxy for freshness
-		const avgAddScore =
-			this.average(results.map((r) => r.addScore ?? 0.5));
+		const avgAddScore = this.average(results.map((r) => r.addScore ?? 0.5));
 
 		return avgAddScore;
 	}
@@ -338,9 +322,7 @@ export class AdversarialDifferentialDiscriminator {
 		const words1 = new Set(text1.toLowerCase().split(/\s+/));
 		const words2 = new Set(text2.toLowerCase().split(/\s+/));
 
-		const intersection = new Set(
-			[...words1].filter((w) => words2.has(w)),
-		);
+		const intersection = new Set([...words1].filter((w) => words2.has(w)));
 		const union = new Set([...words1, ...words2]);
 
 		return union.size > 0 ? intersection.size / union.size : 0;
@@ -353,10 +335,7 @@ export class AdversarialDifferentialDiscriminator {
 		this.historicalScores.push(score);
 
 		// Maintain window size
-		if (
-			this.historicalScores.length >
-			this.config.historicalWindow * 2
-		) {
+		if (this.historicalScores.length > this.config.historicalWindow * 2) {
 			this.historicalScores = this.historicalScores.slice(
 				-this.config.historicalWindow,
 			);
@@ -388,10 +367,7 @@ export class AdversarialDifferentialDiscriminator {
 		const n = values.length;
 		const sumX = (n * (n - 1)) / 2;
 		const sumY = values.reduce((sum, val) => sum + val, 0);
-		const sumXY = values.reduce(
-			(sum, val, i) => sum + i * val,
-			0,
-		);
+		const sumXY = values.reduce((sum, val, i) => sum + i * val, 0);
 		const sumX2 = values.reduce((sum, _, i) => sum + i * i, 0);
 
 		return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
@@ -412,7 +388,7 @@ export class AdversarialDifferentialDiscriminator {
 		if (numbers.length === 0) return 0;
 
 		const mean = this.average(numbers);
-		const squaredDiffs = numbers.map((n) => Math.pow(n - mean, 2));
+		const squaredDiffs = numbers.map((n) => (n - mean) ** 2);
 		return this.average(squaredDiffs);
 	}
 
@@ -427,8 +403,6 @@ export class AdversarialDifferentialDiscriminator {
 	 * Import historical data
 	 */
 	importHistoricalData(scores: ADDScore[]): void {
-		this.historicalScores = scores.slice(
-			-this.config.historicalWindow,
-		);
+		this.historicalScores = scores.slice(-this.config.historicalWindow);
 	}
 }

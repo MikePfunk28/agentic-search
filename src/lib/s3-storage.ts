@@ -1,7 +1,7 @@
 /**
  * S3 Document Storage with IAM Role
  * Secure document upload/download using AWS SDK v3
- * 
+ *
  * Setup:
  * 1. Create IAM role with S3 permissions
  * 2. Set environment variables:
@@ -11,19 +11,36 @@
  *    - AWS_S3_BUCKET
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+	DeleteObjectCommand,
+	GetObjectCommand,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+// Validate required S3 environment variables at module load time
+if (!process.env.AWS_REGION) {
+	throw new Error(
+		"Missing required environment variable: AWS_REGION must be set (e.g. us-east-1)",
+	);
+}
+if (!process.env.AWS_S3_BUCKET) {
+	throw new Error(
+		"Missing required environment variable: AWS_S3_BUCKET must be set",
+	);
+}
 
 // Initialize S3 client with IAM credentials from environment
 const s3Client = new S3Client({
-	region: process.env.AWS_REGION || "us-east-1",
+	region: process.env.AWS_REGION,
 	credentials: {
 		accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
 		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
 	},
 });
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET || "agentic-search-documents";
+const BUCKET_NAME = process.env.AWS_S3_BUCKET;
 
 export interface UploadResult {
 	key: string;
@@ -43,12 +60,12 @@ export interface UploadResult {
 export async function uploadDocument(
 	file: Buffer | string,
 	filename: string,
-	contentType: string
+	contentType: string,
 ): Promise<UploadResult> {
 	// Validate credentials
 	if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
 		throw new Error(
-			"AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables."
+			"AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.",
 		);
 	}
 
@@ -80,7 +97,7 @@ export async function uploadDocument(
 	// Note: This generates a public URL assuming the bucket is publicly accessible
 	// For private buckets, use getPresignedDownloadUrl() instead
 	// The URL format assumes bucket policy allows public read access
-	const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || "us-east-1"}.amazonaws.com/${key}`;
+	const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
 	return {
 		key,
@@ -97,7 +114,7 @@ export async function uploadDocument(
  */
 export async function getPresignedDownloadUrl(
 	key: string,
-	expiresIn: number = 3600
+	expiresIn: number = 3600,
 ): Promise<string> {
 	const command = new GetObjectCommand({
 		Bucket: BUCKET_NAME,

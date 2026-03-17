@@ -1,5 +1,5 @@
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -8,9 +8,19 @@ interface SegmentApprovalPanelProps {
 	onComplete?: () => void;
 }
 
-type SegmentType = "entity" | "relation" | "constraint" | "intent" | "context" | "comparison" | "synthesis";
+type SegmentType =
+	| "entity"
+	| "relation"
+	| "constraint"
+	| "intent"
+	| "context"
+	| "comparison"
+	| "synthesis";
 
-export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: SegmentApprovalPanelProps) {
+export default function SegmentApprovalPanel({
+	searchHistoryId,
+	onComplete,
+}: SegmentApprovalPanelProps) {
 	const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
 	const [editedText, setEditedText] = useState<string>("");
 	const [userConfidence, setUserConfidence] = useState<number>(0.8);
@@ -19,15 +29,20 @@ export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: Se
 	const [suggestedImprovement, setSuggestedImprovement] = useState<string>("");
 
 	// Query pending approvals for this search
-	const pendingApprovals = useQuery(api.interactiveSegmentation.getPendingApprovals, {
-		searchHistoryId,
-	});
+	const pendingApprovals = useQuery(
+		api.interactiveSegmentation.getPendingApprovals,
+		{
+			searchHistoryId,
+		},
+	);
 
 	// Get approval statistics
 	const stats = useQuery(api.interactiveSegmentation.getApprovalStats, {});
 
 	// Mutations
-	const approveSegment = useMutation(api.interactiveSegmentation.approveSegment);
+	const approveSegment = useMutation(
+		api.interactiveSegmentation.approveSegment,
+	);
 	const rejectSegment = useMutation(api.interactiveSegmentation.rejectSegment);
 
 	const handleStartEdit = (segmentId: string, currentText: string) => {
@@ -35,7 +50,10 @@ export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: Se
 		setEditedText(currentText);
 	};
 
-	const handleApprove = async (approvalId: Id<"segmentApprovals">, modified: boolean) => {
+	const handleApprove = async (
+		approvalId: Id<"segmentApprovals">,
+		modified: boolean,
+	) => {
 		try {
 			await approveSegment({
 				approvalId,
@@ -150,7 +168,8 @@ export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: Se
 			<div className="panel-header">
 				<h2>Review Query Segments</h2>
 				<p className="panel-subtitle">
-					Review and modify segments before execution. Your corrections improve the AI's learning.
+					Review and modify segments before execution. Your corrections improve
+					the AI's learning.
 				</p>
 
 				{/* Progress Indicator */}
@@ -158,11 +177,12 @@ export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: Se
 					<div
 						className="progress-fill"
 						style={{
-							width: `${((stats?.total || 0) - pendingApprovals.length) / (stats?.total || 1) * 100}%`,
+							width: `${(((stats?.total || 0) - pendingApprovals.length) / (stats?.total || 1)) * 100}%`,
 						}}
 					/>
 					<span className="progress-text">
-						{(stats?.total || 0) - pendingApprovals.length} of {stats?.total || 0} reviewed
+						{(stats?.total || 0) - pendingApprovals.length} of{" "}
+						{stats?.total || 0} reviewed
 					</span>
 				</div>
 
@@ -171,11 +191,15 @@ export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: Se
 					<div className="approval-stats">
 						<div className="stat-item">
 							<span className="stat-label">Approval Rate:</span>
-							<span className="stat-value">{stats.approvalRate.toFixed(1)}%</span>
+							<span className="stat-value">
+								{stats.approvalRate.toFixed(1)}%
+							</span>
 						</div>
 						<div className="stat-item">
 							<span className="stat-label">Modification Rate:</span>
-							<span className="stat-value">{stats.modificationRate.toFixed(1)}%</span>
+							<span className="stat-value">
+								{stats.modificationRate.toFixed(1)}%
+							</span>
 						</div>
 					</div>
 				)}
@@ -184,7 +208,10 @@ export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: Se
 			{/* Segment Cards */}
 			<div className="segments-container">
 				{pendingApprovals.map((approval, index) => (
-					<div key={approval._id} className={`segment-card segment-type-${approval.segmentType}`}>
+					<div
+						key={approval._id}
+						className={`segment-card segment-type-${approval.segmentType}`}
+					>
 						<div className="segment-header">
 							<div className="segment-type-badge">
 								{approval.segmentType.toUpperCase()}
@@ -218,14 +245,17 @@ export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: Se
 										placeholder="Edit the segment text..."
 									/>
 									<div className="edit-hint">
-										Tip: Make your changes as precise as possible - this creates GOLD training data!
+										Tip: Make your changes as precise as possible - this creates
+										GOLD training data!
 									</div>
 								</div>
 							)}
 
 							{/* User Confidence Slider */}
 							<div className="confidence-control">
-								<label>Your Confidence Level: {(userConfidence * 100).toFixed(0)}%</label>
+								<label>
+									Your Confidence Level: {(userConfidence * 100).toFixed(0)}%
+								</label>
 								<input
 									type="range"
 									min="0"
@@ -265,13 +295,20 @@ export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: Se
 											✓ Approve As-Is
 										</button>
 										<button
-											onClick={() => handleStartEdit(approval.segmentId, approval.segmentText)}
+											onClick={() =>
+												handleStartEdit(
+													approval.segmentId,
+													approval.segmentText,
+												)
+											}
 											className="btn btn-modify"
 										>
 											✏️ Modify
 										</button>
 										<button
-											onClick={() => setEditingSegmentId(`reject-${approval.segmentId}`)}
+											onClick={() =>
+												setEditingSegmentId(`reject-${approval.segmentId}`)
+											}
 											className="btn btn-reject"
 										>
 											✗ Reject
@@ -321,7 +358,9 @@ export default function SegmentApprovalPanel({ searchHistoryId, onComplete }: Se
 										<button
 											onClick={() => handleApprove(approval._id, true)}
 											className="btn btn-save"
-											disabled={!editedText || editedText === approval.segmentText}
+											disabled={
+												!editedText || editedText === approval.segmentText
+											}
 										>
 											✓ Save Changes
 										</button>
@@ -685,11 +724,15 @@ function getSegmentTypeDescription(type: SegmentType): string {
 	const descriptions: Record<SegmentType, string> = {
 		entity: "🎯 Entity: Core concepts, subjects, or objects to search for",
 		relation: "🔗 Relation: Relationships between entities or how they connect",
-		constraint: "📏 Constraint: Limitations, filters, or requirements for results",
-		intent: "💡 Intent: User's underlying goal or what they're trying to accomplish",
+		constraint:
+			"📏 Constraint: Limitations, filters, or requirements for results",
+		intent:
+			"💡 Intent: User's underlying goal or what they're trying to accomplish",
 		context: "📋 Context: Background information or situational details",
-		comparison: "⚖️ Comparison: Analyzing differences or similarities between options",
-		synthesis: "🔬 Synthesis: Combining multiple pieces of information into insights",
+		comparison:
+			"⚖️ Comparison: Analyzing differences or similarities between options",
+		synthesis:
+			"🔬 Synthesis: Combining multiple pieces of information into insights",
 	};
 	return descriptions[type] || "Unknown segment type";
 }

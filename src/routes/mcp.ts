@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import { handleMcpRequest } from "../utils/mcp-handler";
-
 
 // In-memory todos storage (server-side only)
 const todos: Array<{ id: number; title: string }> = [
@@ -19,43 +19,23 @@ const server = new McpServer({
 	version: "1.0.0",
 });
 
-// Properly typed MCP tool schema
 interface AddTodoInput {
 	title: string;
 }
 
-interface ToolSchema {
-	title: string;
-	description: string;
-	inputSchema: {
-		type: string;
-		properties: Record<string, any>;
-		required: string[];
-	};
-}
-
-const addTodoSchema: ToolSchema = {
-	title: "Tool to add a todo to a list of todos",
-	description: "Add a todo to a list of todos",
-	inputSchema: {
-		type: "object",
-		properties: {
-			title: {
-				type: "string",
-				description: "The title of the todo",
-			},
-		},
-		required: ["title"],
-	},
-};
-
 const addTodoHandler = ({ title }: AddTodoInput) => ({
-	content: [{ type: "text", text: JSON.stringify(addTodo(title)) }],
+	content: [{ type: "text" as const, text: JSON.stringify(addTodo(title)) }],
 });
 
 server.registerTool(
 	"addTodo",
-	addTodoSchema,
+	{
+		title: "Tool to add a todo to a list of todos",
+		description: "Add a todo to a list of todos",
+		inputSchema: {
+			title: z.string().describe("The title of the todo"),
+		},
+	},
 	addTodoHandler,
 );
 
