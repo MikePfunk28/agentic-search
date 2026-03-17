@@ -466,10 +466,11 @@ function ScoreBar({
 
 function ScoreTooltip({ text }: { text: string }) {
 	return (
-		<span
-			className="group relative inline-flex items-center"
-			tabIndex={0}
+		<button
+			type="button"
+			className="group relative inline-flex items-center border-0 bg-transparent p-0"
 			title={text}
+			aria-label={text}
 		>
 			<span className="text-xs text-slate-500 transition-colors group-hover:text-slate-200 group-focus:text-slate-200">
 				i
@@ -477,6 +478,6 @@ function ScoreTooltip({ text }: { text: string }) {
 			<span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-56 -translate-x-1/2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-left text-[11px] font-normal leading-relaxed text-white shadow-lg group-hover:block group-focus:block">
 				{text}
 			</span>
-		</span>
+		</button>
 	);
 }

@@ -13,8 +13,8 @@ import {
 	maskApiKey,
 } from "./crypto-utils";
 
-const SESSION_PASSWORD_KEY = "__crypto_session_password__";
 const MIGRATION_FLAG_KEY = "__crypto_migrated__";
+let sessionPassword: string | null = null;
 
 /**
  * Get or create session password for encryption
@@ -25,25 +25,18 @@ function getSessionPassword(): string {
 		throw new Error("Storage operations require browser environment");
 	}
 
-	// Check if we already have a session password
-	let password = sessionStorage.getItem(SESSION_PASSWORD_KEY);
-
-	if (!password) {
-		// Generate new session password
-		password = generateSessionPassword();
-		sessionStorage.setItem(SESSION_PASSWORD_KEY, password);
+	if (!sessionPassword) {
+		sessionPassword = generateSessionPassword();
 	}
 
-	return password;
+	return sessionPassword;
 }
 
 /**
  * Clear session password (e.g., on logout)
  */
 export function clearSessionPassword(): void {
-	if (typeof window !== "undefined") {
-		sessionStorage.removeItem(SESSION_PASSWORD_KEY);
-	}
+	sessionPassword = null;
 }
 
 /**
@@ -53,9 +46,7 @@ export function clearSessionPassword(): void {
  */
 export async function secureSetItem(key: string, value: string): Promise<void> {
 	if (!isCryptoAvailable()) {
-		console.warn("Web Crypto API not available, storing data unencrypted");
-		localStorage.setItem(key, value);
-		return;
+		throw new Error("Web Crypto API not available");
 	}
 
 	try {
@@ -89,6 +80,8 @@ export async function secureGetItem(key: string): Promise<string | null> {
 			} catch (error) {
 				console.error("Failed to migrate data:", error);
 			}
+		} else {
+			throw new Error("Cannot decrypt data: Web Crypto API not available");
 		}
 		return stored;
 	}

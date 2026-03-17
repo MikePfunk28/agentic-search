@@ -25,14 +25,14 @@ const API_KEY_PREFIX = "api-key-"; // Prefix for API key storage
 interface StoredConfig {
 	version: string;
 	activeConfigId: string;
-	configs: Record<string, Omit<ModelConfig, "apiKey"> & { apiKeyRef?: string }>;
+	configs: Record<string, Omit<ModelConfig, "apiKey">>;
 	updatedAt: number;
 }
 
 /**
  * Save a model configuration to localStorage and store any API key in encrypted secure storage.
  *
- * The configuration's API key (if present) is removed from the stored config and saved separately in encrypted secure storage; the saved config will reference the key by an `apiKeyRef`. The saved configuration becomes the active config and the storage timestamp is updated.
+ * The configuration's API key (if present) is removed from the stored config and saved separately in encrypted secure storage. The saved configuration becomes the active config and the storage timestamp is updated.
  *
  * @param id - Identifier for the model configuration
  * @param config - The model configuration to save; if `config.apiKey` is present it will be stored in encrypted secure storage and not kept directly in localStorage
@@ -50,11 +50,8 @@ export async function saveModelConfig(
 		const { apiKey, ...configWithoutKey } = config;
 		const apiKeyRef = apiKey ? `${API_KEY_PREFIX}${id}` : undefined;
 
-		// Store config without API key
-		stored.configs[id] = {
-			...configWithoutKey,
-			apiKeyRef,
-		};
+		// Store config without API key or API key reference
+		stored.configs[id] = configWithoutKey;
 		stored.activeConfigId = id;
 		stored.updatedAt = Date.now();
 
@@ -80,7 +77,7 @@ export async function saveModelConfig(
  * Load a saved model configuration by id, including decrypting its API key when present.
  *
  * @param id - The identifier of the model configuration to load
- * @returns The reconstructed `ModelConfig` with a decrypted `apiKey` if available, or `null` if the config is not found or loading fails (for example, when an API key reference exists but secure storage is unavailable)
+ * @returns The reconstructed `ModelConfig` with a decrypted `apiKey` if available, or `null` if the config is not found or loading fails
  */
 export async function loadModelConfig(id: string): Promise<ModelConfig | null> {
 	try {
@@ -89,11 +86,12 @@ export async function loadModelConfig(id: string): Promise<ModelConfig | null> {
 
 		if (!storedConfig) return null;
 
-		// Load and decrypt API key if reference exists
+		// Load and decrypt API key using the deterministic storage key
 		let apiKey: string | undefined;
-		if (storedConfig.apiKeyRef) {
+		const apiKeyRef = `${API_KEY_PREFIX}${id}`;
+		if (localStorage.getItem(apiKeyRef)) {
 			if (isSecureStorageAvailable()) {
-				apiKey = (await secureGetItem(storedConfig.apiKeyRef)) || undefined;
+				apiKey = (await secureGetItem(apiKeyRef)) || undefined;
 			} else {
 				// SECURITY: Refuse to load unencrypted keys
 				console.error("Secure storage not available. Cannot load API keys securely.");
@@ -101,10 +99,8 @@ export async function loadModelConfig(id: string): Promise<ModelConfig | null> {
 			}
 		}
 
-		// Reconstruct full config with decrypted API key
-		const { apiKeyRef, ...configWithoutRef } = storedConfig;
 		return {
-			...configWithoutRef,
+			...storedConfig,
 			apiKey,
 		} as ModelConfig;
 	} catch (error) {
@@ -152,16 +148,29 @@ export function loadAllConfigs(): StoredConfig {
 		}
 
 		const parsed = JSON.parse(stored) as StoredConfig;
+		const sanitizedConfigs = Object.fromEntries(
+			Object.entries(parsed.configs || {}).map(([id, config]) => {
+				const { apiKey, apiKeyRef, ...rest } = (config || {}) as Record<
+					string,
+					unknown
+				>;
+				return [id, rest as Omit<ModelConfig, "apiKey">];
+			}),
+		) as StoredConfig["configs"];
+		const sanitizedParsed: StoredConfig = {
+			...parsed,
+			configs: sanitizedConfigs,
+		};
 
 		// Check version - migration happens separately via initializeEncryptedStorage
-		if (parsed.version !== STORAGE_VERSION) {
+		if (sanitizedParsed.version !== STORAGE_VERSION) {
 			console.warn(
-				`Storage version mismatch: ${parsed.version} vs ${STORAGE_VERSION}. Call initializeEncryptedStorage() to migrate.`,
+				`Storage version mismatch: ${sanitizedParsed.version} vs ${STORAGE_VERSION}. Call initializeEncryptedStorage() to migrate.`,
 			);
 			// Return as-is, migration will happen later
 		}
 
-		return parsed;
+		return sanitizedParsed;
 	} catch (error) {
 		console.error("Failed to load configs from localStorage:", error);
 		return createDefaultStorage();
@@ -178,8 +187,8 @@ export function deleteModelConfig(id: string): void {
 		const config = stored.configs[id];
 
 		// Remove encrypted API key if it exists
-		if (config?.apiKeyRef) {
-			secureRemoveItem(config.apiKeyRef);
+		if (config) {
+			secureRemoveItem(`${API_KEY_PREFIX}${id}`);
 		}
 
 		delete stored.configs[id];
@@ -191,7 +200,16 @@ export function deleteModelConfig(id: string): void {
 		}
 
 		stored.updatedAt = Date.now();
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+		const sanitizedStored = {
+			...stored,
+			configs: Object.fromEntries(
+				Object.entries(stored.configs).map(([configId, storedConfig]) => {
+					const { apiKey, apiKeyRef, ...rest } = storedConfig as any;
+					return [configId, rest];
+				}),
+			),
+		};
+		localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedStored));
 	} catch (error) {
 		console.error("Failed to delete model config:", error);
 	}
@@ -254,10 +272,8 @@ export function clearAllConfigs(): void {
 		const stored = loadAllConfigs();
 
 		// Remove all encrypted API keys
-		for (const config of Object.values(stored.configs)) {
-			if (config.apiKeyRef) {
-				localStorage.removeItem(config.apiKeyRef);
-			}
+		for (const id of Object.keys(stored.configs)) {
+			localStorage.removeItem(`${API_KEY_PREFIX}${id}`);
 		}
 
 		localStorage.removeItem(STORAGE_KEY);
@@ -272,7 +288,19 @@ export function clearAllConfigs(): void {
 export function exportConfigs(): string {
 	try {
 		const stored = loadAllConfigs();
-		return JSON.stringify(stored, null, 2);
+		return JSON.stringify(
+			{
+				...stored,
+				configs: Object.fromEntries(
+					Object.entries(stored.configs).map(([id, config]) => {
+						const { apiKey, apiKeyRef, ...rest } = config as any;
+						return [id, rest];
+					}),
+				),
+			},
+			null,
+			2,
+		);
 	} catch (error) {
 		console.error("Failed to export configs:", error);
 		return "{}";
@@ -291,7 +319,16 @@ export function importConfigs(json: string): boolean {
 			throw new Error("Invalid config format");
 		}
 
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+		const sanitizedParsed = {
+			...parsed,
+			configs: Object.fromEntries(
+				Object.entries(parsed.configs).map(([id, config]) => {
+					const { apiKey, apiKeyRef, ...rest } = config as any;
+					return [id, rest];
+				}),
+			),
+		};
+		localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedParsed));
 		return true;
 	} catch (error) {
 		console.error("Failed to import configs:", error);
@@ -332,18 +369,12 @@ async function migrateStorage(old: StoredConfig): Promise<StoredConfig> {
 				const modelConfig = config as unknown as ModelConfig;
 				const { apiKey, ...configWithoutKey } = modelConfig;
 
-				// Create reference for API key
-				const apiKeyRef = apiKey ? `${API_KEY_PREFIX}${id}` : undefined;
-
-				// Store encrypted API key if present
+				// Store encrypted API key if present using the deterministic key
 				if (apiKey) {
-					await secureSetItem(apiKeyRef!, apiKey);
+					await secureSetItem(`${API_KEY_PREFIX}${id}`, apiKey);
 				}
 
-				newConfigs[id] = {
-					...configWithoutKey,
-					apiKeyRef,
-				};
+				newConfigs[id] = configWithoutKey;
 			}
 
 			return {
@@ -381,11 +412,11 @@ export async function initializeEncryptedStorage(): Promise<void> {
 			throw new Error("Encryption test failed");
 		}
 
-		// Get all API key references that need migration
+		// Get all API key storage keys that need migration
 		const stored = loadAllConfigs();
-		const apiKeyRefs = Object.values(stored.configs)
-			.map((c) => c.apiKeyRef)
-			.filter((ref): ref is string => !!ref);
+		const apiKeyRefs = Object.keys(stored.configs).map(
+			(id) => `${API_KEY_PREFIX}${id}`,
+		);
 
 		// Migrate unencrypted API keys to encrypted storage
 		await migrateToEncryptedStorage(apiKeyRefs);

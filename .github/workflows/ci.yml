@@ -66,6 +66,9 @@ jobs:
       - name: Build project
         run: pnpm run build
         env:
+          SENTRY_AUTH_TOKEN: ""
+          VITE_SENTRY_ORG: ""
+          VITE_SENTRY_PROJECT: ""
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 

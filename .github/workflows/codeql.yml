@@ -36,8 +36,28 @@ jobs:
           languages: ${{ matrix.language }}
           queries: security-and-quality
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        run: pnpm run build
+        env:
+          SENTRY_AUTH_TOKEN: ""
+          VITE_SENTRY_ORG: ""
+          VITE_SENTRY_PROJECT: ""
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
