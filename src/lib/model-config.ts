@@ -14,6 +14,26 @@
 import { z } from "zod";
 import { validateServerFetchUrl } from "./url-validation";
 
+function stripTrailingSlashes(url: string): string {
+	let normalized = url.trim();
+	while (normalized.endsWith("/")) {
+		normalized = normalized.slice(0, -1);
+	}
+	return normalized;
+}
+
+function hasVersionSegment(url: string): boolean {
+	const lastSlash = url.lastIndexOf("/");
+	if (lastSlash === -1) return false;
+	const segment = url.slice(lastSlash + 1);
+	return (
+		segment.length >= 2 &&
+		segment[0] === "v" &&
+		segment[1] >= "0" &&
+		segment[1] <= "9"
+	);
+}
+
 // Model provider types
 export enum ModelProvider {
 	OPENAI = "openai",
@@ -45,6 +65,34 @@ export const ModelConfigSchema = z.object({
 });
 
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
+
+export function normalizeAnthropicBaseUrl(baseUrl?: string): string | undefined {
+	if (!baseUrl) return undefined;
+
+	let normalized = stripTrailingSlashes(baseUrl);
+	if (normalized.endsWith("/messages")) {
+		normalized = normalized.slice(0, -"/messages".length);
+		normalized = stripTrailingSlashes(normalized);
+	}
+
+	if (!hasVersionSegment(normalized)) {
+		normalized = `${normalized}/v1`;
+	}
+
+	return normalized;
+}
+
+export function normalizeBaseUrlForProvider(
+	provider: ModelProvider,
+	baseUrl?: string,
+): string | undefined {
+	switch (provider) {
+		case ModelProvider.ANTHROPIC:
+			return normalizeAnthropicBaseUrl(baseUrl);
+		default:
+			return baseUrl?.trim() || undefined;
+	}
+}
 
 /**
  * Build a ModelConfig from client-provided model store data.
@@ -82,14 +130,19 @@ export function buildModelConfigFromClient(clientConfig: {
 				: ModelProvider.OPENAI;
 	}
 
-	if (clientConfig.baseUrl) {
-		validateServerFetchUrl(clientConfig.baseUrl);
+	const normalizedBaseUrl = normalizeBaseUrlForProvider(
+		provider,
+		clientConfig.baseUrl,
+	);
+
+	if (normalizedBaseUrl) {
+		validateServerFetchUrl(normalizedBaseUrl);
 	}
 
 	return {
 		provider,
 		model: clientConfig.model,
-		baseUrl: clientConfig.baseUrl,
+		baseUrl: normalizedBaseUrl,
 		apiKey: clientConfig.apiKey,
 		temperature: 0.7,
 		maxTokens: 4096,
@@ -165,7 +218,7 @@ export const ProviderDefaults: Record<ModelProvider, Partial<ModelConfig>> = {
 		maxTokens: 16000,
 	},
 	[ModelProvider.ANTHROPIC]: {
-		baseUrl: "https://api.anthropic.com",
+		baseUrl: "https://api.anthropic.com/v1",
 		model: "claude-sonnet-4.5",
 		temperature: 0.7,
 		maxTokens: 8192,
@@ -288,11 +341,15 @@ export class ModelConfigManager {
 		try {
 			const envPrefix = prefix.toUpperCase();
 			const defaults = ProviderDefaults[provider];
+			const baseUrl = normalizeBaseUrlForProvider(
+				provider,
+				process.env[`${envPrefix}_BASE_URL`] || defaults.baseUrl,
+			);
 
 			const config: ModelConfig = {
 				provider,
 				apiKey: process.env[`${envPrefix}_API_KEY`],
-				baseUrl: process.env[`${envPrefix}_BASE_URL`] || defaults.baseUrl,
+				baseUrl,
 				model: process.env[`${envPrefix}_MODEL`] || defaults.model || "",
 				temperature: Number(
 					process.env[`${envPrefix}_TEMPERATURE`] || defaults.temperature,
@@ -316,7 +373,11 @@ export class ModelConfigManager {
 	 * Add a new model configuration
 	 */
 	addConfig(id: string, config: ModelConfig): void {
-		const validated = ModelConfigSchema.parse(config);
+		const normalizedConfig = {
+			...config,
+			baseUrl: normalizeBaseUrlForProvider(config.provider, config.baseUrl),
+		};
+		const validated = ModelConfigSchema.parse(normalizedConfig);
 		this.configs.set(id, validated);
 	}
 
@@ -393,12 +454,18 @@ export class ModelConfigManager {
 	 * Make a test request to verify model connectivity
 	 */
 	private async makeTestRequest(config: ModelConfig): Promise<Response> {
+		const normalizedBaseUrl =
+			normalizeBaseUrlForProvider(config.provider, config.baseUrl) ||
+			ProviderDefaults[config.provider].baseUrl;
+
 		// For local models (Ollama, LM Studio), use different endpoint
 		if (
 			config.provider === ModelProvider.OLLAMA ||
 			config.provider === ModelProvider.LM_STUDIO
 		) {
-			return fetch(`${config.baseUrl}/api/tags`, {
+			const localBaseUrl = stripTrailingSlashes(normalizedBaseUrl || "")
+				.replace(/\/v1$/i, "");
+			return fetch(`${localBaseUrl}/api/tags`, {
 				method: "GET",
 				signal: AbortSignal.timeout(config.timeout),
 			});
@@ -420,7 +487,16 @@ export class ModelConfigManager {
 
 		const testPayload = this.getTestPayload(config);
 
-		return fetch(`${config.baseUrl}/chat/completions`, {
+		if (config.provider === ModelProvider.ANTHROPIC) {
+			return fetch(`${normalizedBaseUrl}/messages`, {
+				method: "POST",
+				headers,
+				body: JSON.stringify(testPayload),
+				signal: AbortSignal.timeout(config.timeout),
+			});
+		}
+
+		return fetch(`${normalizedBaseUrl}/chat/completions`, {
 			method: "POST",
 			headers,
 			body: JSON.stringify(testPayload),
@@ -501,7 +577,7 @@ export class ModelConfigManager {
 			maxTokens: config.maxTokens,
 			anthropicApiKey: config.apiKey,
 			clientOptions: {
-				baseURL: config.baseUrl,
+				baseURL: normalizeAnthropicBaseUrl(config.baseUrl),
 			},
 			streaming: config.enableStreaming,
 		};

@@ -97,6 +97,19 @@ describe("createAIModelInstance", () => {
 		const model = await createAIModelInstance(config);
 		expect(model).toBeDefined();
 		expect((model as any)._type).toBe("anthropic-model");
+		expect((model as any).baseURL).toBe("https://api.anthropic.com/v1");
+	});
+
+	test("normalizes Anthropic-compatible custom base URLs", async () => {
+		const config = makeConfig(ModelProvider.ANTHROPIC, {
+			apiKey: "sk-ant-test",
+			baseUrl: "https://api.z.ai/api/anthropic",
+		});
+
+		const model = await createAIModelInstance(config);
+		expect(model).toBeDefined();
+		expect((model as any)._type).toBe("anthropic-model");
+		expect((model as any).baseURL).toBe("https://api.z.ai/api/anthropic/v1");
 	});
 
 	test("creates Google model instance", async () => {

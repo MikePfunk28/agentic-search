@@ -1,14 +1,10 @@
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
 } from "@/lib/csrf-protection";
-import { ModelConfigManager, ModelProvider } from "@/lib/model-config";
 import { chatRequestSchema } from "@/lib/api-schemas";
+import { loadChatApiRuntime } from "@/lib/server/lazy-runtime";
 
 const SYSTEM_PROMPT = `You are an intelligent AI assistant with access to agentic search capabilities. You can help users with:
 
@@ -52,11 +48,22 @@ export const Route = createFileRoute("/api/chat")({
 					// array non-empty); the rest of the message shape is passed through.
 					const messages = (rawBody as any).messages;
 					const { modelProvider = "ollama", model: requestedModel } = parsed.data;
+					const {
+						createAnthropic,
+						createOpenAI,
+						createOpenAICompatible,
+						convertToModelMessages,
+						stepCountIs,
+						streamText,
+						ModelConfigManager,
+						ModelProvider,
+						normalizeAnthropicBaseUrl,
+					} = await loadChatApiRuntime();
 
 					// Get model configuration
 					const modelManager = new ModelConfigManager();
 					let modelConfig =
-						modelManager.getConfig(modelProvider as ModelProvider) ||
+						modelManager.getConfig(modelProvider as any) ||
 						modelManager.getActiveConfig();
 
 					if (
@@ -99,6 +106,8 @@ export const Route = createFileRoute("/api/chat")({
 						case ModelProvider.ANTHROPIC: {
 							const anthropicProvider = createAnthropic({
 								apiKey: modelConfig.apiKey || process.env.ANTHROPIC_API_KEY,
+								baseURL:
+									normalizeAnthropicBaseUrl(modelConfig.baseUrl) || undefined,
 							});
 							model = anthropicProvider(modelConfig.model);
 							break;

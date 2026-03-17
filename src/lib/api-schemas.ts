@@ -10,6 +10,7 @@ const modelConfigSchema = z.object({
 	model: z.string(),
 	apiKey: z.string().optional(),
 	baseUrl: z.string().optional(),
+	protocol: z.enum(["openai-compatible", "anthropic"]).optional(),
 });
 
 export const searchRequestSchema = z.object({

@@ -800,6 +800,36 @@ export class UnifiedSearchOrchestrator {
 		} catch (error) {
 			console.error("[UnifiedSearch] Search failed:", error);
 
+			if (primaryModelConfig) {
+				console.warn(
+					`[UnifiedSearch] Primary model ${primaryModelConfig.provider}:${primaryModelConfig.model} failed; retrying in web-only mode`,
+				);
+				try {
+					const fallbackResult = await this.search(query, null, {
+						...options,
+						useParallelModels: false,
+						useInterleavedReasoning: false,
+						parallelModelConfigs: [],
+						useSegmentation: false,
+					});
+
+					return {
+						...fallbackResult,
+						reasoning: [
+							`Primary model ${primaryModelConfig.provider}:${primaryModelConfig.model} failed; continuing with web-only search.`,
+							...fallbackResult.reasoning,
+						],
+						modelUsed: "none",
+						provider: "web-only",
+					};
+				} catch (fallbackError) {
+					console.error(
+						"[UnifiedSearch] Web-only fallback search failed:",
+						fallbackError,
+					);
+				}
+			}
+
 			// Return fallback result
 			return {
 				results: [],

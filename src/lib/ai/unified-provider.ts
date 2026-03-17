@@ -16,6 +16,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import {
 	type ModelConfig,
 	ModelProvider,
+	normalizeBaseUrlForProvider,
 	ProviderDefaults,
 } from "../model-config";
 import { validateServerFetchUrlAsync } from "../url-validation";
@@ -31,8 +32,11 @@ export async function createAIModelInstance(
 	config: ModelConfig,
 ): Promise<ReturnType<ReturnType<typeof createOpenAI>>> {
 	const resolvedBaseUrl =
-		config.baseUrl ||
-		ProviderDefaults[config.provider as ModelProvider]?.baseUrl;
+		normalizeBaseUrlForProvider(
+			config.provider,
+			config.baseUrl ||
+				ProviderDefaults[config.provider as ModelProvider]?.baseUrl,
+		) || undefined;
 
 	if (resolvedBaseUrl) {
 		await validateServerFetchUrlAsync(resolvedBaseUrl);

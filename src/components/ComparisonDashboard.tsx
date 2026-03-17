@@ -12,6 +12,17 @@ import type {
 	ParallelPromptResult,
 } from "../lib/parallel-model-orchestrator";
 
+const ADD_SCORE_EXPLANATIONS = {
+	relevance:
+		"How strongly the result text matches the query wording. This is a heuristic lexical match score, not a literal usefulness score.",
+	diversity:
+		"How varied the result set is across sources and content. Higher means less redundancy.",
+	freshness:
+		"How recent the results appear to be, especially for latest or time-sensitive queries.",
+	consistency:
+		"How complete and well-formed the result set is, including presence of title, snippet, and URL.",
+} as const;
+
 export interface DashboardProps {
 	parallelResults?: ParallelPromptResult;
 	reasoningResult?: ReasoningResult;
@@ -164,21 +175,25 @@ export function ComparisonDashboard({
 									label="Relevance"
 									value={addMetrics.currentScore.relevanceScore}
 									color="cyan"
+									tooltip={ADD_SCORE_EXPLANATIONS.relevance}
 								/>
 								<ScoreBar
 									label="Diversity"
 									value={addMetrics.currentScore.diversityScore}
 									color="blue"
+									tooltip={ADD_SCORE_EXPLANATIONS.diversity}
 								/>
 								<ScoreBar
 									label="Freshness"
 									value={addMetrics.currentScore.freshnessScore}
 									color="purple"
+									tooltip={ADD_SCORE_EXPLANATIONS.freshness}
 								/>
 								<ScoreBar
 									label="Consistency"
 									value={addMetrics.currentScore.consistencyScore}
 									color="green"
+									tooltip={ADD_SCORE_EXPLANATIONS.consistency}
 								/>
 							</div>
 						</div>
@@ -414,10 +429,12 @@ function ScoreBar({
 	label,
 	value,
 	color,
+	tooltip,
 }: {
 	label: string;
 	value: number;
 	color: "cyan" | "blue" | "purple" | "green";
+	tooltip?: string;
 }) {
 	const colorClasses = {
 		cyan: "bg-cyan-500",
@@ -429,7 +446,10 @@ function ScoreBar({
 	return (
 		<div>
 			<div className="flex items-center justify-between mb-1">
-				<span className="text-sm text-slate-300">{label}</span>
+				<span className="flex items-center gap-1 text-sm text-slate-300">
+					<span>{label}</span>
+					{tooltip ? <ScoreTooltip text={tooltip} /> : null}
+				</span>
 				<span className="text-sm text-slate-400">
 					{(value * 100).toFixed(0)}%
 				</span>
@@ -441,5 +461,22 @@ function ScoreBar({
 				/>
 			</div>
 		</div>
+	);
+}
+
+function ScoreTooltip({ text }: { text: string }) {
+	return (
+		<span
+			className="group relative inline-flex items-center"
+			tabIndex={0}
+			title={text}
+		>
+			<span className="text-xs text-slate-500 transition-colors group-hover:text-slate-200 group-focus:text-slate-200">
+				i
+			</span>
+			<span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-56 -translate-x-1/2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-left text-[11px] font-normal leading-relaxed text-white shadow-lg group-hover:block group-focus:block">
+				{text}
+			</span>
+		</span>
 	);
 }

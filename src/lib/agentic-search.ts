@@ -286,7 +286,10 @@ Be specific about the intent type and appropriate sources.`;
 				timeout: Math.min(model.timeout || 60000, 15000),
 			};
 			const response = await this.callModel(prompt, fastModel);
-			const parsed = JSON.parse(response);
+			const parsed = this.parseJsonObjectResponse(response);
+			if (!parsed) {
+				throw new Error("Model returned invalid JSON for intent analysis");
+			}
 			return {
 				type: parsed.type || "factual",
 				complexity: parsed.complexity || "moderate",
@@ -338,7 +341,10 @@ Make queries specific and effective for the intent type.`;
 				timeout: Math.min(model.timeout || 60000, 15000),
 			};
 			const response = await this.callModel(prompt, fastModel);
-			const parsed = JSON.parse(response);
+			const parsed = this.parseJsonObjectResponse(response);
+			if (!parsed) {
+				throw new Error("Model returned invalid JSON for search strategy");
+			}
 			const searchDepth =
 				typeof parsed.searchDepth === "number"
 					? Math.max(1, Math.min(parsed.searchDepth, 5))
@@ -457,6 +463,7 @@ Make queries specific and effective for the intent type.`;
 		const variants: string[] = [];
 		const lower = normalizedQuery.toLowerCase();
 		const tokens = lower.split(/\s+/);
+		const hasExplicitYear = /\b(19|20)\d{2}\b/.test(normalizedQuery);
 
 		// 1. Synonym expansion: find tokens that have synonyms and create expanded queries
 		for (const token of tokens) {
@@ -481,7 +488,9 @@ Make queries specific and effective for the intent type.`;
 			intent.type === "news" ||
 			/\b(latest|recent|today|new|news|update)\b/i.test(normalizedQuery)
 		) {
-			variants.push(`${normalizedQuery} ${new Date().getFullYear()}`);
+			if (!hasExplicitYear) {
+				variants.push(`${normalizedQuery} ${new Date().getFullYear()}`);
+			}
 			variants.push(`${normalizedQuery} recent developments`);
 		} else if (intent.type === "comparison") {
 			variants.push(`${normalizedQuery} comparison review`);
@@ -491,7 +500,9 @@ Make queries specific and effective for the intent type.`;
 			variants.push(`${normalizedQuery} best practices examples`);
 		} else if (intent.type === "research" || intent.type === "analysis") {
 			variants.push(
-				`${normalizedQuery} research papers ${new Date().getFullYear()}`,
+				hasExplicitYear
+					? `${normalizedQuery} research papers`
+					: `${normalizedQuery} research papers ${new Date().getFullYear()}`,
 			);
 			variants.push(`${normalizedQuery} systematic review analysis`);
 		} else {
@@ -1453,16 +1464,24 @@ Return:
 		}
 	}
 
-	private parseSynthesizedResultIds(response: string): string[] {
+	private parseJsonObjectResponse(response: string): Record<string, any> | null {
 		const fencedMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/i);
-		const candidate = fencedMatch?.[1] || response;
+		const candidate = (fencedMatch?.[1] || response).trim();
 		const start = candidate.indexOf("{");
 		const end = candidate.lastIndexOf("}");
-		if (start === -1 || end === -1 || end <= start) return [];
+		if (start === -1 || end === -1 || end <= start) return null;
 
 		try {
-			const parsed = JSON.parse(candidate.slice(start, end + 1));
-			if (!Array.isArray(parsed?.orderedResultIds)) return [];
+			return JSON.parse(candidate.slice(start, end + 1));
+		} catch {
+			return null;
+		}
+	}
+
+	private parseSynthesizedResultIds(response: string): string[] {
+		const parsed = this.parseJsonObjectResponse(response);
+		if (!parsed || !Array.isArray(parsed.orderedResultIds)) return [];
+		try {
 			return parsed.orderedResultIds.filter(
 				(id: unknown): id is string => typeof id === "string" && id.length > 0,
 			);

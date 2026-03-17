@@ -40,6 +40,23 @@ interface ADDQualityPanelProps {
 	onAdjustThreshold?: (threshold: number) => void;
 }
 
+const METRIC_EXPLANATIONS = {
+	relevance:
+		"How strongly the result title and snippet match the query wording. This is a heuristic lexical match score, so a useful result can still score low if it uses different phrasing.",
+	diversity:
+		"How varied the result set is across sources and content. Higher means less redundancy and fewer near-duplicate results.",
+	freshness:
+		"How recent the results appear to be, especially for time-sensitive queries such as latest, current, or year-specific searches.",
+	consistency:
+		"How complete and well-formed the result set is. Results score higher when title, snippet, and URL are all present.",
+	overall:
+		"Weighted summary of the search quality signals. It is a heuristic quality score, not a literal truth or accuracy percentage.",
+	threshold:
+		"Minimum per-result quality score required to stay visible. Raising the threshold hides weaker results but does not rerun the search.",
+	breakdown:
+		"These per-result breakdown numbers are heuristic estimates derived from the result score for quick review, not independently measured sub-scores.",
+} as const;
+
 export function ADDQualityPanel({
 	results,
 	addMetrics,
@@ -130,15 +147,39 @@ export function ADDQualityPanel({
 			{addMetrics && (
 				<div className="mb-6 p-4 bg-gradient-to-r from-pink-50 to-purple-50 border border-pink-200 rounded-lg">
 					<div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-						<MetricBadge label="Relevance" value={addMetrics.relevance} />
-						<MetricBadge label="Diversity" value={addMetrics.diversity} />
-						<MetricBadge label="Freshness" value={addMetrics.freshness} />
-						<MetricBadge label="Consistency" value={addMetrics.consistency} />
+						<MetricBadge
+							label="Relevance"
+							value={addMetrics.relevance}
+							tooltip={METRIC_EXPLANATIONS.relevance}
+						/>
+						<MetricBadge
+							label="Diversity"
+							value={addMetrics.diversity}
+							tooltip={METRIC_EXPLANATIONS.diversity}
+						/>
+						<MetricBadge
+							label="Freshness"
+							value={addMetrics.freshness}
+							tooltip={METRIC_EXPLANATIONS.freshness}
+						/>
+						<MetricBadge
+							label="Consistency"
+							value={addMetrics.consistency}
+							tooltip={METRIC_EXPLANATIONS.consistency}
+						/>
 						<MetricBadge
 							label="Overall"
 							value={addMetrics.overallScore}
 							highlight
+							tooltip={METRIC_EXPLANATIONS.overall}
 						/>
+					</div>
+
+					<div className="mb-4 rounded-lg bg-white/70 px-3 py-2 text-xs text-gray-700">
+						These are heuristic quality signals, not ground-truth accuracy.
+						Relevance is based partly on wording overlap, so genuinely useful
+						results can still score low if they use different language than the
+						query.
 					</div>
 
 					<div className="flex items-center gap-2 text-sm">
@@ -170,6 +211,7 @@ export function ADDQualityPanel({
 					<label className="flex items-center gap-2 text-sm font-medium text-gray-900">
 						<Settings className="w-4 h-4" />
 						Quality Threshold: {qualityThreshold.toFixed(2)}
+						<TooltipHint text={METRIC_EXPLANATIONS.threshold} />
 					</label>
 					<span className="text-xs text-gray-600">
 						Showing {filteredResults.length} of {results.length} results
@@ -282,6 +324,12 @@ export function ADDQualityPanel({
 								{/* Detailed Breakdown (if high quality or flagged) */}
 								{(score >= 0.7 || isFlagged) && (
 									<div className="mt-3 pt-3 border-t border-gray-200">
+										<div className="mb-2 flex items-center gap-2 text-[11px] text-gray-600">
+											<span className="font-medium uppercase tracking-wide">
+												Heuristic Breakdown
+											</span>
+											<TooltipHint text={METRIC_EXPLANATIONS.breakdown} />
+										</div>
 										<div className="grid grid-cols-4 gap-2 text-xs">
 											<div>
 												<span className="text-gray-600">Relevance:</span>
@@ -346,10 +394,12 @@ function MetricBadge({
 	label,
 	value,
 	highlight = false,
+	tooltip,
 }: {
 	label: string;
 	value: number;
 	highlight?: boolean;
+	tooltip?: string;
 }) {
 	const percentage = (value * 100).toFixed(0);
 	const color =
@@ -368,7 +418,25 @@ function MetricBadge({
 			>
 				{percentage}%
 			</div>
-			<div className="text-xs text-gray-600 font-medium">{label}</div>
+			<div className="flex items-center justify-center gap-1 text-xs text-gray-600 font-medium">
+				<span>{label}</span>
+				{tooltip ? <TooltipHint text={tooltip} /> : null}
+			</div>
 		</div>
+	);
+}
+
+function TooltipHint({ text }: { text: string }) {
+	return (
+		<span
+			className="group relative inline-flex items-center"
+			tabIndex={0}
+			title={text}
+		>
+			<Info className="h-3.5 w-3.5 text-gray-400 transition-colors group-hover:text-gray-700 group-focus:text-gray-700" />
+			<span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-56 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-normal leading-relaxed text-white shadow-lg group-hover:block group-focus:block">
+				{text}
+			</span>
+		</span>
 	);
 }

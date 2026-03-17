@@ -1,19 +1,7 @@
-// NOTE: dotenv is NOT imported here — Vite and TanStack Start already load
-// .env.local automatically in dev mode. Importing dotenv would pull in node:http
-// transitively, which crashes miniflare's workerd runtime.
-
-// NOTE: Do not initialize Sentry in local dev worker runtime.
-// Cloudflare/miniflare cannot resolve some Node module fallbacks used by Sentry.
-if (process.env.NODE_ENV === 'production' && process.env.VITE_SENTRY_DSN) {
-  const Sentry = await import('@sentry/tanstackstart-react')
-  Sentry.init({
-    dsn: process.env.VITE_SENTRY_DSN,
-    sendDefaultPii: process.env.SENTRY_SEND_DEFAULT_PII === 'true',
-    integrations: [
-      Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
-    ],
-    enableLogs: true,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
-  })
-}
+// TanStack Start auto-discovers instrument.server.* at worker startup.
+//
+// Do not import Sentry's TanStack Start SDK here. Its server entry resolves to
+// @sentry/node and transitively pulls in node:http, which Cloudflare workerd /
+// Miniflare cannot load. Client-side Sentry, when enabled, must be initialized
+// from browser-only code paths instead.
+export {}

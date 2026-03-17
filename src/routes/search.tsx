@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Search, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getClientSearchConfig } from "../lib/model-store";
-import { researchStorage } from "../lib/results-storage";
 
 export const Route = createFileRoute("/search")({ component: SearchPage });
 
@@ -65,6 +64,7 @@ function SearchPage() {
 			const data = await response.json();
 			setResults(data.results || []);
 			if (Array.isArray(data.results) && data.results.length > 0) {
+				const { researchStorage } = await import("../lib/results-storage");
 				await researchStorage.storeResults(
 					query,
 					data.results,

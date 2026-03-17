@@ -3,14 +3,8 @@ import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
 } from "@/lib/csrf-protection";
-import {
-	buildModelConfigFromClient,
-	type ModelConfig,
-} from "@/lib/model-config";
-import { researchStorage } from "@/lib/results-storage";
-import { getAvailableProviders } from "@/lib/search-providers";
-import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
 import { searchRequestSchema } from "@/lib/api-schemas";
+import { loadSearchApiRuntime } from "@/lib/server/lazy-runtime";
 
 // Cloudflare Workers: read env bindings from .dev.vars / dashboard secrets
 let cfEnv: Record<string, string | undefined> = {};
@@ -78,14 +72,23 @@ export const Route = createFileRoute("/api/search")({
 						modelConfigs: clientModelConfigs,
 						searchApiKeys,
 					} = parsed.data;
+					const {
+						buildModelConfigFromClient,
+						researchStorage,
+						getAvailableProviders,
+						unifiedSearchOrchestrator,
+					} = await loadSearchApiRuntime();
 
 					// Build model config from client-provided data, or fall back to server-side
-					let modelConfig: ModelConfig | null = null;
+					let modelConfig: Awaited<
+						ReturnType<typeof buildModelConfigFromClient>
+					> | null = null;
 					if (clientModelConfig?.provider && clientModelConfig.model) {
 							modelConfig = buildModelConfigFromClient({
 								...clientModelConfig,
 								baseUrl: clientModelConfig.baseUrl || "",
-								protocol: clientModelConfig.provider,
+								protocol:
+									clientModelConfig.protocol || clientModelConfig.provider,
 							});
 						console.log(
 							`[SearchAPI] Using client model: ${clientModelConfig.provider}:${clientModelConfig.model}`,
@@ -101,7 +104,7 @@ export const Route = createFileRoute("/api/search")({
 								modelConfig = buildModelConfigFromClient({
 									...firstModel,
 									baseUrl: firstModel.baseUrl || "",
-									protocol: firstModel.provider,
+									protocol: firstModel.protocol || firstModel.provider,
 								});
 							console.log(
 								`[SearchAPI] Using first client model from multi-select: ${firstModel.provider}:${firstModel.model}`,

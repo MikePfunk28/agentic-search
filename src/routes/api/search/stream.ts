@@ -12,10 +12,7 @@ import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
 } from "@/lib/csrf-protection";
-import { buildModelConfigFromClient } from "@/lib/model-config";
-import { researchStorage } from "@/lib/results-storage";
-import { getAvailableProviders } from "@/lib/search-providers";
-import { unifiedSearchOrchestrator } from "@/lib/unified-search-orchestrator";
+import { loadSearchApiRuntime } from "@/lib/server/lazy-runtime";
 import { getSearchScope } from "./control";
 
 // ---------------------------------------------------------------------------
@@ -281,6 +278,12 @@ async function executeSearchWithProgress(
 	},
 ) {
 	try {
+		const {
+			buildModelConfigFromClient,
+			researchStorage,
+			getAvailableProviders,
+			unifiedSearchOrchestrator,
+		} = await loadSearchApiRuntime();
 		console.log(
 			`[StreamSearch] Starting search for searchId=${searchId}, query="${query}"`,
 		);

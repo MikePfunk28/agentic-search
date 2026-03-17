@@ -192,6 +192,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 				newProvider.baseUrl,
 				newProvider.apiKey || undefined,
 				newProvider.protocol,
+				{ preferredModel: customSelectedModel },
 			);
 			setCustomDetectedModels(models);
 			setCustomDetectionError(error);
@@ -720,6 +721,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 									)}
 									Test Connection &amp; Detect Models
 								</button>
+
+								<p className="text-xs text-gray-500">
+									Detection is optional. If this endpoint does not publish a
+									model list, enter a model name manually and add the provider
+									anyway.
+								</p>
 
 								{/* Detection error */}
 								{customDetectionError && (

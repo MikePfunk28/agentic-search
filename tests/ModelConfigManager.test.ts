@@ -9,6 +9,7 @@ import {
   ModelProvider,
   ModelConfigSchema,
   ProviderDefaults,
+  buildModelConfigFromClient,
   type ModelConfig,
 } from '../src/lib/model-config';
 
@@ -347,7 +348,7 @@ describe('ModelConfigManager', () => {
       await manager.testConnection('test');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('api.anthropic.com'),
+        'https://api.anthropic.com/v1/messages',
         expect.objectContaining({
           headers: expect.objectContaining({
             'x-api-key': 'sk-ant-test123',
@@ -381,6 +382,21 @@ describe('ModelConfigManager', () => {
         'http://localhost:11434/api/tags',
         expect.any(Object)
       );
+    });
+  });
+
+  describe('Custom Provider Normalization', () => {
+    it('should normalize Anthropic-compatible client base URLs to /v1', () => {
+      const config = buildModelConfigFromClient({
+        provider: 'zai',
+        model: 'glm-5',
+        baseUrl: 'https://api.z.ai/api/anthropic',
+        apiKey: 'test-key',
+        protocol: 'anthropic',
+      });
+
+      expect(config.provider).toBe(ModelProvider.ANTHROPIC);
+      expect(config.baseUrl).toBe('https://api.z.ai/api/anthropic/v1');
     });
   });
 

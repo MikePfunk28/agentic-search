@@ -4,14 +4,7 @@ import {
 	createCsrfErrorResponse,
 	validateCsrfRequest,
 } from "@/lib/csrf-protection";
-import {
-	buildOpenAIJsonl,
-	cancelFineTuneJob,
-	createFineTuneJob,
-	deleteTrainingFile,
-	getFineTuneJob,
-	uploadTrainingFile,
-} from "@/lib/openai-fine-tuning";
+import { loadOpenAIFineTuneRuntime } from "@/lib/server/lazy-runtime";
 
 const launchRequestSchema = z.object({
 	action: z.literal("launch"),
@@ -87,6 +80,7 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 				}
 
 				try {
+					const { getFineTuneJob } = await loadOpenAIFineTuneRuntime();
 					const job = await getFineTuneJob(jobId);
 					return new Response(JSON.stringify({ job }), {
 						status: 200,
@@ -136,6 +130,13 @@ export const Route = createFileRoute("/api/fine-tune/openai")({
 				}
 
 				try {
+					const {
+						buildOpenAIJsonl,
+						cancelFineTuneJob,
+						createFineTuneJob,
+						deleteTrainingFile,
+						uploadTrainingFile,
+					} = await loadOpenAIFineTuneRuntime();
 					const rawBody = await request.json();
 
 					if (rawBody?.action === "cancel") {

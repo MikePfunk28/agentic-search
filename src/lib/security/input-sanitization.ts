@@ -1,9 +1,9 @@
 /**
  * Security Utilities for Input Sanitization and Validation
- * Uses DOMPurify (battle-tested library) instead of fragile regex patterns.
+ * Uses xss, which is safe to bundle into browser and worker runtimes.
  */
 
-import DOMPurify from "isomorphic-dompurify";
+import xss from "xss";
 
 /**
  * Maximum allowed string lengths to prevent DoS
@@ -15,7 +15,7 @@ export const MAX_URL_LENGTH = 2048;
 
 /**
  * Sanitize user input string for safe processing.
- * Uses DOMPurify to strip HTML — no fragile regex.
+ * Uses xss to strip HTML — no fragile regex.
  */
 export function sanitizeInput(
 	input: string,
@@ -47,12 +47,12 @@ export function sanitizeInput(
 	}
 
 	if (!allowHtml) {
-		// DOMPurify strips ALL HTML tags — one line, battle-tested
-		sanitized = DOMPurify.sanitize(sanitized, { ALLOWED_TAGS: [] });
+		// xss strips tags without depending on Node built-ins.
+		sanitized = stripHtml(sanitized);
 	}
 
 	if (strict) {
-		// DOMPurify handles HTML; strict mode additionally removes
+		// xss handles HTML; strict mode additionally removes
 		// characters that could be dangerous in shell/SQL contexts
 		sanitized = sanitized
 			.replaceAll("<", "")
@@ -66,6 +66,15 @@ export function sanitizeInput(
 	}
 
 	return sanitized.trim();
+}
+
+function stripHtml(value: string): string {
+	return xss(value, {
+		whiteList: {},
+		stripIgnoreTag: true,
+		stripIgnoreTagBody: ["script", "style"],
+		css: false,
+	});
 }
 
 /**
@@ -86,8 +95,8 @@ export function sanitizeFilename(filename: string): string {
 		throw new Error("Invalid filename: path traversal detected");
 	}
 
-	// Strip HTML via DOMPurify first
-	let sanitized = DOMPurify.sanitize(filename, { ALLOWED_TAGS: [] });
+	// Strip HTML before filesystem checks
+	let sanitized = stripHtml(filename);
 
 	// Remove any path components
 	const lastSlash = Math.max(
@@ -103,8 +112,8 @@ export function sanitizeFilename(filename: string): string {
 
 	// Replace dangerous filesystem characters with underscore
 	const dangerousChars = new Set(["<", ">", ":", '"', "|", "?", "*"]);
-	sanitized = Array.from(sanitized)
-		.map((ch) => {
+	sanitized = [...sanitized]
+		.map((ch: string) => {
 			if (dangerousChars.has(ch)) return "_";
 			// Control characters
 			if (ch.charCodeAt(0) < 0x20) return "_";
@@ -205,8 +214,8 @@ export function sanitizeApiKey(key: string | undefined): string | undefined {
 		throw new Error("Invalid API key length");
 	}
 
-	// Strip any HTML via DOMPurify
-	const cleaned = DOMPurify.sanitize(sanitized, { ALLOWED_TAGS: [] });
+	// Strip any HTML via xss
+	const cleaned = stripHtml(sanitized);
 	if (cleaned !== sanitized) {
 		throw new Error("Invalid characters in API key");
 	}

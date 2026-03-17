@@ -127,3 +127,8 @@ docs/code_review/code_review.md
 
 docs/feature/feature.md
 desktop-3000.png
+.codex-dev-clean.log
+.codex-dev-live.log
+.codex-dev.log
+.codex-verify-dev.err.log
+.codex-verify-dev.log

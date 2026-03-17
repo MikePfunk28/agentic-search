@@ -88,6 +88,173 @@ function normalizeBaseUrl(url: string): string {
 	return url.replace(/\/v1\/?$/, "").replace(/\/+$/, "") + "/v1";
 }
 
+function uniqueStrings(values: Array<string | undefined | null>): string[] {
+	return [...new Set(values.filter((value): value is string => Boolean(value)))];
+}
+
+function cleanProviderUrl(baseUrl: string): string {
+	return baseUrl.replace(/^\[/, "").replace(/\].*$/, "").trim().replace(/\/+$/, "");
+}
+
+function tryParseProviderUrl(baseUrl: string): URL | null {
+	try {
+		return new URL(baseUrl);
+	} catch {
+		return null;
+	}
+}
+
+function buildDetectedModelList(
+	knownModels: string[],
+	preferredModel?: string,
+): string[] {
+	const manualModel = preferredModel?.trim();
+	return uniqueStrings([manualModel, ...knownModels]);
+}
+
+function extractModelIds(payload: unknown): string[] {
+	if (!payload || typeof payload !== "object") {
+		return [];
+	}
+
+	const data = payload as {
+		data?: Array<{ id?: string }>;
+		models?: Array<{ id?: string; name?: string }>;
+	};
+
+	if (Array.isArray(data.data)) {
+		return data.data
+			.map((model) => model?.id?.trim())
+			.filter((model): model is string => Boolean(model));
+	}
+
+	if (Array.isArray(data.models)) {
+		return data.models
+			.map((model) => model?.id?.trim() || model?.name?.trim())
+			.filter((model): model is string => Boolean(model));
+	}
+
+	return [];
+}
+
+function buildOpenAIModelUrls(baseUrl: string): string[] {
+	const cleanBase = cleanProviderUrl(baseUrl);
+	const parsed = tryParseProviderUrl(cleanBase);
+	const path = parsed?.pathname.toLowerCase() || "";
+	const isVersionedPath = /\/v\d+(\/|$)/.test(path);
+
+	if (cleanBase.endsWith("/v1")) {
+		return [`${cleanBase}/models`];
+	}
+
+	if (isVersionedPath) {
+		return [`${cleanBase}/models`];
+	}
+
+	return uniqueStrings([`${cleanBase}/v1/models`, `${cleanBase}/models`]);
+}
+
+function buildOpenAICompletionUrls(baseUrl: string): string[] {
+	const cleanBase = cleanProviderUrl(baseUrl);
+	const parsed = tryParseProviderUrl(cleanBase);
+	const path = parsed?.pathname.toLowerCase() || "";
+	const isVersionedPath = /\/v\d+(\/|$)/.test(path);
+
+	if (cleanBase.endsWith("/v1")) {
+		return [`${cleanBase}/chat/completions`];
+	}
+
+	if (isVersionedPath) {
+		return [`${cleanBase}/chat/completions`];
+	}
+
+	return uniqueStrings([
+		`${cleanBase}/v1/chat/completions`,
+		`${cleanBase}/chat/completions`,
+	]);
+}
+
+function buildAnthropicMessageUrls(baseUrl: string): string[] {
+	const cleanBase = cleanProviderUrl(baseUrl);
+
+	if (cleanBase.endsWith("/v1")) {
+		return [`${cleanBase}/messages`];
+	}
+
+	return uniqueStrings([`${cleanBase}/v1/messages`, `${cleanBase}/messages`]);
+}
+
+interface ProviderDetectionHints {
+	knownModels: string[];
+	manualEntryMessage: string;
+}
+
+function getProviderDetectionHints(
+	baseUrl: string,
+	protocol: "openai-compatible" | "anthropic",
+): ProviderDetectionHints {
+	const parsed = tryParseProviderUrl(baseUrl);
+	const host = parsed?.hostname.toLowerCase() || "";
+	const path = parsed?.pathname.toLowerCase() || "";
+	const isZai = host === "api.z.ai";
+
+	if (isZai && path.includes("/api/anthropic")) {
+		return {
+			knownModels: ["glm-5", "glm-4.7", "glm-4.5-air"],
+			manualEntryMessage:
+				"Z.AI Anthropic-compatible endpoints do not expose Claude model listings. Using known GLM models instead.",
+		};
+	}
+
+	if (isZai && path.includes("/api/coding/paas/")) {
+		return {
+			knownModels: [
+				"glm-5",
+				"glm-4.7",
+				"glm-4.6",
+				"glm-4.5",
+				"glm-4.5-air",
+				"glm-4.6v",
+				"glm-4.5v",
+			],
+			manualEntryMessage:
+				"This Z.AI coding endpoint does not publish a standard /models list. Enter a model manually or use the known coding models.",
+		};
+	}
+
+	if (isZai && path.includes("/api/paas/")) {
+		return {
+			knownModels: [
+				"glm-5",
+				"glm-5-code",
+				"glm-4.7",
+				"glm-4.7-flash",
+				"glm-4.6",
+				"glm-4.5",
+				"glm-4.5-x",
+				"glm-4.5-air",
+				"glm-4.5-flash",
+			],
+			manualEntryMessage:
+				"Automatic model listing is limited for this Z.AI endpoint. Enter a model manually if detection cannot confirm it.",
+		};
+	}
+
+	if (protocol === "anthropic") {
+		return {
+			knownModels: [...AVAILABLE_MODELS.Anthropic],
+			manualEntryMessage:
+				"This Anthropic-compatible endpoint does not expose a model list. Enter a model manually if needed.",
+		};
+	}
+
+	return {
+		knownModels: [],
+		manualEntryMessage:
+			"Automatic model detection is unavailable for this endpoint. Enter a model name manually and add the provider.",
+	};
+}
+
 // --- In-Memory Store (no localStorage, no persistence) ---
 
 let _memoryStore: ModelStore = createDefaultStore();
@@ -523,54 +690,81 @@ export async function detectCustomProviderModels(
 	baseUrl: string,
 	apiKey?: string,
 	protocol: "openai-compatible" | "anthropic" = "openai-compatible",
+	options: { preferredModel?: string } = {},
 ): Promise<{ models: string[]; error: string | null }> {
 	// Ensure the URL is absolute — strip any accidental markdown link syntax
-	const cleanedUrl = baseUrl.replace(/^\[/, "").replace(/\].*$/, "").trim();
+	const cleanedUrl = cleanProviderUrl(baseUrl);
 	if (!/^https?:\/\//i.test(cleanedUrl)) {
 		console.warn("[ModelStore] Invalid provider URL (not absolute):", baseUrl);
 		return { models: [], error: "Invalid provider URL: must be an absolute http/https URL" };
 	}
 	baseUrl = cleanedUrl;
+	const hints = getProviderDetectionHints(baseUrl, protocol);
+	const fallbackModels = buildDetectedModelList(
+		hints.knownModels,
+		options.preferredModel,
+	);
 
 	// Anthropic protocol: no /v1/models endpoint exists.
 	// Validate the key with a minimal request, then return known models.
 	if (protocol === "anthropic") {
 		if (!apiKey) {
-			console.warn("[ModelStore] Anthropic requires an API key");
-			return { models: ANTHROPIC_KNOWN_MODELS, error: null }; // Return list anyway so user can pick
+			return { models: fallbackModels, error: null };
 		}
-		try {
-			const cleanBase = baseUrl.replace(/\/+$/, "");
-			const response = await fetch(`${cleanBase}/v1/messages`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"x-api-key": apiKey,
-					"anthropic-version": "2023-06-01",
-				},
-				body: JSON.stringify({
-					model: "claude-haiku-4-5-20251001",
-					max_tokens: 1,
-					messages: [{ role: "user", content: "hi" }],
-				}),
-				signal: AbortSignal.timeout(10000),
-			});
-			// Any response (even 400 for bad model) means the key/URL works
-			if (response.ok || response.status === 400 || response.status === 429) {
-				console.log("[ModelStore] Anthropic API key validated successfully");
-				return { models: ANTHROPIC_KNOWN_MODELS, error: null };
+
+		let lastStatus: number | null = null;
+		let lastError: string | null = null;
+		const probeModel = fallbackModels[0] || ANTHROPIC_KNOWN_MODELS[0];
+
+		for (const messagesUrl of buildAnthropicMessageUrls(baseUrl)) {
+			try {
+				const response = await fetch(messagesUrl, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"x-api-key": apiKey,
+						"anthropic-version": "2023-06-01",
+					},
+					body: JSON.stringify({
+						model: probeModel,
+						max_tokens: 1,
+						messages: [{ role: "user", content: "hi" }],
+					}),
+					signal: AbortSignal.timeout(10000),
+				});
+
+				if (response.ok || response.status === 400 || response.status === 429) {
+					return { models: fallbackModels, error: null };
+				}
+
+				if (response.status === 401 || response.status === 403) {
+					console.warn("[ModelStore] Anthropic API key is invalid (401/403)");
+					return { models: [], error: "Invalid API key or unauthorized" };
+				}
+
+				lastStatus = response.status;
+			} catch (error) {
+				lastError = classifyDetectionError(error);
 			}
-			if (response.status === 401 || response.status === 403) {
-				console.warn("[ModelStore] Anthropic API key is invalid (401/403)");
-				return { models: [], error: "Invalid API key or unauthorized" };
-			}
-			console.warn("[ModelStore] Anthropic returned status", response.status);
-			return { models: ANTHROPIC_KNOWN_MODELS, error: `Failed to detect models: HTTP ${response.status}` };
-		} catch (error) {
-			console.warn("[ModelStore] Failed to validate Anthropic key:", error);
-			const classified = classifyDetectionError(error);
-			return { models: ANTHROPIC_KNOWN_MODELS, error: classified }; // Return models anyway, let user try
 		}
+
+		if (fallbackModels.length > 0) {
+			return {
+				models: fallbackModels,
+				error:
+					lastStatus && lastStatus !== 404
+						? `Connected, but automatic model detection is unavailable (HTTP ${lastStatus}).`
+						: lastError,
+			};
+		}
+
+		return {
+			models: [],
+			error:
+				lastStatus !== null
+					? `Failed to detect models: HTTP ${lastStatus}`
+					: lastError || hints.manualEntryMessage,
+		};
 	}
 
 	// OpenAI-compatible: call /v1/models
@@ -608,49 +802,74 @@ export async function detectCustomProviderModels(
 			headers.Authorization = `Bearer ${apiKey}`;
 		}
 
-		const modelsUrl = baseUrl.endsWith("/v1")
-			? `${baseUrl}/models`
-			: baseUrl.endsWith("/v1/")
-				? `${baseUrl}models`
-				: `${baseUrl}/v1/models`;
+		let lastStatus: number | null = null;
+		for (const modelsUrl of buildOpenAIModelUrls(baseUrl)) {
+			response = await fetch(modelsUrl, {
+				method: "GET",
+				headers,
+				signal: AbortSignal.timeout(10000),
+			});
 
-		response = await fetch(modelsUrl, {
-			method: "GET",
-			headers,
-			signal: AbortSignal.timeout(10000),
-		});
-
-		if (!response.ok) {
-			console.warn("[ModelStore] Custom provider returned", response.status);
-			if (response.status === 401 || response.status === 403) {
-				return { models: [], error: "Invalid API key or unauthorized" };
+			if (!response.ok) {
+				console.warn("[ModelStore] Custom provider returned", response.status);
+				if (response.status === 401 || response.status === 403) {
+					return { models: [], error: "Invalid API key or unauthorized" };
+				}
+				lastStatus = response.status;
+				continue;
 			}
-			return { models: [], error: `Failed to detect models: HTTP ${response.status}` };
+
+			const detectedModels = extractModelIds(await response.json());
+			if (detectedModels.length > 0) {
+				return { models: detectedModels, error: null };
+			}
 		}
 
-		const data = await response.json();
-		// OpenAI-compatible format: { data: [{ id: "model-name" }] }
-		if (data.data && Array.isArray(data.data)) {
-			return { models: data.data.map((m: { id: string }) => m.id), error: null };
-		}
-		// Some providers return { models: [{ name: "model-name" }] }
-		if (data.models && Array.isArray(data.models)) {
-			return {
-				models: data.models.map(
-					(m: { name?: string; id?: string }) => m.name || m.id || "",
-				),
-				error: null,
-			};
+		const probeModel = fallbackModels[0];
+		if (probeModel) {
+			for (const completionsUrl of buildOpenAICompletionUrls(baseUrl)) {
+				response = await fetch(completionsUrl, {
+					method: "POST",
+					headers,
+					body: JSON.stringify({
+						model: probeModel,
+						messages: [{ role: "user", content: "hi" }],
+						max_tokens: 1,
+					}),
+					signal: AbortSignal.timeout(10000),
+				});
+
+				if (response.ok || response.status === 400 || response.status === 429) {
+					return { models: fallbackModels, error: null };
+				}
+
+				if (response.status === 401 || response.status === 403) {
+					return { models: [], error: "Invalid API key or unauthorized" };
+				}
+
+				lastStatus = response.status;
+			}
 		}
 
-		return { models: [], error: null };
+		return {
+			models: fallbackModels,
+			error:
+				fallbackModels.length > 0
+					? null
+					: lastStatus !== null
+						? `Failed to detect models: HTTP ${lastStatus}. ${hints.manualEntryMessage}`
+						: hints.manualEntryMessage,
+		};
 	} catch (error) {
 		const classified = classifyDetectionError(error);
 		console.warn(
 			"[ModelStore] Failed to detect models from custom provider:",
 			classified,
 		);
-		return { models: [], error: classified };
+		return {
+			models: fallbackModels,
+			error: fallbackModels.length > 0 ? null : classified,
+		};
 	}
 }
 
