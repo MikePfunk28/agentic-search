@@ -18,7 +18,37 @@ export const currentUser = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
-    return await ctx.db.get(userId);
+    const storedUser = await ctx.db.get(userId);
+    const identity = await ctx.auth.getUserIdentity();
+
+    const resolvedName =
+      storedUser?.name ??
+      (typeof identity?.name === "string" ? identity.name : undefined) ??
+      (typeof (identity as any)?.nickname === "string"
+        ? (identity as any).nickname
+        : undefined);
+    const resolvedEmail =
+      storedUser?.email ??
+      (typeof identity?.email === "string" ? identity.email : undefined);
+    const resolvedImage =
+      storedUser?.image ??
+      (typeof (identity as any)?.pictureUrl === "string"
+        ? (identity as any).pictureUrl
+        : undefined) ??
+      (typeof (identity as any)?.picture === "string"
+        ? (identity as any).picture
+        : undefined) ??
+      (typeof (identity as any)?.avatarUrl === "string"
+        ? (identity as any).avatarUrl
+        : undefined);
+
+    return {
+      ...(storedUser ?? { _id: userId }),
+      name: resolvedName,
+      email: resolvedEmail,
+      image: resolvedImage,
+      isAnonymous: storedUser?.isAnonymous === true,
+    };
   },
 });
 

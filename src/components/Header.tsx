@@ -12,6 +12,8 @@ import {
 	X,
 } from "lucide-react";
 import { useState } from "react";
+import { useAppAuth } from "../hooks/useAppAuth";
+import { getUserAvatarUrl, getUserDisplayName } from "../lib/user-profile";
 import AuthButton from "./AuthButton";
 import { SettingsModal } from "./SettingsModal";
 
@@ -26,6 +28,10 @@ import { SettingsModal } from "./SettingsModal";
 export default function Header() {
 	const [isOpen, setIsOpen] = useState(false);
 	const [showSettings, setShowSettings] = useState(false);
+	const { user, isAuthenticated, isLoading, isAnonymous } = useAppAuth();
+	const avatarUrl = getUserAvatarUrl(user);
+	const displayName = getUserDisplayName(user);
+	const initials = displayName.charAt(0).toUpperCase();
 
 	return (
 		<>
@@ -179,7 +185,38 @@ export default function Header() {
 					</Link>
 				</nav>
 
-				<div className="p-4 border-t border-gray-700 bg-gray-800 flex flex-col gap-2">
+				<div className="p-4 border-t border-gray-700 bg-gray-800 flex flex-col gap-3">
+					{!isLoading && (
+						<div className="rounded-lg border border-gray-700 bg-gray-900/70 p-3">
+							{isAuthenticated ? (
+								<div className="flex items-center gap-3">
+									{avatarUrl ? (
+										<img
+											src={avatarUrl}
+											alt={displayName}
+											className="w-10 h-10 rounded-full border border-cyan-500"
+										/>
+									) : (
+										<div className="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-sm font-bold text-white">
+											{initials}
+										</div>
+									)}
+									<div className="min-w-0">
+										<div className="text-sm font-medium text-white truncate">
+											{displayName}
+										</div>
+										<div className="text-xs text-gray-400 truncate">
+											{isAnonymous ? "Guest session" : user?.email || "Signed in"}
+										</div>
+									</div>
+								</div>
+							) : (
+								<div className="text-sm text-gray-400">
+									Sign in from the top-right account button to sync your data.
+								</div>
+							)}
+						</div>
+					)}
 					<div className="text-sm text-gray-400">Secure Agentic Search</div>
 				</div>
 			</aside>

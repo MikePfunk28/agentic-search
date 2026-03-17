@@ -141,10 +141,15 @@ function normalizeOpenAIRecord(record: any): {
 
 export function buildOpenAIJsonl(
 	records: unknown[],
-	_format: FineTuneExportFormat,
+	format: FineTuneExportFormat,
 ): string {
 	if (!Array.isArray(records) || records.length === 0) {
 		throw new Error("At least one training record is required.");
+	}
+	if (format !== "openai_jsonl") {
+		throw new Error(
+			`Unsupported fine-tune export format for OpenAI: ${format}`,
+		);
 	}
 
 	return records

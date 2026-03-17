@@ -101,6 +101,8 @@ export interface UserConfig {
 		deepseek?: string;
 		firecrawl?: string;
 		brave?: string;
+		tavily?: string;
+		exa?: string;
 	};
 	preferences: {
 		enableOCR: boolean;

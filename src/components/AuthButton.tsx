@@ -17,12 +17,24 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAppAuth } from "../hooks/useAppAuth";
+import { getUserAvatarUrl, getUserDisplayName } from "../lib/user-profile";
+
+const USER_PREVIEW_STORAGE_KEY = "agentic-search-user-preview";
+
+interface StoredUserPreview {
+	name?: string;
+	email?: string;
+	image?: string;
+}
 
 export default function AuthButton() {
 	const { user, isAuthenticated, isLoading, signIn, signOut, isAnonymous } =
 		useAppAuth();
 	const [showDropdown, setShowDropdown] = useState(false);
 	const [showSignIn, setShowSignIn] = useState(false);
+	const [cachedPreview, setCachedPreview] = useState<StoredUserPreview | null>(
+		null,
+	);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const signInRef = useRef<HTMLDivElement>(null);
 
@@ -43,7 +55,69 @@ export default function AuthButton() {
 		return () => document.removeEventListener("mousedown", handleClick);
 	}, []);
 
+	useEffect(() => {
+		try {
+			const stored = window.localStorage.getItem(USER_PREVIEW_STORAGE_KEY);
+			if (stored) {
+				setCachedPreview(JSON.parse(stored) as StoredUserPreview);
+			}
+		} catch {
+			setCachedPreview(null);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (isLoading) return;
+
+		if (isAuthenticated && user && !isAnonymous) {
+			const preview: StoredUserPreview = {
+				name: getUserDisplayName(user) || undefined,
+				email: user.email || undefined,
+				image: getUserAvatarUrl(user),
+			};
+			setCachedPreview(preview);
+			try {
+				window.localStorage.setItem(
+					USER_PREVIEW_STORAGE_KEY,
+					JSON.stringify(preview),
+				);
+			} catch {
+				// Ignore storage errors; auth state remains authoritative.
+			}
+			return;
+		}
+
+		if (!isAuthenticated || isAnonymous) {
+			setCachedPreview(null);
+			try {
+				window.localStorage.removeItem(USER_PREVIEW_STORAGE_KEY);
+			} catch {
+				// Ignore storage errors.
+			}
+		}
+	}, [isAnonymous, isAuthenticated, isLoading, user]);
+
 	if (isLoading) {
+		if (cachedPreview) {
+			const previewName = cachedPreview.name || cachedPreview.email || "User";
+			const previewInitial = previewName.charAt(0).toUpperCase();
+			return (
+				<div className="flex items-center gap-2 px-2 py-1.5 rounded-lg opacity-80">
+					{cachedPreview.image ? (
+						<img
+							src={cachedPreview.image}
+							alt={previewName}
+							className="w-8 h-8 rounded-full border-2 border-cyan-500/60"
+						/>
+					) : (
+						<div className="w-8 h-8 rounded-full bg-cyan-600/80 flex items-center justify-center text-sm font-bold">
+							{previewInitial}
+						</div>
+					)}
+				</div>
+			);
+		}
+
 		return <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse" />;
 	}
 
@@ -159,7 +233,8 @@ export default function AuthButton() {
 	}
 
 	// Authenticated user with real account
-	const displayName = user?.name || user?.email || "User";
+	const displayName = getUserDisplayName(user);
+	const avatarUrl = getUserAvatarUrl(user);
 	const initials = displayName.charAt(0).toUpperCase();
 
 	return (
@@ -169,9 +244,9 @@ export default function AuthButton() {
 				onClick={() => setShowDropdown(!showDropdown)}
 				className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-700 rounded-lg transition-colors"
 			>
-				{user?.image ? (
+				{avatarUrl ? (
 					<img
-						src={user.image}
+						src={avatarUrl}
 						alt={displayName}
 						className="w-8 h-8 rounded-full border-2 border-cyan-500"
 					/>

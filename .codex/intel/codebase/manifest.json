@@ -1,0 +1,8 @@
+{
+  "generated_at": "2026-03-17T16:41:42.790169+00:00",
+  "artifacts": {
+    "index": "index.json",
+    "imports": "import-edges.json",
+    "summary": "summary.md"
+  }
+}

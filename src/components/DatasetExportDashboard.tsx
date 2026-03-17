@@ -2,6 +2,8 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { useAppAuth } from "../hooks/useAppAuth";
+import { AuthRequiredState } from "./AuthRequiredState";
 
 type ExportFormat = "openai_jsonl" | "anthropic_jsonl" | "generic_json";
 type UsageEventType =
@@ -93,6 +95,7 @@ function parseHyperparameterValue(value: string): number | "auto" | undefined {
 }
 
 export default function DatasetExportDashboard() {
+	const { isAuthenticated, isLoading } = useAppAuth();
 	const [format, setFormat] = useState<ExportFormat>("openai_jsonl");
 	const [minQuality, setMinQuality] = useState<number>(0.7);
 	const [eventTypes, setEventTypes] = useState<UsageEventType[]>([
@@ -117,10 +120,13 @@ export default function DatasetExportDashboard() {
 	const [fineTuneMessage, setFineTuneMessage] = useState<string | null>(null);
 	const [cancellingJobId, setCancellingJobId] = useState<string | null>(null);
 
-	const stats = useQuery(api.usageTracking.getUsageStats, {});
+	const stats = useQuery(
+		api.usageTracking.getUsageStats,
+		isAuthenticated ? {} : "skip",
+	);
 	const exportData = useQuery(
 		api.usageTracking.exportForFineTuning,
-		isExporting
+		isAuthenticated && isExporting
 			? {
 					format,
 					minQuality,
@@ -129,7 +135,10 @@ export default function DatasetExportDashboard() {
 				}
 			: "skip",
 	);
-	const datasets = useQuery(api.usageTracking.listDatasets, {});
+	const datasets = useQuery(
+		api.usageTracking.listDatasets,
+		isAuthenticated ? {} : "skip",
+	);
 	const createDataset = useMutation(api.usageTracking.createDatasetExport);
 	const linkFineTuningJob = useMutation(api.usageTracking.linkFineTuningJob);
 	const syncFineTuningJob = useMutation(api.usageTracking.syncFineTuningJob);
@@ -240,11 +249,22 @@ export default function DatasetExportDashboard() {
 		const anchor = document.createElement("a");
 		anchor.href = url;
 		anchor.download = filename;
-		document.body.appendChild(anchor);
 		anchor.click();
-		document.body.removeChild(anchor);
-		URL.revokeObjectURL(url);
+		setTimeout(() => URL.revokeObjectURL(url), 0);
 	};
+
+	if (isLoading) {
+		return <div className="p-8 text-gray-500">Loading dataset export tools...</div>;
+	}
+
+	if (!isAuthenticated) {
+		return (
+			<AuthRequiredState
+				title="Sign in to export datasets"
+				description="Dataset exports and fine-tuning jobs use your private usage history, so they require a signed-in session."
+			/>
+		);
+	}
 
 	const handleSaveDataset = async () => {
 		if (!datasetName.trim()) {

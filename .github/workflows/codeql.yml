@@ -35,6 +35,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: security-and-quality
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -49,6 +50,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Clean generated output
+        run: rm -rf dist
 
       - name: Build project
         run: pnpm run build

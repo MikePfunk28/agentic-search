@@ -2,30 +2,40 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { useAppAuth } from "../hooks/useAppAuth";
 
 interface SearchHistoryProps {
 	onSelectSearch?: (searchId: Id<"searchHistory">) => void;
 }
 
 export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
+	const { isAuthenticated, isLoading } = useAppAuth();
 	const [currentPage, setCurrentPage] = useState(0);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [qualityFilter, setQualityFilter] = useState<number | null>(null);
 	const [modelFilter, setModelFilter] = useState<string>("");
 
 	// Query search history with pagination
-	const searchHistory = useQuery(api.searchHistory.listSearchHistory, {
-		limit: 10,
-		offset: currentPage * 10,
-	});
+	const searchHistory = useQuery(
+		api.searchHistory.listSearchHistory,
+		isAuthenticated
+			? {
+					limit: 10,
+					offset: currentPage * 10,
+				}
+			: "skip",
+	);
 
 	// Query search statistics
-	const stats = useQuery(api.searchHistory.getSearchStats, {});
+	const stats = useQuery(
+		api.searchHistory.getSearchStats,
+		isAuthenticated ? {} : "skip",
+	);
 
 	// Search within history
 	const searchResults = useQuery(
 		api.searchHistory.searchHistory,
-		searchQuery ? { query: searchQuery, limit: 10 } : "skip",
+		isAuthenticated && searchQuery ? { query: searchQuery, limit: 10 } : "skip",
 	);
 
 	// Approve search mutation
@@ -53,11 +63,26 @@ export default function SearchHistory({ onSelectSearch }: SearchHistoryProps) {
 	};
 
 	// Filter results based on criteria
-	const filteredResults = (searchResults || searchHistory)?.filter((search) => {
-		if (qualityFilter && search.quality < qualityFilter) return false;
+	const baseResults =
+		searchQuery.trim().length > 0 ? searchResults || [] : searchHistory || [];
+
+	const filteredResults = baseResults.filter((search) => {
+		if (qualityFilter && (search.quality ?? 0) < qualityFilter) return false;
 		if (modelFilter && !search.modelUsed.includes(modelFilter)) return false;
 		return true;
 	});
+
+	if (isLoading) {
+		return <div className="p-8 text-slate-500">Loading history...</div>;
+	}
+
+	if (!isAuthenticated) {
+		return (
+			<div className="p-8 text-slate-500">
+				Sign in or continue as a guest to sync server-side history.
+			</div>
+		);
+	}
 
 	return (
 		<div className="search-history-container">

@@ -65,7 +65,7 @@ export const listSearchHistory = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return [];
     }
 
     const limit = args.limit || 20;
@@ -94,14 +94,14 @@ export const getSearch = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return null;
     }
 
     const search = await ctx.db.get(args.searchId);
 
     // Verify ownership
     if (search && search.userId !== userIdentity.subject) {
-      throw new Error("Unauthorized: You do not own this search");
+      return null;
     }
 
     return search;
@@ -122,7 +122,7 @@ export const approveSearch = mutation({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return [];
     }
 
     const search = await ctx.db.get(args.searchId);
@@ -179,7 +179,7 @@ export const searchHistory = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return [];
     }
 
     const limit = args.limit || 20;
@@ -208,7 +208,14 @@ export const getSearchStats = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return {
+        totalSearches: 0,
+        avgQuality: 0,
+        avgExecutionTime: 0,
+        totalTokens: 0,
+        approvalRate: 0,
+        modelDistribution: {},
+      };
     }
 
     const timeRange = args.timeRangeMs || 30 * 24 * 60 * 60 * 1000; // 30 days

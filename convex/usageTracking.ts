@@ -570,7 +570,16 @@ export const getUsageStats = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return {
+        totalSearches: 0,
+        totalSegments: 0,
+        totalFeedback: 0,
+        avgQuality: 0,
+        totalTokens: 0,
+        avgExecutionTime: 0,
+        modelDistribution: {},
+        eventsCount: 0,
+      };
     }
 
     const timeRange = args.timeRangeMs || 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -657,7 +666,11 @@ export const exportForFineTuning = query({
   handler: async (ctx, args) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return {
+        format: args.format,
+        count: 0,
+        data: [],
+      };
     }
 
     const { records } = await buildFineTuningRecords(ctx, userIdentity.subject, {
@@ -791,7 +804,7 @@ export const listDatasets = query({
   handler: async (ctx) => {
     const userIdentity = await ctx.auth.getUserIdentity();
     if (!userIdentity) {
-      throw new Error("Authentication required");
+      return [];
     }
 
     const datasets = await ctx.db
@@ -997,5 +1010,4 @@ export const getTopQueries = query({
       .slice(0, args.limit ?? 10);
   },
 });
-
 

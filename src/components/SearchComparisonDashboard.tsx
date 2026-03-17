@@ -2,6 +2,8 @@ import { useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { useAppAuth } from "../hooks/useAppAuth";
+import { AuthRequiredState } from "./AuthRequiredState";
 
 interface SearchComparisonDashboardProps {
 	searchIds?: [Id<"searchHistory">, Id<"searchHistory">];
@@ -10,26 +12,40 @@ interface SearchComparisonDashboardProps {
 export default function SearchComparisonDashboard({
 	searchIds,
 }: SearchComparisonDashboardProps) {
+	const { isAuthenticated, isLoading } = useAppAuth();
 	const [leftSearchId, setLeftSearchId] = useState<Id<"searchHistory"> | null>(
 		searchIds?.[0] || null,
 	);
 	const [rightSearchId, setRightSearchId] =
 		useState<Id<"searchHistory"> | null>(searchIds?.[1] || null);
 
-	const recentSearches = useQuery(api.searchHistory.listSearchHistory, {
-		limit: 20,
-		offset: 0,
-	});
+	const recentSearches = useQuery(
+		api.searchHistory.listSearchHistory,
+		isAuthenticated ? { limit: 20, offset: 0 } : "skip",
+	);
 
 	const leftSearch = useQuery(
 		api.searchHistory.getSearch,
-		leftSearchId ? { searchId: leftSearchId } : "skip",
+		isAuthenticated && leftSearchId ? { searchId: leftSearchId } : "skip",
 	);
 
 	const rightSearch = useQuery(
 		api.searchHistory.getSearch,
-		rightSearchId ? { searchId: rightSearchId } : "skip",
+		isAuthenticated && rightSearchId ? { searchId: rightSearchId } : "skip",
 	);
+
+	if (isLoading) {
+		return <div className="p-8 text-gray-500">Loading comparison dashboard...</div>;
+	}
+
+	if (!isAuthenticated) {
+		return (
+			<AuthRequiredState
+				title="Sign in to compare searches"
+				description="Search comparison uses your synced history, so it needs an authenticated session."
+			/>
+		);
+	}
 
 	const getSearchDate = (search: {
 		createdAt?: number;
@@ -88,7 +104,7 @@ export default function SearchComparisonDashboard({
 								<strong>Query:</strong> {leftSearch.query}
 							</p>
 							<p>
-								<strong>Quality:</strong> {leftSearch.quality.toFixed(3)}
+								<strong>Quality:</strong> {(leftSearch.quality ?? 0).toFixed(3)}
 							</p>
 							<p>
 								<strong>Results:</strong> {leftSearch.results.length}
@@ -113,7 +129,7 @@ export default function SearchComparisonDashboard({
 								<strong>Query:</strong> {rightSearch.query}
 							</p>
 							<p>
-								<strong>Quality:</strong> {rightSearch.quality.toFixed(3)}
+								<strong>Quality:</strong> {(rightSearch.quality ?? 0).toFixed(3)}
 							</p>
 							<p>
 								<strong>Results:</strong> {rightSearch.results.length}

@@ -11,6 +11,7 @@ import { BarChart3, Key, LogOut, Settings, Shield, User } from "lucide-react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { useAppAuth } from "../hooks/useAppAuth";
+import { getUserAvatarUrl, getUserDisplayName } from "../lib/user-profile";
 
 export const Route = createFileRoute("/profile")({
 	component: ProfilePage,
@@ -111,7 +112,8 @@ function ProfilePage() {
 }
 
 function AccountInfoCard({ user }: { user: any }) {
-	const displayName = user?.name || user?.email || "User";
+	const displayName = getUserDisplayName(user);
+	const avatarUrl = getUserAvatarUrl(user);
 
 	return (
 		<div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
@@ -120,9 +122,9 @@ function AccountInfoCard({ user }: { user: any }) {
 				Account
 			</h3>
 			<div className="flex items-center gap-4">
-				{user?.image ? (
+				{avatarUrl ? (
 					<img
-						src={user.image}
+						src={avatarUrl}
 						alt={displayName}
 						className="w-16 h-16 rounded-full border-2 border-cyan-500"
 					/>

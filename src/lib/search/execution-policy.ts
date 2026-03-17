@@ -48,7 +48,7 @@ export function resolveSearchExecutionPolicy(params: {
 	} = params;
 
 	const configuredModelCount = primaryModelConfig
-		? Math.max(1, parallelModelConfigs.length || 1)
+		? 1 + parallelModelConfigs.length
 		: 0;
 
 	if (!primaryModelConfig) {
